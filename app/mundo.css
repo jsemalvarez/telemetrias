@@ -1,0 +1,1832 @@
+/* ==================================================================
+   Mundo: frente de tablero naval.
+
+   Física de panel, no de tarjeta. La profundidad viene del bisel — un filo
+   claro arriba y uno oscuro abajo, como una chapa plegada — nunca de una
+   sombra difusa. Nada se apoya sobre un degradado. El naranja de marca
+   aparece sólo donde hay señal activa.
+================================================================== */
+
+:root {
+  /* Biseles: la única fuente de relieve. */
+  --proa: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.66);
+  --rebaje: inset 0 2px 0 rgba(0, 0, 0, 0.72), inset 0 -1px 0 rgba(255, 255, 255, 0.055);
+}
+
+/* ------------------------------ Riel ------------------------------ */
+
+.riel {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--acero);
+  border-bottom: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+}
+
+.riel__marco {
+  display: flex;
+  align-items: center;
+  gap: var(--e5);
+  min-height: 62px;
+}
+
+.marca {
+  display: flex;
+  align-items: baseline;
+  gap: var(--e2);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.marca__corchete {
+  width: 4px;
+  height: 20px;
+  background: var(--naranja);
+  align-self: center;
+}
+
+.marca__nombre {
+  font-size: var(--t11);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--blanco);
+}
+
+.marca__linea {
+  color: var(--naranja);
+}
+
+.riel__nav {
+  display: flex;
+  gap: var(--e5);
+  margin-left: auto;
+  font-size: var(--t7);
+}
+.riel__nav + .interruptor--riel {
+  margin-left: 0;
+}
+
+.riel__nav a {
+  text-decoration: none;
+  color: var(--gris);
+  padding-block: var(--e2);
+  border-bottom: 1px solid transparent;
+  transition: color 0.18s var(--sale), border-color 0.18s var(--sale);
+}
+.riel__nav a:hover {
+  color: var(--blanco);
+  border-bottom-color: var(--naranja);
+}
+
+/* El mismo pulsador del héroe, en miniatura, montado en el riel. */
+.interruptor--riel {
+  margin-left: auto;
+}
+.interruptor--riel .interruptor__bisel {
+  width: 34px;
+}
+.interruptor--riel .interruptor__rosca {
+  width: 22px;
+  height: 22px;
+}
+.interruptor--riel .interruptor__lente {
+  width: 14px;
+  height: 14px;
+}
+.interruptor--riel .interruptor__lente::after {
+  inset: 2px 6px 8px 3px;
+}
+.interruptor--riel .interruptor__designacion {
+  display: none;
+}
+.interruptor--riel .interruptor__chapa {
+  padding: var(--e2) var(--e4);
+}
+.interruptor--riel .interruptor__rotulo {
+  font-size: var(--t5);
+  letter-spacing: 0.06em;
+}
+
+/* --------------------------- Interruptor ---------------------------
+   Pulsador iluminado con bisel roscado sobre chapa grabada. Es la única
+   acción de la página y se construye con el vocabulario del tablero. */
+
+.interruptor {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+  font-family: inherit;
+  text-decoration: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+.interruptor__bisel {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  flex: 0 0 auto;
+  background: var(--acero-alto);
+  border: 1px solid #0a0d0f;
+  border-right: 0;
+  box-shadow: var(--proa);
+}
+.interruptor__rosca {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #0c0f11;
+  box-shadow: var(--rebaje);
+}
+.interruptor__lente {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--naranja);
+  border: 1px solid var(--naranja-lente);
+  transition: background-color 0.14s var(--sale);
+}
+.interruptor__lente::after {
+  content: "";
+  position: absolute;
+  inset: 4px 12px 14px 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.interruptor__chapa {
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  padding: var(--e3) var(--e5);
+  background: var(--acero);
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+  text-align: left;
+}
+.interruptor__designacion {
+  font-size: var(--t2);
+  color: var(--gris-hondo);
+}
+.interruptor__rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--blanco);
+}
+
+/* Grabado en la chapa, con el trazo del dibujo tecnico y el color del rotulo:
+   es parte de la leyenda, no una segunda senal naranja. */
+.simbolo-entrar {
+  width: 1.05em;
+  height: 1.05em;
+  flex: 0 0 auto;
+}
+.simbolo-entrar path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: miter;
+}
+
+.interruptor:hover .interruptor__lente {
+  background: var(--naranja-alto);
+}
+.interruptor:hover .interruptor__chapa {
+  background: #2a2f35;
+}
+.interruptor:active .interruptor__bisel,
+.interruptor:active .interruptor__chapa {
+  box-shadow: var(--rebaje);
+}
+.interruptor:active .interruptor__lente {
+  background: var(--naranja-hondo);
+}
+.interruptor:disabled {
+  cursor: not-allowed;
+}
+.interruptor:disabled .interruptor__lente {
+  background: var(--gris-hondo);
+  border-color: var(--borde-vivo);
+}
+.interruptor:disabled .interruptor__rotulo {
+  color: var(--gris-hondo);
+}
+.interruptor:focus-visible {
+  outline: 2px solid var(--naranja);
+  outline-offset: 3px;
+}
+
+/* La lente es una lámpara incandescente y se comporta como tal: no conmuta, se
+   calienta y se enfría. Baja despacio hasta el filamento frío y sube rápido,
+   que es la asimetría que la distingue de un parpadeo de CSS. Termina en 100%
+   encendida, así que con movimiento reducido la lámpara queda prendida. */
+@keyframes filamento {
+  0%,
+  8% {
+    background-color: var(--naranja);
+    border-color: var(--naranja-lente);
+  }
+  58% {
+    background-color: var(--naranja-hondo);
+    border-color: var(--naranja-hondo);
+  }
+  70%,
+  100% {
+    background-color: var(--naranja);
+    border-color: var(--naranja-lente);
+  }
+}
+@keyframes filamento-brillo {
+  0%,
+  8% {
+    opacity: 1;
+  }
+  58% {
+    opacity: 0.45;
+  }
+  70%,
+  100% {
+    opacity: 1;
+  }
+}
+
+.interruptor__lente {
+  animation: filamento 2.6s linear infinite;
+}
+.interruptor__lente::after {
+  animation: filamento-brillo 2.6s linear infinite;
+}
+
+/* Los estados mandan sobre el ciclo: con el dedo encima la lámpara responde al
+   dedo, no al filamento, y deshabilitada simplemente está apagada. */
+.interruptor:hover .interruptor__lente,
+.interruptor:active .interruptor__lente,
+.interruptor:disabled .interruptor__lente,
+.interruptor:hover .interruptor__lente::after,
+.interruptor:active .interruptor__lente::after,
+.interruptor:disabled .interruptor__lente::after {
+  animation: none;
+}
+
+/* ------------------------------ Hueco ------------------------------
+   Alojamiento rebajado: todo instrumento va montado dentro de uno. */
+
+.hueco {
+  position: relative;
+  background: #101418;
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--rebaje);
+}
+.hueco__designacion,
+.lectura__designacion {
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  font-size: var(--t1);
+  color: var(--gris-hondo);
+}
+
+/* --------------------------- Travelling --------------------------- */
+
+.travelling {
+  position: relative;
+  height: 460vh;
+}
+
+.travelling__visor {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--negro);
+}
+
+.camara {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: grid;
+}
+
+.plano {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  will-change: transform, opacity;
+}
+
+.plano--tablero {
+  opacity: var(--o1, 1);
+  transform: scale(var(--z, 1));
+  z-index: 4;
+}
+.plano--buque {
+  opacity: var(--o2, 0);
+  transform: scale(calc(0.55 + var(--z, 1) * 0.75));
+  z-index: 3;
+}
+.plano--flota {
+  opacity: var(--o3, 0);
+  transform: scale(calc(0.62 + var(--z, 1) * 0.85));
+  z-index: 2;
+}
+.plano--oficina {
+  opacity: var(--o4, 0);
+  transform: scale(calc(0.78 + var(--z, 1) * 0.6));
+  z-index: 1;
+}
+
+.travelling__relato {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.relato {
+  height: 115vh;
+  width: min(92vw, 1240px);
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+.relato--der {
+  align-items: flex-end;
+}
+
+/* Chapa serigrafiada atornillada sobre la puerta del tablero. */
+.relato__chapa {
+  position: relative;
+  pointer-events: auto;
+  display: grid;
+  gap: var(--e4);
+  max-width: 30rem;
+  padding: var(--e6) var(--e5) var(--e5);
+  background: var(--acero);
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+}
+.relato__chapa::before,
+.relato__chapa::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #0e1215;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.relato__chapa::before {
+  left: 11px;
+}
+.relato__chapa::after {
+  right: 11px;
+}
+.relato__chapa h1 {
+  font-size: clamp(1.6rem, 2.35vw, 2.35rem);
+}
+.relato__chapa h2 {
+  font-size: clamp(1.35rem, 1.85vw, 1.8rem);
+}
+.relato__chapa p {
+  font-size: 1rem;
+  color: var(--serigrafia);
+  max-width: none;
+}
+.relato__chapa .interruptor {
+  justify-self: start;
+  margin-top: var(--e2);
+}
+.relato__chapa p.relato__demo {
+  padding-top: var(--e3);
+  border-top: 1px solid var(--borde);
+  color: var(--gris-hondo);
+  font-size: var(--t4);
+}
+
+/* ---------------------- Tablero (a sangre completa) ---------------------- */
+
+.tablero {
+  width: 100%;
+  height: 100%;
+}
+
+.tablero__gabinete {
+  height: 100%;
+  background: var(--casco);
+  display: grid;
+  grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.15fr);
+  grid-template-rows: 1fr auto;
+  column-gap: 0;
+  padding-top: 62px;
+}
+
+/* Puerta: chapa lisa con persianas, legenda, bisagras y tornillos. */
+.tablero__puerta {
+  position: relative;
+  border-right: 1px solid #0a0d0f;
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.05);
+  padding: var(--e6) var(--e7);
+}
+.tablero__bisagras {
+  position: absolute;
+  left: 14px;
+  top: 16%;
+  bottom: 16%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.tablero__bisagras span {
+  width: 9px;
+  height: 34px;
+  background: var(--acero-alto);
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+}
+.tablero__tornillos {
+  position: absolute;
+  right: var(--e5);
+  bottom: var(--e5);
+  display: flex;
+  gap: var(--e3);
+}
+.tablero__legenda {
+  position: absolute;
+  left: var(--e7);
+  bottom: var(--e5);
+  font-size: var(--t2);
+  color: var(--gris-hondo);
+}
+.tablero__persianas {
+  position: absolute;
+  top: var(--e6);
+  left: var(--e7);
+  width: 132px;
+  opacity: 0.7;
+}
+.persianas__hoja {
+  stroke: #3e444b;
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.tablero__instrumentos {
+  display: grid;
+  grid-template-rows: auto auto auto auto 1fr;
+  gap: var(--e4);
+  align-content: stretch;
+  padding: var(--e6) var(--e7) var(--e5) var(--e6);
+}
+
+.tablero__agujas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--e4);
+}
+.hueco--aguja {
+  display: grid;
+  place-items: center;
+  padding: var(--e4) var(--e2) var(--e3);
+}
+
+.tablero__pilotos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--e3) var(--e5);
+  padding: var(--e4) var(--e4) var(--e4);
+}
+
+.tablero__digitales {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(124px, 1fr));
+  gap: 1px;
+  background: #0a0d0f;
+  border: 1px solid #0a0d0f;
+}
+
+.tablero__pie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e4);
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-top: var(--e5);
+}
+.tablero__demo {
+  font-size: var(--t2);
+  color: var(--gris-hondo);
+}
+
+.tablero__bornera {
+  position: relative;
+  grid-column: 1 / -1;
+  border-top: 1px solid #0a0d0f;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: #0d1013;
+  padding-left: 44px;
+}
+.tablero__bornera-designacion {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--t2);
+  color: var(--gris-hondo);
+}
+
+/* ---------------------------- Sinóptico ---------------------------- */
+
+.tablero__sinoptico {
+  display: grid;
+  place-items: center;
+  padding: var(--e4) var(--e5);
+}
+.sinoptico {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+}
+.sinoptico__gen {
+  fill: #0b0e10;
+  stroke: #6d757d;
+  stroke-width: 1.8;
+}
+.sinoptico__gen--vivo {
+  stroke: var(--naranja);
+}
+.sinoptico__rotulo {
+  fill: var(--serigrafia);
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+.sinoptico__linea {
+  stroke: #4e555c;
+  stroke-width: 1.6;
+}
+.sinoptico__linea--viva {
+  stroke: var(--naranja);
+}
+.sinoptico__contacto {
+  stroke: #6d757d;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+.sinoptico__contacto--cerrado {
+  stroke: var(--naranja);
+}
+.sinoptico__cruz {
+  stroke: #4e555c;
+  stroke-width: 1.4;
+}
+.sinoptico__cruz--viva {
+  stroke: var(--naranja);
+}
+.sinoptico__barra {
+  stroke: var(--naranja);
+  stroke-width: 5;
+}
+.sinoptico__barra-rotulo {
+  fill: var(--gris);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-anchor: end;
+}
+.sinoptico__barra-valor {
+  fill: var(--blanco);
+  font-size: 15px;
+  font-weight: 700;
+  text-anchor: end;
+}
+
+/* ---------------------------- Medidor ---------------------------- */
+
+.medidor {
+  margin: 0;
+  width: 100%;
+  max-width: 132px;
+}
+.medidor svg {
+  display: block;
+  width: 100%;
+}
+.medidor__caja {
+  fill: #0a0d0f;
+  stroke: #4d545c;
+  stroke-width: 2.5;
+}
+.medidor__esfera {
+  fill: #15191d;
+  stroke: #2c3238;
+  stroke-width: 1;
+}
+.medidor__marca {
+  stroke: var(--acero-marca);
+  stroke-width: 1;
+}
+.medidor__marca--mayor {
+  stroke: var(--serigrafia);
+  stroke-width: 1.8;
+}
+.medidor__aguja {
+  stroke: var(--naranja);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  transition: all 0.85s var(--sale);
+}
+.medidor__aguja--atencion {
+  stroke: var(--alarma);
+}
+.medidor__eje {
+  fill: var(--acero-alto);
+  stroke: #4d545c;
+  stroke-width: 1;
+}
+.medidor__unidad {
+  fill: var(--gris);
+  font-size: 11px;
+  font-weight: 600;
+  text-anchor: middle;
+  letter-spacing: 0.08em;
+}
+.medidor__pie {
+  margin-top: var(--e2);
+  display: block;
+  font-size: var(--t2);
+  line-height: 1.3;
+  text-align: center;
+}
+
+/* ----------------------------- Piloto ----------------------------- */
+
+.piloto {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+}
+.piloto svg {
+  width: 28px;
+  flex: 0 0 auto;
+}
+.piloto__bisel {
+  fill: var(--acero-alto);
+  stroke: #0a0d0f;
+  stroke-width: 1.5;
+}
+.piloto__rosca {
+  fill: #0b0e10;
+}
+.piloto__lente {
+  fill: #1b1f23;
+  stroke: #2a2f34;
+  stroke-width: 1;
+}
+.piloto__lente--on.piloto__lente--naranja {
+  fill: var(--naranja);
+  stroke: var(--naranja-lente);
+}
+.piloto__lente--on.piloto__lente--alarma {
+  fill: var(--alarma);
+  stroke: var(--alarma-lente);
+}
+.piloto__lente--on.piloto__lente--ok {
+  fill: var(--ok);
+  stroke: var(--ok-lente);
+}
+.piloto__reflejo {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.42);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.piloto__etiqueta {
+  font-size: var(--t2);
+  line-height: 1.25;
+}
+
+/* ---------------------------- Lecturas ---------------------------- */
+
+.lectura {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--e4) var(--e4) var(--e3);
+  background: #101418;
+  box-shadow: var(--rebaje);
+}
+.lectura__etiqueta {
+  font-size: var(--t1);
+}
+.lectura__valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--blanco);
+  line-height: 1.05;
+}
+.lectura__unidad {
+  font-size: var(--t5);
+  font-weight: 600;
+  color: var(--gris);
+  margin-left: 3px;
+}
+.lectura--atencion .lectura__valor {
+  color: var(--alarma);
+}
+
+/* ------------------------- Chapa y tornillo ------------------------- */
+
+.tornillo {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 auto;
+}
+.tornillo__cabeza {
+  fill: #0e1215;
+  stroke: var(--acero-tornillo);
+  stroke-width: 1.2;
+}
+.tornillo__ranura {
+  stroke: var(--acero-ranura);
+  stroke-width: 1.6;
+}
+
+.chapa {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  background: var(--acero);
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+  padding: var(--e4) var(--e5);
+}
+.chapa .tornillo {
+  position: absolute;
+}
+.chapa .tornillo:nth-of-type(1) { top: 5px; left: 5px; }
+.chapa .tornillo:nth-of-type(2) { top: 5px; right: 5px; }
+.chapa .tornillo:nth-of-type(3) { bottom: 5px; left: 5px; }
+.chapa .tornillo:nth-of-type(4) { bottom: 5px; right: 5px; }
+.chapa__equipo {
+  font-size: var(--t2);
+}
+.chapa__buque {
+  font-size: var(--t10);
+  font-weight: 700;
+  color: var(--serigrafia);
+  letter-spacing: 0.05em;
+}
+.chapa__nombre {
+  color: var(--blanco);
+}
+.chapa__linea {
+  font-size: var(--t4);
+  color: var(--gris);
+}
+
+/* ----------------------------- Bornera ----------------------------- */
+
+.bornera {
+  display: block;
+  width: 100%;
+  height: 40px;
+}
+.bornera__riel {
+  fill: #0d1013;
+}
+.bornera__borne {
+  fill: var(--acero);
+  stroke: #0a0d0f;
+  stroke-width: 1;
+}
+.bornera__tornillo {
+  fill: #0c0f11;
+  stroke: var(--acero-tornillo);
+  stroke-width: 1;
+}
+.bornera__ranura {
+  stroke: var(--acero-ranura);
+  stroke-width: 1.4;
+}
+.bornera__num {
+  fill: var(--gris-hondo);
+  font-size: 8px;
+  text-anchor: middle;
+}
+
+/* ------------------------------ Buque ------------------------------ */
+
+.buque {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+.buque line,
+.buque path,
+.buque rect {
+  vector-effect: non-scaling-stroke;
+}
+.buque__casco,
+.buque__caseta,
+.buque__puente,
+.buque__portico,
+.buque__amurada {
+  fill: none;
+  stroke: #949ca4;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+.buque__casco {
+  fill: #12161a;
+}
+.buque__agua {
+  stroke: #4e555c;
+  stroke-width: 1.2;
+  stroke-dasharray: 7 7;
+}
+.buque__mastil,
+.buque__jarcia,
+.buque__rampa,
+.buque__ventana,
+.buque__tangon,
+.buque__potera {
+  stroke: #767e86;
+  stroke-width: 1.4;
+  fill: none;
+}
+.buque__tangon {
+  stroke-dasharray: 3 3;
+}
+.buque__luz {
+  fill: var(--gris-hondo);
+}
+.buque--vivo .buque__luz {
+  fill: var(--naranja);
+}
+.buque__sala {
+  fill: #0b0e10;
+  stroke: #949ca4;
+  stroke-width: 1.6;
+}
+.buque__tablero {
+  fill: var(--gris-hondo);
+}
+.buque__senal {
+  stroke: var(--gris-hondo);
+  stroke-width: 1.6;
+}
+.buque__lectura {
+  fill: var(--gris-hondo);
+  font-size: 13px;
+  font-weight: 700;
+}
+.buque--vivo .buque__tablero {
+  fill: var(--naranja);
+}
+.buque--vivo .buque__senal {
+  stroke: var(--naranja);
+}
+.buque--vivo .buque__lectura {
+  fill: var(--naranja);
+}
+.buque--alarma .buque__tablero {
+  fill: var(--alarma);
+}
+.buque--alarma .buque__senal,
+.buque--alarma .buque__lectura {
+  stroke: var(--alarma);
+  fill: var(--alarma);
+}
+
+.buque-solo {
+  width: min(52vw, 700px);
+  margin-right: auto;
+  margin-left: 3%;
+}
+
+.flota-mar {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--e5) var(--e5);
+  width: min(50vw, 660px);
+  margin-left: auto;
+  margin-right: 3%;
+}
+/* Banda de rótulo del campo, no una leyenda suelta: cruza la grilla entera
+   igual que la barra del panel de flota. */
+.flota-mar__demo {
+  grid-column: 1 / -1;
+  margin: 0 0 var(--e3);
+  padding-bottom: var(--e2);
+  border-bottom: 1px solid var(--borde);
+  font-size: var(--t2);
+  color: var(--gris-hondo);
+  text-align: right;
+}
+.flota-mar__casco {
+  display: grid;
+  gap: var(--e1);
+}
+.flota-mar__valor {
+  display: none;
+  font-size: var(--t5);
+  color: var(--naranja);
+  text-align: center;
+}
+.flota-mar__casco--alarma .flota-mar__valor {
+  color: var(--alarma);
+}
+.flota-mar__casco--sin-enlace .flota-mar__valor {
+  color: var(--gris-hondo);
+}
+.flota-mar__pie {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--e2);
+}
+.flota-mar__nombre {
+  font-size: var(--t4);
+  color: var(--serigrafia);
+}
+.flota-mar__tipo {
+  font-size: var(--t2);
+  color: var(--gris-hondo);
+  letter-spacing: 0.1em;
+}
+.flota-mar__casco--alarma .flota-mar__nombre {
+  color: var(--alarma);
+}
+.flota-mar__casco--sin-enlace {
+  opacity: 0.42;
+}
+
+/* ----------------------------- Monitor ----------------------------- */
+
+.monitor {
+  width: min(88vw, 1240px);
+  margin-inline: auto;
+}
+.monitor__barra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--acero);
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+  padding: var(--e3) var(--e4);
+  font-size: var(--t3);
+}
+.monitor__base {
+  min-height: min(56vh, 540px);
+  background: #0b0e10;
+  border: 1px solid #0a0d0f;
+  border-top: 0;
+  box-shadow: var(--rebaje);
+  padding: var(--e5);
+}
+
+.mini-flota {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: min(54%, 620px);
+  border-top: 1px solid var(--borde);
+}
+.mini-flota__fila {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e3) 0;
+  border-bottom: 1px solid var(--borde);
+  font-size: var(--t6);
+}
+.mini-flota__piloto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gris-hondo);
+}
+.mini-flota__fila--navegando .mini-flota__piloto { background: var(--ok); }
+.mini-flota__fila--alarma .mini-flota__piloto { background: var(--alarma); }
+.mini-flota__fila--puerto .mini-flota__piloto { background: var(--naranja); }
+.mini-flota__nombre {
+  color: var(--serigrafia);
+  font-weight: 600;
+}
+.mini-flota__detalle {
+  color: var(--gris);
+  font-size: var(--t5);
+}
+.mini-flota__fila--alarma .mini-flota__nombre,
+.mini-flota__fila--alarma .mini-flota__detalle {
+  color: var(--alarma);
+}
+.mini-flota__fila--sin-enlace {
+  opacity: 0.5;
+}
+
+/* ---------------------------- Secciones ---------------------------- */
+
+.seccion {
+  padding-block: var(--e9);
+  border-top: 1px solid #0a0d0f;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.seccion__cabeza {
+  display: grid;
+  gap: var(--e4);
+  margin-bottom: var(--e8);
+  max-width: 60ch;
+}
+.seccion__cabeza p {
+  color: var(--gris);
+  font-size: var(--t10);
+}
+/* Obras abre a la derecha: cuatro secciones no pueden abrir igual. */
+.seccion__cabeza--der {
+  margin-left: auto;
+  text-align: right;
+  justify-items: end;
+}
+.seccion__cabeza--der p {
+  text-align: right;
+}
+
+/* ------------------------- Panel de flota ------------------------- */
+
+.panel-flota {
+  background: var(--casco);
+}
+.panel-flota__barra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--e4);
+  padding: var(--e3) var(--e4);
+  background: var(--acero);
+  border-bottom: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+}
+.panel-flota__demo {
+  color: var(--gris-hondo);
+}
+.panel-flota__bornera {
+  border-top: 1px solid #0a0d0f;
+  background: #0d1013;
+}
+
+.tabla-flota {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t8);
+}
+.tabla-flota th,
+.tabla-flota td {
+  text-align: left;
+  padding: var(--e4);
+  border-bottom: 1px solid var(--borde);
+}
+.tabla-flota thead th {
+  font-size: var(--t3);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gris);
+  padding-block: var(--e3);
+}
+.fila th {
+  font-weight: 700;
+  color: var(--blanco);
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+}
+.fila__piloto {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--gris-hondo);
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 1px #0a0d0f;
+}
+.fila--navegando .fila__piloto { background: var(--ok); }
+.fila--alarma .fila__piloto { background: var(--alarma); }
+.fila--puerto .fila__piloto { background: var(--naranja); }
+.fila__estado {
+  font-size: var(--t6);
+  color: var(--gris);
+}
+.fila--alarma .fila__estado {
+  color: var(--alarma);
+  font-weight: 700;
+}
+.fila__detalle {
+  color: var(--serigrafia);
+  font-size: var(--t7);
+}
+.fila__hace {
+  color: var(--gris);
+  font-size: var(--t6);
+  white-space: nowrap;
+}
+.fila--sin-enlace th,
+.fila--sin-enlace .fila__detalle {
+  color: var(--gris-hondo);
+}
+.fila--sin-enlace .fila__hace {
+  color: var(--naranja);
+}
+.tabla-flota tbody tr:hover {
+  background: var(--naranja-tenue);
+}
+
+/* ----------------------------- Unifilar -----------------------------
+   Cuatro circuitos derivando de una barra vertical. No es una grilla de
+   tarjetas: es el plano que Tecvol dibuja. */
+
+.unifilar {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr);
+  gap: var(--e8);
+  align-items: start;
+}
+.unifilar__cabeza {
+  display: grid;
+  gap: var(--e4);
+}
+.unifilar__cabeza p {
+  color: var(--gris);
+  font-size: var(--t10);
+}
+.unifilar__origen {
+  color: var(--naranja);
+}
+
+.unifilar__diagrama {
+  position: relative;
+  padding-left: var(--e8);
+}
+/* La barra colectora, alimentada desde la acometida. */
+.unifilar__diagrama::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 13px;
+  bottom: 0;
+  width: 5px;
+  background: var(--naranja);
+}
+.unifilar__alimentador {
+  position: relative;
+  margin: 0 0 var(--e5);
+  padding-bottom: var(--e5);
+  border-bottom: 1px solid var(--borde);
+}
+/* La acometida entra a la barra por la izquierda. */
+.unifilar__alimentador::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--e8) * -1);
+  top: 12px;
+  width: var(--e8);
+  height: 3px;
+  background: var(--naranja);
+}
+
+.unifilar__circuitos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.circuito {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  column-gap: var(--e4);
+  align-items: start;
+  padding-block: var(--e5);
+  border-bottom: 1px solid var(--borde);
+}
+.circuito:last-child {
+  border-bottom: 0;
+}
+.circuito__ramal {
+  position: absolute;
+  left: calc(var(--e8) * -1 + 5px);
+  top: calc(var(--e5) + 14px);
+  width: calc(var(--e8) - 5px);
+  height: 1px;
+  background: var(--naranja);
+}
+.simbolo-q {
+  width: 28px;
+  grid-row: span 2;
+}
+.simbolo-q__linea,
+.simbolo-q__contacto {
+  stroke: var(--naranja);
+  stroke-width: 1.6;
+}
+.simbolo-q__cruz {
+  stroke: var(--naranja);
+  stroke-width: 1.4;
+}
+.circuito__designacion {
+  position: absolute;
+  left: 0;
+  bottom: var(--e4);
+  font-size: var(--t2);
+  color: var(--gris-hondo);
+}
+.circuito__titulo {
+  color: var(--blanco);
+  margin-bottom: var(--e2);
+}
+.circuito__detalle {
+  color: var(--gris);
+  font-size: var(--t8);
+}
+
+.confian__titulo {
+  margin-bottom: var(--e4);
+  font-weight: 600;
+}
+.confian__lista {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e3) var(--e6);
+  margin: 0;
+  padding: 0;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  font-weight: 600;
+  color: var(--gris);
+  letter-spacing: 0.02em;
+}
+
+/* --------------------------- Formulario --------------------------- */
+
+.seccion--demo {
+  background: var(--casco);
+}
+.demo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: var(--e8);
+  align-items: start;
+}
+.demo__texto {
+  display: grid;
+  gap: var(--e4);
+}
+.demo__texto p {
+  color: var(--gris);
+  font-size: var(--t10);
+}
+.demo__alterna a {
+  color: var(--naranja);
+}
+
+.formulario {
+  background: var(--negro);
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+}
+.formulario__chapa {
+  padding: var(--e3) var(--e5);
+  background: var(--acero);
+  border-bottom: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+}
+.formulario__campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--e5);
+  padding: var(--e6) var(--e5);
+}
+
+.campo {
+  display: grid;
+  gap: var(--e2);
+  margin: 0;
+}
+.campo--ancho {
+  grid-column: 1 / -1;
+}
+.campo__cabeza {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--e3);
+}
+.campo__etiqueta {
+  font-size: var(--t5);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gris);
+}
+.campo__designacion {
+  font-size: var(--t2);
+  color: var(--gris-hondo);
+}
+.hueco--campo {
+  display: block;
+}
+.campo__entrada {
+  display: block;
+  width: 100%;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--blanco);
+  background: transparent;
+  border: 0;
+  padding: var(--e3) var(--e4);
+}
+.campo__entrada:focus {
+  outline: none;
+}
+.hueco--campo:focus-within {
+  border-color: var(--naranja);
+  box-shadow: var(--rebaje), inset 0 0 0 1px var(--naranja);
+}
+.campo__entrada[aria-invalid='true'] {
+  color: var(--alarma-texto);
+}
+.hueco--campo:has(.campo__entrada[aria-invalid='true']) {
+  border-color: var(--alarma);
+  box-shadow: var(--rebaje), inset 0 0 0 1px var(--alarma);
+}
+.campo__ayuda {
+  font-size: var(--t6);
+  color: var(--gris);
+}
+.campo__entrada[aria-invalid='true'] ~ .campo__ayuda,
+.campo:has([aria-invalid='true']) .campo__ayuda {
+  color: var(--alarma);
+}
+
+.aviso {
+  margin: var(--e5) var(--e5) 0;
+  padding: var(--e4);
+  border: 1px solid;
+  font-size: var(--t8);
+}
+.aviso ul {
+  margin: var(--e2) 0 0;
+  padding-left: 1.1rem;
+}
+.aviso--error {
+  border-color: var(--alarma);
+  background: color-mix(in srgb, var(--alarma) 13%, transparent);
+  color: var(--alarma-texto);
+}
+.aviso--ok {
+  border-color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 13%, transparent);
+  color: var(--ok-texto);
+}
+.aviso a {
+  color: inherit;
+}
+
+.formulario__mando {
+  padding: 0 var(--e5) var(--e6);
+}
+.formulario__mando .interruptor {
+  width: 100%;
+}
+.formulario__mando .interruptor__chapa {
+  flex: 1;
+}
+.formulario__bornera {
+  border-top: 1px solid #0a0d0f;
+  background: #0d1013;
+}
+
+/* ------------------------------- Pie ------------------------------- */
+
+.pie {
+  border-top: 1px solid #0a0d0f;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  padding-block: var(--e8) var(--e6);
+}
+.pie__marco {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: var(--e8);
+  align-items: start;
+}
+.pie__marca {
+  display: block;
+  margin-bottom: var(--e3);
+}
+.pie__oficio {
+  color: var(--gris);
+  font-size: var(--t8);
+}
+.pie__datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--e5);
+  margin: 0;
+}
+.pie__datos dt {
+  margin-bottom: var(--e1);
+}
+.pie__datos dd {
+  margin: 0;
+  font-size: var(--t8);
+  color: var(--serigrafia);
+}
+.pie__legal {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--e5);
+  padding-top: var(--e5);
+  border-top: 1px solid var(--borde);
+  font-size: var(--t6);
+  color: var(--gris);
+}
+.pie__placa {
+  margin-left: auto;
+  color: var(--gris-hondo);
+}
+
+/* ---------------------------- Responsive ---------------------------- */
+
+@media (max-width: 1180px) {
+  .tablero__gabinete {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+  }
+  .tablero__puerta {
+    display: none;
+  }
+  .unifilar,
+  .demo,
+  .pie__marco {
+    grid-template-columns: 1fr;
+    gap: var(--e7);
+  }
+  .flota-mar {
+    width: min(58vw, 620px);
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --marco: 90vw;
+  }
+  .riel__marco {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--e3);
+    padding-bottom: var(--e2);
+    min-height: 0;
+    padding-top: var(--e2);
+  }
+  .riel__nav {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    gap: var(--e4);
+    font-size: var(--t5);
+    border-top: 1px solid var(--borde);
+    padding-top: var(--e2);
+  }
+  .riel__nav a {
+    padding-block: 0;
+  }
+  .marca__linea {
+    display: none;
+  }
+
+  .travelling {
+    height: 440vh;
+  }
+  .camara {
+    align-content: start;
+    /* El riel de dos filas tapa el arranque de cada plano si no se le da aire. */
+    padding-top: 96px;
+  }
+  .plano {
+    align-items: start;
+  }
+  .relato {
+    height: 110vh;
+    align-items: stretch;
+    justify-content: flex-end;
+    padding-bottom: var(--e5);
+  }
+  .relato--der {
+    align-items: stretch;
+  }
+  .relato__chapa {
+    max-width: none;
+    padding: var(--e6) var(--e4) var(--e4);
+  }
+
+  .tablero__gabinete {
+    padding-top: 0;
+  }
+  .tablero__sinoptico {
+    display: none;
+  }
+  .tablero__instrumentos {
+    padding: var(--e4);
+    gap: var(--e3);
+    align-content: start;
+  }
+  /* En el ancho del teléfono el detalle numérico y la regleta no entran junto
+     a la serigrafía: la lectura completa vive en la tabla de flota. */
+  .tablero__digitales,
+  .tablero__bornera {
+    display: none;
+  }
+  .tablero__agujas {
+    gap: var(--e2);
+  }
+  .hueco--aguja {
+    padding: var(--e3) var(--e1) var(--e2);
+  }
+  .tablero__pie {
+    order: -1;
+    padding-top: 0;
+  }
+  /* La etiqueta de demostración ya viaja en la última chapa del relato. */
+  .tablero__demo {
+    display: none;
+  }
+  .chapa {
+    padding: var(--e3) var(--e4);
+  }
+  /* La chapa del relato se acorta para que el instrumento entre entero encima. */
+  .relato__chapa {
+    gap: var(--e3);
+  }
+  .relato__chapa p {
+    font-size: var(--t8);
+  }
+
+  .buque-solo,
+  .flota-mar {
+    width: 90vw;
+    margin-inline: auto;
+  }
+  .flota-mar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--e3);
+  }
+  .flota-mar__pie {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .buque__lectura {
+    display: none;
+  }
+  .flota-mar__valor {
+    display: block;
+  }
+  .monitor {
+    width: 92vw;
+  }
+  .monitor__base {
+    min-height: 40vh;
+    padding: var(--e3);
+  }
+  .mini-flota {
+    width: 100%;
+  }
+  .mini-flota__fila {
+    grid-template-columns: 10px minmax(0, 1fr);
+  }
+  .mini-flota__detalle {
+    grid-column: 2;
+  }
+
+  .unifilar__circuitos {
+    padding-left: var(--e6);
+  }
+  .circuito__ramal {
+    left: calc(var(--e6) * -1 + 5px);
+    width: calc(var(--e6) - 5px);
+  }
+  .seccion__cabeza--der {
+    text-align: left;
+    justify-items: start;
+  }
+  .seccion__cabeza--der p {
+    text-align: left;
+  }
+
+  .formulario__campos {
+    grid-template-columns: 1fr;
+    padding: var(--e5) var(--e4);
+  }
+  .aviso {
+    margin-inline: var(--e4);
+  }
+  .formulario__mando {
+    padding: 0 var(--e4) var(--e5);
+  }
+  .interruptor__bisel {
+    width: 48px;
+  }
+  .interruptor__chapa {
+    padding: var(--e3) var(--e4);
+  }
+
+  .tabla-flota thead {
+    display: none;
+  }
+  .tabla-flota,
+  .tabla-flota tbody,
+  .tabla-flota tr,
+  .tabla-flota th,
+  .tabla-flota td {
+    display: block;
+    width: 100%;
+  }
+  .tabla-flota tr {
+    padding: var(--e4);
+    border-bottom: 1px solid var(--borde);
+  }
+  .tabla-flota th,
+  .tabla-flota td {
+    padding: 0;
+    border: 0;
+  }
+  .tabla-flota td {
+    margin-top: var(--e1);
+  }
+  .fila th {
+    margin-bottom: var(--e2);
+  }
+}
+
+/* Movimiento reducido: la cámara se detiene en el plano 1 y el relato se lee
+   como texto corrido. La flota completa vive en la tabla real de abajo. */
+@media (prefers-reduced-motion: reduce) {
+  .travelling {
+    height: auto;
+  }
+  .travelling__visor {
+    position: relative;
+    height: auto;
+  }
+  .camara {
+    height: auto;
+    min-height: 82vh;
+  }
+  .plano--buque,
+  .plano--flota,
+  .plano--oficina {
+    display: none;
+  }
+  .plano--tablero {
+    opacity: 1;
+    transform: none;
+  }
+  .travelling__relato {
+    position: static;
+  }
+  .relato {
+    height: auto;
+    padding-block: var(--e7);
+  }
+}
+
+/* ===================== Cuadro de aplicaciones =====================
+   Toda puerta de tablero lleva su cuadro de cargas impreso por dentro: una
+   fila por circuito, con lo que alimenta y su corriente. Acá la fila es una
+   familia de instalación, y cada una declara su propio parque — así ninguna
+   promete obra donde no la hay. */
+
+.cuadro {
+  background: var(--casco);
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+  margin-bottom: var(--e8);
+}
+.cuadro__chapa {
+  background: var(--acero);
+  box-shadow: var(--proa);
+  border-bottom: 1px solid #0a0d0f;
+  padding: var(--e3) var(--e5);
+}
+.cuadro__tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t8);
+}
+.cuadro__tabla th,
+.cuadro__tabla td {
+  text-align: left;
+  vertical-align: top;
+  padding: var(--e4) var(--e5);
+  border-bottom: 1px solid var(--borde);
+}
+.cuadro__tabla thead th {
+  font-size: var(--t3);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gris);
+  padding-block: var(--e3);
+}
+.cuadro__tabla tbody tr:last-child th,
+.cuadro__tabla tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.aplicacion__sector {
+  font-size: var(--t10);
+  font-weight: 700;
+  color: var(--blanco);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.aplicacion__tablero {
+  color: var(--gris);
+  max-width: 26ch;
+}
+/* La pregunta es la del que opera, así que se lee como frase y no como dato. */
+.aplicacion__pregunta {
+  color: var(--serigrafia);
+  max-width: 30ch;
+}
+.aplicacion__parque {
+  font-size: var(--t6);
+  color: var(--serigrafia);
+  max-width: 18ch;
+}
+/* Sin obra ejecutada se dice sin adornos: es un dato, no una advertencia.
+   Va en gris y no en gris-hondo: sobre casco ese tono da 3,7:1 y esto se lee. */
+.aplicacion__parque--sin {
+  color: var(--gris);
+}
+
+@media (max-width: 860px) {
+  /* Cuatro columnas en un teléfono no son una tabla: la fila se re-monta como
+     bloque y cada celda declara qué es. */
+  .cuadro__tabla,
+  .cuadro__tabla tbody,
+  .cuadro__tabla tr {
+    display: block;
+  }
+  .cuadro__tabla thead {
+    display: none;
+  }
+  .aplicacion {
+    padding: var(--e5);
+    border-bottom: 1px solid var(--borde);
+  }
+  .cuadro__tabla tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .cuadro__tabla th,
+  .cuadro__tabla td {
+    display: block;
+    padding: 0;
+    border-bottom: 0;
+    max-width: none;
+  }
+  .aplicacion__sector {
+    white-space: normal;
+    margin-bottom: var(--e2);
+  }
+  .aplicacion__pregunta {
+    margin-top: var(--e2);
+  }
+  .aplicacion__parque {
+    margin-top: var(--e3);
+    padding-top: var(--e3);
+    border-top: 1px solid var(--borde);
+  }
+}
