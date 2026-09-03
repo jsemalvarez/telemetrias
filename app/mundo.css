@@ -1722,6 +1722,279 @@
   }
 }
 
+/* ==================================================================
+   Acceso — la bornera de acceso  ·  seed 8af58d33
+
+   La regleta del tablero, con dos bornes cableados y el resto libres.
+   Todo el vocabulario es el ya documentado: chapa, hueco, bisel, y las
+   designaciones extendidas con −X0 (bornes) y −Q0 (habilitación).
+================================================================== */
+
+.acceso {
+  min-height: calc(100vh - 62px);
+  display: grid;
+  align-content: center;
+  padding-block: var(--e8);
+}
+
+.acceso__cabeza {
+  display: grid;
+  gap: var(--e4);
+  max-width: 54ch;
+  margin-bottom: var(--e7);
+}
+/* Pantalla de paso: el titular usa el escalón de headline, no el de display. */
+.acceso__cabeza h1 {
+  font-size: clamp(1.7rem, 3.4vw, 2.9rem);
+}
+.acceso__bajada {
+  color: var(--gris);
+  font-size: var(--t10);
+}
+
+/* ----------------------------- Regleta ----------------------------- */
+
+.regleta {
+  background: var(--casco);
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+}
+.regleta__chapa {
+  padding: var(--e3) var(--e5);
+  background: var(--acero);
+  border-bottom: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+}
+.regleta__aviso {
+  margin: var(--e5) var(--e5) 0;
+}
+
+/* El riel: bloques de borne separados por el filo de 1px del sistema. */
+.regleta__riel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 1px;
+  background: #0a0d0f;
+  margin: var(--e5);
+  border: 1px solid #0a0d0f;
+}
+
+.borne {
+  margin: 0;
+  flex: 1 1 240px;
+  /* Los bornes reparten el ancho del riel entre ellos: el sobrante no puede
+     quedar como filo negro ni como una chapa vacia al extremo. */
+  max-width: none;
+  min-width: 0;
+  display: grid;
+  gap: var(--e2);
+  align-content: start;
+  padding: var(--e4);
+  background: var(--acero);
+  box-shadow: var(--proa);
+}
+.borne__cabeza {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--e3);
+}
+.borne__designacion {
+  font-size: var(--t2);
+  color: var(--gris);
+}
+
+/* La habilitación es una llave, no un borne. Absorbe el sobrante del riel
+   para que el filo negro siga siendo una línea y no una superficie. */
+.borne--llave {
+  flex: 0 1 18rem;
+  display: grid;
+  place-items: center;
+  padding: var(--e4);
+}
+
+/* --------------------------- Chapas del pie --------------------------- */
+
+.acceso__chapas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: var(--e5);
+  margin-top: var(--e6);
+  align-items: start;
+}
+.acceso__demo,
+.acceso__pedir {
+  display: grid;
+  gap: var(--e3);
+  padding: var(--e5);
+}
+.acceso__pedir p {
+  color: var(--gris);
+  font-size: var(--t8);
+  max-width: none;
+}
+.acceso__pedir a {
+  color: var(--naranja);
+}
+
+.acceso__credencial {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--e4);
+  margin: 0;
+}
+.acceso__credencial dt {
+  font-size: var(--t2);
+  margin-bottom: var(--e1);
+}
+.acceso__credencial dd {
+  margin: 0;
+  font-size: var(--t10);
+  font-weight: 700;
+  color: var(--blanco);
+  -webkit-user-select: all;
+  user-select: all;
+}
+
+/* ------------------------ Riel de las rutas de app ------------------------ */
+
+.riel__derecha {
+  display: flex;
+  align-items: center;
+  gap: var(--e4);
+  margin-left: auto;
+}
+.riel__sesion {
+  color: var(--gris-hondo);
+}
+.riel__sesion .cifra {
+  color: var(--serigrafia);
+}
+
+.riel__salida {
+  font-family: inherit;
+  font-size: var(--t6);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gris);
+  background: var(--acero-alto);
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+  padding: var(--e2) var(--e4);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.16s var(--sale), background-color 0.16s var(--sale);
+}
+.riel__salida:hover {
+  color: var(--blanco);
+  background: #343a41;
+}
+.riel__salida:active {
+  box-shadow: var(--rebaje);
+}
+
+/* ------------------------- Destino provisorio ------------------------- */
+
+.obra {
+  min-height: calc(100vh - 62px);
+  display: grid;
+  place-items: center;
+  padding-block: var(--e8);
+}
+.obra__marco {
+  display: grid;
+  justify-items: center;
+}
+.obra__cargando {
+  color: var(--gris-hondo);
+}
+.obra__chapa {
+  max-width: 44rem;
+  display: grid;
+  gap: var(--e4);
+  padding: var(--e7) var(--e6) var(--e6);
+}
+/* Designación arriba a la derecha del alojamiento, librando el tornillo de
+   esquina: apilada sobre el titular sería un kicker. */
+.obra__legenda {
+  position: absolute;
+  top: var(--e5);
+  right: var(--e6);
+}
+/* Titular montado sobre chapa: baja al escalón de display de componente. */
+.obra__chapa h1 {
+  font-size: clamp(1.6rem, 2.35vw, 2.35rem);
+}
+.obra__chapa p {
+  color: var(--serigrafia);
+  font-size: var(--t10);
+  max-width: none;
+}
+/* Revelación, no titular: se lee, no grita — pero se lee. */
+.obra__nota {
+  color: var(--gris);
+  font-size: var(--t6);
+  padding-top: var(--e3);
+  border-top: 1px solid var(--borde);
+}
+.obra__volver {
+  justify-self: start;
+  margin-top: var(--e2);
+}
+
+@media (max-width: 900px) {
+  .acceso__chapas {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .acceso,
+  .obra {
+    min-height: 0;
+    padding-block: var(--e7);
+  }
+  .regleta__riel {
+    margin: var(--e4);
+  }
+  /* Dos escenas: el riel se re-monta en filas, no se achica. */
+  .borne,
+  .borne--llave {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+  .borne--llave {
+    justify-items: stretch;
+  }
+  .borne--llave .interruptor {
+    width: 100%;
+  }
+  .borne--llave .interruptor__chapa {
+    flex: 1;
+  }
+  .regleta__aviso {
+    margin-inline: var(--e4);
+  }
+  .acceso__demo,
+  .acceso__pedir {
+    padding: var(--e4);
+  }
+  .obra__chapa {
+    padding: var(--e7) var(--e4) var(--e4);
+  }
+  .obra__legenda {
+    right: var(--e4);
+  }
+  .riel__derecha {
+    gap: var(--e3);
+  }
+  .riel__sesion {
+    display: none;
+  }
+}
+
 /* ===================== Cuadro de aplicaciones =====================
    Toda puerta de tablero lleva su cuadro de cargas impreso por dentro: una
    fila por circuito, con lo que alimenta y su corriente. Acá la fila es una
