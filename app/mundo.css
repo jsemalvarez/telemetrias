@@ -1995,6 +1995,711 @@
   }
 }
 
+/* ===================== Registrador de faja (/tablero) =====================
+   El tablero es un registrador: la historia no es una consulta detrás de un
+   filtro, es la superficie. Cada magnitud corre a lo ancho del papel y el
+   valor de ahora asoma en la ventana del extremo, con la pluma apoyada
+   encima. El único movimiento autorizado es esa pluma. */
+
+.registrador {
+  min-height: calc(100vh - 62px);
+  padding-block: var(--e7) var(--e8);
+  display: grid;
+  align-content: start;
+}
+.registrador .marco {
+  display: grid;
+  gap: var(--e5);
+  align-content: start;
+}
+
+/* --------------------------- Cabecera --------------------------- */
+
+.registrador__cabeza {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: var(--e5) var(--e6);
+  column-gap: var(--e5);
+  row-gap: var(--e2);
+}
+/* Arriba a la derecha del alojamiento, librando el tornillo de esquina.
+   Apilada sobre el titular sería un kicker, y acá no se ponen kickers. */
+.registrador__legenda {
+  position: absolute;
+  top: var(--e3);
+  right: var(--e5);
+  font-size: var(--t2);
+}
+.registrador__titulo {
+  font-size: clamp(1.35rem, 1.85vw, 1.8rem);
+  color: var(--serigrafia);
+  letter-spacing: 0.04em;
+}
+.registrador__nombre {
+  color: var(--blanco);
+}
+.registrador__estado {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  justify-self: end;
+  max-width: none;
+}
+/* Lámpara: cuerpo saturado con su propio reborde claro, sobre el collar negro
+   del agujero pasante. La misma física que cualquier piloto del sistema. */
+.registrador__lampara {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--gris-hondo);
+  box-shadow: 0 0 0 1px #0a0d0f;
+}
+.registrador__estado--navegando .registrador__lampara {
+  background: var(--ok);
+  box-shadow: inset 0 0 0 1px var(--ok-lente), 0 0 0 1px #0a0d0f;
+}
+.registrador__estado--alarma .registrador__lampara {
+  background: var(--alarma);
+  box-shadow: inset 0 0 0 1px var(--alarma-lente), 0 0 0 1px #0a0d0f;
+}
+.registrador__estado--puerto .registrador__lampara {
+  background: var(--naranja);
+  box-shadow: inset 0 0 0 1px var(--naranja-lente), 0 0 0 1px #0a0d0f;
+}
+.registrador__palabra {
+  font-size: var(--t4);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--serigrafia);
+}
+.registrador__estado--alarma .registrador__palabra {
+  color: var(--alarma-texto);
+}
+.registrador__enlace {
+  font-size: var(--t6);
+  color: var(--gris);
+}
+.registrador__enlace::before {
+  content: '\00b7\00a0';
+}
+.registrador__regla-marca {
+  color: var(--naranja);
+}
+.registrador__vivo {
+  margin-left: var(--e2);
+}
+
+/* ------------------------- Cuerpo y flota ------------------------- */
+
+.registrador__cuerpo {
+  display: grid;
+  grid-template-columns: 17.5rem 1fr;
+  gap: 1px;
+  background: #0a0d0f;
+  border: 1px solid #0a0d0f;
+}
+
+.plumas {
+  background: var(--casco);
+  display: flex;
+  flex-direction: column;
+}
+.plumas__chapa {
+  background: var(--acero);
+  box-shadow: var(--proa);
+  border-bottom: 1px solid #0a0d0f;
+  padding: var(--e3) var(--e4);
+}
+.plumas__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  align-content: stretch;
+  flex: 1;
+}
+.plumas__lista li {
+  display: flex;
+}
+
+/* Cada buque es una pluma del carro. La cargada baja al rebaje: apretada a
+   fondo, que es lo que hace una pieza cuando queda en posición. */
+.pluma {
+  position: relative;
+  flex: 1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "lampara nombre"
+    "lampara linea";
+  align-items: center;
+  column-gap: var(--e3);
+  row-gap: 1px;
+  min-height: 54px;
+  padding: var(--e3) var(--e5) var(--e3) var(--e4);
+  text-align: left;
+  font-family: inherit;
+  background: var(--acero);
+  border: 0;
+  border-bottom: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+  cursor: pointer;
+  transition: background-color 0.16s var(--sale), color 0.16s var(--sale);
+}
+.pluma:hover {
+  background: #2a2f35;
+}
+.pluma--cargada,
+.pluma--cargada:hover {
+  background: var(--acero-alto);
+  box-shadow: var(--rebaje);
+}
+.pluma__lampara {
+  grid-area: lampara;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--gris-hondo);
+  box-shadow: 0 0 0 1px #0a0d0f;
+}
+.pluma--navegando .pluma__lampara {
+  background: var(--ok);
+  box-shadow: inset 0 0 0 1px var(--ok-lente), 0 0 0 1px #0a0d0f;
+}
+.pluma--alarma .pluma__lampara {
+  background: var(--alarma);
+  box-shadow: inset 0 0 0 1px var(--alarma-lente), 0 0 0 1px #0a0d0f;
+}
+.pluma--puerto .pluma__lampara {
+  background: var(--naranja);
+  box-shadow: inset 0 0 0 1px var(--naranja-lente), 0 0 0 1px #0a0d0f;
+}
+.pluma__nombre {
+  grid-area: nombre;
+  font-size: var(--t7);
+  font-weight: 700;
+  color: var(--serigrafia);
+  letter-spacing: 0.03em;
+}
+.pluma--cargada .pluma__nombre {
+  color: var(--blanco);
+}
+.pluma--alarma .pluma__nombre {
+  color: var(--blanco);
+}
+.pluma__linea {
+  grid-area: linea;
+  display: flex;
+  align-items: baseline;
+  gap: var(--e2);
+  flex-wrap: wrap;
+}
+.pluma__estado {
+  font-size: var(--t2);
+}
+/* El rojo saturado a 9 px sobre acero no llega al piso de lectura: el cuerpo
+   de la lámpara se queda saturado y la palabra sube al tinte claro. */
+.pluma--alarma .pluma__estado {
+  color: var(--alarma-texto);
+}
+.pluma__edad {
+  font-size: var(--t5);
+  color: var(--gris);
+  white-space: nowrap;
+}
+.pluma__edad::before {
+  content: "\00b7\00a0";
+  color: var(--gris);
+}
+.pluma--sin-enlace .pluma__edad {
+  color: var(--naranja);
+}
+.pluma .pluma-nib {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  margin-top: -8px;
+}
+
+/* ----------------------------- La pluma ----------------------------- */
+
+.pluma-nib {
+  width: 14px;
+  height: 16px;
+  display: block;
+  pointer-events: none;
+}
+.pluma-nib__punta {
+  fill: var(--naranja);
+  stroke: var(--naranja-lente);
+  stroke-width: 1;
+}
+.pluma-nib--apagada .pluma-nib__punta {
+  fill: var(--gris-hondo);
+  stroke: none;
+}
+
+/* ------------------------------ La faja ------------------------------ */
+
+.faja {
+  display: grid;
+  grid-template-columns: 12.5rem 1fr 7.5rem;
+  gap: 1px;
+  background: #0a0d0f;
+  touch-action: pan-y;
+}
+.faja:focus-visible {
+  outline: 2px solid var(--naranja);
+  outline-offset: -2px;
+}
+/* Las tres partes del canal caen en las columnas de la faja, así los cuatro
+   papeles comparten un solo eje y la regla los cruza por el mismo lugar. */
+.canal {
+  display: contents;
+}
+
+.canal__chapa {
+  background: var(--acero);
+  box-shadow: var(--proa);
+  padding: var(--e3) var(--e4);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-content: center;
+  gap: 2px var(--e3);
+  min-height: 86px;
+}
+.canal__nombre {
+  font-size: var(--t7);
+  font-weight: 700;
+  color: var(--blanco);
+  line-height: 1.2;
+}
+.canal__designacion {
+  font-size: var(--t2);
+  align-self: start;
+  justify-self: end;
+}
+.canal__escala {
+  grid-column: 1 / -1;
+  font-size: var(--t5);
+  color: var(--gris);
+}
+.canal--alarma .canal__nombre {
+  color: var(--alarma-texto);
+}
+
+.canal__papel {
+  position: relative;
+  min-height: 86px;
+  overflow: hidden;
+  cursor: col-resize;
+}
+.faja[data-arrastrando] .canal__papel {
+  cursor: grabbing;
+}
+.canal__grafico {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.canal__filo {
+  stroke: var(--borde-vivo);
+  stroke-width: 1;
+}
+.canal__reticula {
+  stroke: var(--borde);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+.canal__hora {
+  stroke: var(--borde-vivo);
+  stroke-width: 1;
+  opacity: 0.75;
+}
+.canal__limite {
+  stroke: var(--alarma);
+  stroke-width: 1;
+  stroke-dasharray: 5 4;
+  opacity: 0.7;
+}
+.canal__umbral {
+  color: var(--alarma-texto);
+}
+/* La traza es el recorrido de la aguja: la misma tinta que la aguja del medidor. */
+.canal__traza {
+  fill: none;
+  stroke: var(--naranja);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.canal__traza--alarma {
+  stroke: var(--alarma);
+}
+.canal__corte {
+  stroke: var(--acero-marca);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+.canal__regla {
+  stroke: var(--naranja);
+  stroke-width: 1;
+}
+/* El único movimiento de la ruta: la pluma se desliza al valor nuevo. */
+.canal__papel .pluma-nib {
+  position: absolute;
+  left: calc(var(--pluma-x) * 100%);
+  top: calc(var(--pluma-y) * 100%);
+  margin: -8px 0 0 -13px;
+  transition: top 0.85s var(--sale), left 0.85s var(--sale);
+}
+
+.canal__ventana {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--e3) var(--e4);
+}
+.canal__valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--blanco);
+  line-height: 1.05;
+}
+.canal__unidad {
+  font-size: var(--t5);
+  font-weight: 600;
+  color: var(--gris);
+  margin-left: 3px;
+}
+.canal__marca {
+  font-size: var(--t2);
+  color: var(--gris);
+}
+.canal--alarma .canal__papel {
+  border-color: var(--alarma);
+  box-shadow: var(--rebaje), inset 0 0 0 1px var(--alarma);
+}
+.canal--alarma .canal__ventana {
+  border-color: var(--alarma);
+  box-shadow: var(--rebaje), inset 0 0 0 1px var(--alarma);
+}
+.canal--alarma .canal__valor,
+.canal__valor--fuera {
+  color: var(--alarma-texto);
+}
+
+/* ---------------------------- Eje de tiempo ---------------------------- */
+
+.eje,
+.eje__ala {
+  background: var(--casco);
+  box-shadow: var(--proa);
+  min-height: 34px;
+}
+.eje__ala {
+  display: flex;
+  align-items: center;
+  padding-inline: var(--e4);
+  font-size: var(--t2);
+}
+.eje__ala--fin {
+  justify-content: flex-end;
+}
+.eje {
+  position: relative;
+}
+/* El carro corre sobre su propio riel, arriba de la escala: es lo que hace
+   un registrador de verdad, y deja la marca del filo vivo sin pisar. */
+.eje::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 5px;
+  height: 1px;
+  background: var(--borde);
+}
+.eje__carro {
+  position: absolute;
+  top: 0;
+  height: 11px;
+  width: 9px;
+  left: clamp(4.5px, var(--carro-x), calc(100% - 4.5px));
+  transform: translateX(-50%);
+  background: var(--acero-alto);
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+  cursor: col-resize;
+  display: grid;
+  place-items: center;
+}
+.eje__carro:focus-visible {
+  outline-offset: -1px;
+}
+.faja[data-arrastrando] .eje__carro {
+  box-shadow: var(--rebaje);
+}
+.eje__carro-marca {
+  width: 1px;
+  height: 5px;
+  background: var(--naranja);
+}
+.eje__marca {
+  position: absolute;
+  top: 18px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: var(--t2);
+  color: var(--gris);
+}
+.eje__marca::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 1px;
+  height: 5px;
+  background: var(--borde-vivo);
+}
+.eje__marca[data-extremo="inicio"] {
+  transform: none;
+}
+.eje__marca[data-extremo="inicio"]::before {
+  left: 0;
+}
+/* El extremo vivo: donde se apoya la pluma. */
+.eje__marca[data-extremo="fin"] {
+  transform: translateX(-100%);
+  color: var(--naranja);
+}
+.eje__marca[data-extremo="fin"]::before {
+  left: auto;
+  right: 0;
+  background: var(--naranja);
+}
+.eje__marca--muerta[data-extremo="fin"],
+.eje__marca--muerta[data-extremo="fin"]::before {
+  color: var(--gris);
+  background: var(--borde-vivo);
+}
+
+/* ------------------------------ Maniobra ------------------------------ */
+
+.maniobra {
+  display: grid;
+  grid-template-columns: minmax(19rem, 1fr) minmax(16rem, 0.85fr) minmax(17rem, 1.05fr);
+  gap: 1px;
+  background: #0a0d0f;
+  border: 1px solid #0a0d0f;
+}
+.maniobra__bloque {
+  background: var(--casco);
+  display: flex;
+  flex-direction: column;
+}
+.maniobra__chapa {
+  background: var(--acero);
+  box-shadow: var(--proa);
+  border-bottom: 1px solid #0a0d0f;
+  padding: var(--e3) var(--e4);
+}
+.maniobra__hueco {
+  flex: 1;
+  margin: var(--e4);
+  padding: var(--e4) var(--e5);
+  display: grid;
+  place-items: center;
+}
+
+.llaves {
+  list-style: none;
+  margin: var(--e4);
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  align-content: stretch;
+  flex: 1;
+  background: #0a0d0f;
+  border: 1px solid #0a0d0f;
+}
+.llave {
+  display: grid;
+  grid-template-columns: 22px auto 1fr auto;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e2) var(--e3);
+  background: var(--acero);
+  box-shadow: var(--proa);
+}
+.llave .simbolo-q {
+  width: 22px;
+  height: 34px;
+  grid-row: auto;
+}
+/* El naranja queda para el circuito que está vivo: un interruptor abierto o
+   sin reportar se dibuja con el gris de trazo del plano. */
+.llave--abierto .simbolo-q__linea,
+.llave--abierto .simbolo-q__contacto,
+.llave--abierto .simbolo-q__cruz {
+  stroke: var(--acero-ranura);
+}
+.llave--desconocido .simbolo-q__linea,
+.llave--desconocido .simbolo-q__contacto,
+.llave--desconocido .simbolo-q__cruz {
+  stroke: var(--acero-marca);
+}
+.simbolo-q__contacto--incierto {
+  stroke-dasharray: 3 3;
+}
+.llave__designacion {
+  font-size: var(--t2);
+}
+.llave__nombre {
+  font-size: var(--t7);
+  color: var(--serigrafia);
+}
+.llave__estado {
+  font-size: var(--t5);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gris);
+  white-space: nowrap;
+}
+.llave--cerrado .llave__estado {
+  color: var(--naranja);
+}
+
+.auxiliares {
+  flex: 1;
+  margin: var(--e4);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-content: stretch;
+  gap: 1px;
+  background: #0a0d0f;
+  border: 1px solid #0a0d0f;
+}
+
+/* Revelación de demo: se lee, no grita, y está en todas las ramas. */
+.registrador__nota {
+  color: var(--gris);
+  font-size: var(--t6);
+  padding-top: var(--e3);
+  border-top: 1px solid var(--borde);
+  max-width: none;
+}
+
+/* Sinóptico con un interruptor cuya posición no fue reportada. */
+.sinoptico__contacto--incierto {
+  stroke-dasharray: 4 4;
+}
+.sinoptico__barra--muerta {
+  stroke: var(--acero-marca);
+}
+
+/* --------------------------- Dos escenas --------------------------- */
+
+@media (max-width: 1180px) {
+  .maniobra {
+    grid-template-columns: 1fr 1fr;
+  }
+  .maniobra__bloque:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 980px) {
+  /* La flota deja de ser columna y se monta como carro sobre la faja. */
+  .registrador__cuerpo {
+    grid-template-columns: 1fr;
+  }
+  .plumas__lista {
+    grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));
+    gap: 1px;
+    background: #0a0d0f;
+  }
+  .pluma {
+    border-bottom: 0;
+  }
+  .faja {
+    grid-template-columns: 10.5rem 1fr 7rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .registrador {
+    min-height: 0;
+    padding-block: var(--e6) var(--e7);
+  }
+  .registrador__cabeza {
+    grid-template-columns: 1fr;
+    padding: var(--e6) var(--e4) var(--e4);
+  }
+  .registrador__legenda {
+    right: var(--e4);
+  }
+  .registrador__estado {
+    justify-self: start;
+    flex-wrap: wrap;
+    row-gap: var(--e1);
+  }
+  /* El canal se re-monta en filas: la chapa y la ventana comparten el renglón
+     de arriba y el papel toma el ancho entero. No se achica: se vuelve a montar. */
+  .faja {
+    grid-template-columns: 1fr;
+  }
+  .canal {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "chapa ventana"
+      "papel papel";
+    gap: 1px;
+    background: #0a0d0f;
+  }
+  .canal__chapa {
+    grid-area: chapa;
+    min-height: 0;
+  }
+  .canal__ventana {
+    grid-area: ventana;
+    min-width: 8.5rem;
+  }
+  .canal__papel {
+    grid-area: papel;
+    min-height: 104px;
+  }
+  .eje__ala {
+    display: none;
+  }
+  .eje__marca--menor {
+    display: none;
+  }
+  .eje__carro {
+    width: 16px;
+  }
+  .pluma {
+    min-height: 62px;
+  }
+  .maniobra,
+  .maniobra__bloque:first-child {
+    grid-template-columns: 1fr;
+    grid-column: auto;
+  }
+  .maniobra__hueco,
+  .llaves,
+  .auxiliares {
+    margin: var(--e3);
+  }
+}
+
 /* ===================== Cuadro de aplicaciones =====================
    Toda puerta de tablero lleva su cuadro de cargas impreso por dentro: una
    fila por circuito, con lo que alimenta y su corriente. Acá la fila es una
