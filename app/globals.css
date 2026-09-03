@@ -1,0 +1,234 @@
+/* ------------------------------------------------------------------
+   Mundo Tecvol — heredado de tecvol.com.ar tal cual.
+   Naranja de marca #FF8929 como única señal activa; el resto es acero.
+------------------------------------------------------------------ */
+
+:root {
+  /* Grounds: la escena es una sala de máquinas, no una oficina. */
+  --negro: #0e1114;
+  --casco: #16191d;
+  --acero: #22262b;
+  --acero-alto: #2b3036;
+  --borde: #33373d;
+  --borde-vivo: #454b52;
+
+  /* Tinta */
+  --blanco: #ffffff;
+  --serigrafia: #c9cdd2;
+  --gris: #9aa1a8;
+  --gris-hondo: #727577;
+
+  /* Marca: único acento. */
+  --naranja: #ff8929;
+  --naranja-hondo: #db4d1b;
+  --naranja-tenue: rgba(255, 137, 41, 0.14);
+
+  /* Estados */
+  --alarma: #ff4734;
+  --ok: #4ea86a;
+
+  /* Ritmo: un solo sistema de espaciado. */
+  --e1: 0.25rem;
+  --e2: 0.5rem;
+  --e3: 0.75rem;
+  --e4: 1rem;
+  --e5: 1.5rem;
+  --e6: 2rem;
+  --e7: 3rem;
+  --e8: 4.5rem;
+  --e9: 7rem;
+
+
+  /* Rampa tipográfica: paso de 1/16rem. Es la escala que el frente de tablero
+     necesita — serigrafía diminuta, rótulos, lectura y display conviven en una
+     misma cara, así que los pasos son finos a propósito. */
+  --t1: 0.5rem;
+  --t2: 0.5625rem;
+  --t3: 0.625rem;
+  --t4: 0.6875rem;
+  --t5: 0.75rem;
+  --t6: 0.8125rem;
+  --t7: 0.875rem;
+  --t8: 0.9375rem;
+  --t9: 1rem;
+  --t10: 1.0625rem;
+  --t11: 1.2rem;
+
+  /* Tintes derivados. Una lente encendida necesita el reborde más claro que su
+     cuerpo: es la física sobre la que se apoya todo el mundo, no decoración. */
+  --naranja-lente: #ffc48f;
+  --naranja-alto: #ffa053;
+  --alarma-lente: #ff9d93;
+  --alarma-texto: #ffd9d4;
+  --ok-lente: #9fd6b1;
+  --ok-texto: #d3f0dc;
+
+  /* Grises de trazo para el dibujo técnico. */
+  --acero-marca: #7b838b;
+  --acero-tornillo: #545b63;
+  --acero-ranura: #868e96;
+
+  --medida: 68ch;
+  --marco: min(92vw, 1440px);
+
+  /* Un solo easing, exponencial de salida. */
+  --sale: cubic-bezier(0.16, 1, 0.3, 1);
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--negro);
+  color: var(--serigrafia);
+  font-family: var(--fuente-sora), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* ---- Superficies que el navegador dibuja y que igual son del diseño ---- */
+
+::selection {
+  background: var(--naranja);
+  color: var(--negro);
+}
+
+:root {
+  scrollbar-color: var(--borde-vivo) var(--negro);
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+::-webkit-scrollbar-track {
+  background: var(--negro);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--borde-vivo);
+  border: 3px solid var(--negro);
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--naranja);
+}
+
+input,
+textarea,
+select {
+  caret-color: var(--naranja);
+}
+
+:focus-visible {
+  outline: 2px solid var(--naranja);
+  outline-offset: 3px;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: color-mix(in srgb, var(--naranja) 55%, transparent);
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
+}
+a:hover {
+  text-decoration-color: var(--naranja);
+}
+
+/* Toda cifra de instrumento es medición: ancho fijo, sin baile. */
+.cifra {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: -0.01em;
+}
+
+/* ---- Tipografía ---- */
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  color: var(--blanco);
+}
+
+/* La voz de display de la marca es caja alta, como en el sitio existente.
+   En versales la letra necesita menos tracking negativo, y en español la tilde
+   se apoya por encima de la altura de mayúscula: con interlineado cerrado la Á
+   de "ESTÁ" se come la línea de arriba. 1.14 es el piso que la deja respirar. */
+h1, h2 {
+  text-transform: uppercase;
+  letter-spacing: -0.012em;
+  line-height: 1.14;
+}
+
+h1 { font-size: clamp(2rem, 5vw, 3.6rem); }
+h2 { font-size: clamp(1.7rem, 3.4vw, 2.9rem); }
+h3 { font-size: clamp(1.1rem, 1.6vw, 1.35rem); letter-spacing: -0.02em; }
+
+p { margin: 0; max-width: var(--medida); text-wrap: pretty; }
+
+/* Serigrafía de tablero: la etiqueta grabada sobre chapa. */
+.serigrafia {
+  font-size: var(--t4);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gris);
+}
+
+.marco {
+  width: var(--marco);
+  margin-inline: auto;
+}
+
+.oculto-visual {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.saltar {
+  position: absolute;
+  left: var(--e4);
+  top: -100%;
+  z-index: 100;
+  background: var(--naranja);
+  color: var(--negro);
+  padding: var(--e3) var(--e4);
+  font-weight: 700;
+  transition: top 0.18s var(--sale);
+}
+.saltar:focus-visible {
+  top: var(--e4);
+}

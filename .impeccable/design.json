@@ -1,0 +1,802 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-03T12:00:00.000Z",
+  "title": "Design System: Monitoreo Tecvol",
+  "extensions": {
+    "colorMeta": {
+      "naranja": {
+        "role": "primary",
+        "displayName": "Señal Naranja",
+        "canonical": "#ff8929",
+        "note": "Inherited unchanged from tecvol.com.ar. Brand constraint, not a choice this build made.",
+        "tonalRamp": [
+          "#2e1200",
+          "#4d1f00",
+          "#733100",
+          "#9c4600",
+          "#c45f0c",
+          "#e5741a",
+          "#ff8929",
+          "#ffb277"
+        ]
+      },
+      "naranja-hondo": {
+        "role": "primary",
+        "displayName": "Naranja Hondo",
+        "canonical": "#db4d1b",
+        "tonalRamp": [
+          "#280b02",
+          "#431405",
+          "#63200a",
+          "#853010",
+          "#a83b15",
+          "#c44418",
+          "#db4d1b",
+          "#f0855c"
+        ]
+      },
+      "alarma": {
+        "role": "secondary",
+        "displayName": "Alarma Roja",
+        "canonical": "#ff4734",
+        "tonalRamp": [
+          "#2d0500",
+          "#4b0c04",
+          "#6e150b",
+          "#932014",
+          "#b82b1e",
+          "#dc3728",
+          "#ff4734",
+          "#ff9184"
+        ]
+      },
+      "ok": {
+        "role": "secondary",
+        "displayName": "Verde Navegando",
+        "canonical": "#4ea86a",
+        "tonalRamp": [
+          "#08200f",
+          "#0f381c",
+          "#17512b",
+          "#20693a",
+          "#2c854b",
+          "#3d975c",
+          "#4ea86a",
+          "#96d0a8"
+        ]
+      },
+      "negro": {
+        "role": "neutral",
+        "displayName": "Negro de Sala",
+        "canonical": "#0e1114",
+        "tonalRamp": [
+          "#06080a",
+          "#0e1114",
+          "#16191d",
+          "#22262b",
+          "#2b3036",
+          "#33373d",
+          "#454b52",
+          "#727577"
+        ]
+      },
+      "casco": {
+        "role": "neutral",
+        "displayName": "Casco",
+        "canonical": "#16191d",
+        "tonalRamp": [
+          "#06080a",
+          "#0e1114",
+          "#16191d",
+          "#22262b",
+          "#2b3036",
+          "#33373d",
+          "#454b52",
+          "#727577"
+        ]
+      },
+      "acero": {
+        "role": "neutral",
+        "displayName": "Acero",
+        "canonical": "#22262b",
+        "tonalRamp": [
+          "#06080a",
+          "#0e1114",
+          "#16191d",
+          "#22262b",
+          "#2b3036",
+          "#33373d",
+          "#454b52",
+          "#727577"
+        ]
+      },
+      "acero-alto": {
+        "role": "neutral",
+        "displayName": "Acero Alto",
+        "canonical": "#2b3036",
+        "tonalRamp": [
+          "#06080a",
+          "#0e1114",
+          "#16191d",
+          "#22262b",
+          "#2b3036",
+          "#33373d",
+          "#454b52",
+          "#727577"
+        ]
+      },
+      "filo-negro": {
+        "role": "neutral",
+        "displayName": "Filo Negro",
+        "canonical": "#0a0d0f",
+        "note": "The 1px cut line between every plate; the system's universal border color.",
+        "tonalRamp": [
+          "#050607",
+          "#0a0d0f",
+          "#12161a",
+          "#1c2126",
+          "#262c32",
+          "#31383f",
+          "#454b52",
+          "#6d7379"
+        ]
+      },
+      "borde": {
+        "role": "neutral",
+        "displayName": "Borde",
+        "canonical": "#33373d",
+        "tonalRamp": [
+          "#06080a",
+          "#0e1114",
+          "#16191d",
+          "#22262b",
+          "#2b3036",
+          "#33373d",
+          "#454b52",
+          "#727577"
+        ]
+      },
+      "borde-vivo": {
+        "role": "neutral",
+        "displayName": "Borde Vivo",
+        "canonical": "#454b52",
+        "tonalRamp": [
+          "#06080a",
+          "#0e1114",
+          "#16191d",
+          "#22262b",
+          "#2b3036",
+          "#33373d",
+          "#454b52",
+          "#727577"
+        ]
+      },
+      "serigrafia": {
+        "role": "neutral",
+        "displayName": "Serigrafía",
+        "canonical": "#c9cdd2",
+        "note": "Default body ink — the color of silkscreen paint on grey steel.",
+        "tonalRamp": [
+          "#1b1e21",
+          "#2e3236",
+          "#44494e",
+          "#5c6167",
+          "#767c82",
+          "#949aa0",
+          "#c9cdd2",
+          "#eef0f2"
+        ]
+      },
+      "gris": {
+        "role": "neutral",
+        "displayName": "Gris",
+        "canonical": "#9aa1a8",
+        "tonalRamp": [
+          "#15181b",
+          "#252a2e",
+          "#383d42",
+          "#4d5359",
+          "#666d73",
+          "#82898f",
+          "#9aa1a8",
+          "#d3d8dc"
+        ]
+      },
+      "gris-hondo": {
+        "role": "neutral",
+        "displayName": "Gris Hondo",
+        "canonical": "#727577",
+        "note": "Circuit designations and demo-data disclaimers: stamped and quiet.",
+        "tonalRamp": [
+          "#131414",
+          "#212324",
+          "#313334",
+          "#434546",
+          "#565859",
+          "#646769",
+          "#727577",
+          "#b0b3b5"
+        ]
+      },
+      "blanco": {
+        "role": "neutral",
+        "displayName": "Blanco",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#26292c",
+          "#3a3e42",
+          "#51565a",
+          "#6b7075",
+          "#8d9296",
+          "#b4b8bb",
+          "#dcdedf",
+          "#ffffff"
+        ]
+      },
+      "naranja-lente": {
+        "role": "primary",
+        "displayName": "Naranja Lente",
+        "canonical": "#ffc48f",
+        "note": "The lit rim of an orange lamp: the pushbutton lens border and the live Piloto stroke. Merged from two rims three percent apart (#ffbe86 / #ffc48f) that served the same role; the only deliberate rendered-value change of the hygiene pass.",
+        "tonalRamp": [
+          "#3a2110",
+          "#5a331a",
+          "#7d4a26",
+          "#a06136",
+          "#c47c4c",
+          "#e29d69",
+          "#ffc48f",
+          "#ffe2ca"
+        ]
+      },
+      "naranja-alto": {
+        "role": "primary",
+        "displayName": "Naranja Alto",
+        "canonical": "#ffa053",
+        "note": "Hover state of the pushbutton lens.",
+        "tonalRamp": [
+          "#331700",
+          "#52260a",
+          "#763c15",
+          "#9b5320",
+          "#c06c2d",
+          "#e2873f",
+          "#ffa053",
+          "#ffcfa6"
+        ]
+      },
+      "alarma-lente": {
+        "role": "secondary",
+        "displayName": "Alarma Lente",
+        "canonical": "#ff9d93",
+        "note": "Lit rim of the alarm lamp.",
+        "tonalRamp": [
+          "#3a1512",
+          "#5b201b",
+          "#7e2f28",
+          "#a24136",
+          "#c65a4d",
+          "#e57a6d",
+          "#ff9d93",
+          "#ffcfc9"
+        ]
+      },
+      "alarma-texto": {
+        "role": "secondary",
+        "displayName": "Alarma Texto",
+        "canonical": "#ffd9d4",
+        "note": "Prose set on an error notice or an invalid field, where full-strength alarma will not hold as text.",
+        "tonalRamp": [
+          "#3d2523",
+          "#5c3835",
+          "#7d4d49",
+          "#9f645f",
+          "#c07f79",
+          "#e0a9a3",
+          "#ffd9d4",
+          "#fff0ee"
+        ]
+      },
+      "ok-lente": {
+        "role": "secondary",
+        "displayName": "Verde Lente",
+        "canonical": "#9fd6b1",
+        "note": "Lit rim of the under-way lamp.",
+        "tonalRamp": [
+          "#0e2417",
+          "#173a26",
+          "#215136",
+          "#2d6947",
+          "#3f855c",
+          "#66ab80",
+          "#9fd6b1",
+          "#d5eede"
+        ]
+      },
+      "ok-texto": {
+        "role": "secondary",
+        "displayName": "Verde Texto",
+        "canonical": "#d3f0dc",
+        "note": "Prose set on a success notice.",
+        "tonalRamp": [
+          "#17291e",
+          "#24402d",
+          "#33583e",
+          "#457151",
+          "#5d8e69",
+          "#8bb795",
+          "#d3f0dc",
+          "#eefaf2"
+        ]
+      },
+      "acero-marca": {
+        "role": "neutral",
+        "displayName": "Acero Marca",
+        "canonical": "#7b838b",
+        "note": "Minor tick marks on a dial face. SVG stroke only.",
+        "tonalRamp": [
+          "#14171a",
+          "#232629",
+          "#33383c",
+          "#464b50",
+          "#5b6167",
+          "#6b7278",
+          "#7b838b",
+          "#b7bdc2"
+        ]
+      },
+      "acero-tornillo": {
+        "role": "neutral",
+        "displayName": "Acero Tornillo",
+        "canonical": "#545b63",
+        "note": "The body of a screw head. SVG stroke only.",
+        "tonalRamp": [
+          "#0e1013",
+          "#1a1d21",
+          "#262a2f",
+          "#33383e",
+          "#414750",
+          "#4a5158",
+          "#545b63",
+          "#98a0a8"
+        ]
+      },
+      "acero-ranura": {
+        "role": "neutral",
+        "displayName": "Acero Ranura",
+        "canonical": "#868e96",
+        "note": "The slot cut across a screw head. SVG stroke only.",
+        "tonalRamp": [
+          "#16191c",
+          "#25292d",
+          "#363b40",
+          "#4a5055",
+          "#5f666c",
+          "#737a81",
+          "#868e96",
+          "#c0c6cb"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The page's single h1 on the narrative plate. Uppercase, 1.14 line-height floor."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section and narrative-plane headings. Uppercase."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Sub-headings inside sections; the only heading level not uppercase."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Prose, capped at a 68ch measure; section intros run to 60ch."
+      },
+      "cifra": {
+        "displayName": "Cifra",
+        "purpose": "Every instrument reading. Tabular + lining numerals so digits never change width."
+      },
+      "label": {
+        "displayName": "Serigrafía",
+        "purpose": "Panel legends, equipment names, table headers, bar labels. Uppercase at 0.16em."
+      },
+      "designacion": {
+        "displayName": "Designación",
+        "purpose": "Circuit tags mounted at the top-right corner of the thing they name."
+      },
+      "display-chapa": {
+        "displayName": "Display (on a plate)",
+        "purpose": "The narrative plate's h1. A headline silkscreened onto a mounted component runs smaller than one printed on the page ground."
+      },
+      "headline-chapa": {
+        "displayName": "Headline (on a plate)",
+        "purpose": "The narrative plate's h2, on the same plate-mounted display scale."
+      }
+    },
+    "shadows": [
+      {
+        "name": "proa",
+        "value": "inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.66)",
+        "purpose": "Proud plate: anything mounted on top of the panel — nav rail, engraved plates, button bezels and legends, hinges, bar headers."
+      },
+      {
+        "name": "rebaje",
+        "value": "inset 0 2px 0 rgba(0,0,0,0.72), inset 0 -1px 0 rgba(255,255,255,0.055)",
+        "purpose": "Recess: anything cut into the panel — instrument housings, readouts, the monitor well, threaded rings, form fields. Also the pressed state of any control."
+      },
+      {
+        "name": "costura",
+        "value": "inset 0 1px 0 rgba(255,255,255,0.05)",
+        "purpose": "Section seam over a filo-negro top border: the joint between two panel sections."
+      },
+      {
+        "name": "collar",
+        "value": "0 0 0 1px #0a0d0f",
+        "purpose": "Zero-blur hairline ring around a round pilot lamp so it reads as drilled through the plate."
+      },
+      {
+        "name": "foco-campo",
+        "value": "inset 0 2px 0 rgba(0,0,0,0.72), inset 0 -1px 0 rgba(255,255,255,0.055), inset 0 0 0 1px #ff8929",
+        "purpose": "Field housing on :focus-within — the recess stays and gains an orange inset ring."
+      }
+    ],
+    "motion": [
+      {
+        "name": "sale",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The system's single easing curve. Every transition in the build uses it."
+      },
+      {
+        "name": "dur-lampara",
+        "value": "0.14s",
+        "purpose": "Pushbutton lens color change on hover/active."
+      },
+      {
+        "name": "dur-enlace",
+        "value": "0.18s",
+        "purpose": "Nav link color and underline; skip-link reveal."
+      },
+      {
+        "name": "dur-aguja",
+        "value": "0.85s",
+        "purpose": "Gauge needle travel to a new reading."
+      },
+      {
+        "name": "travelling-track",
+        "value": "460vh",
+        "purpose": "Scroll track driving the four-plane camera inside a sticky 100vh viewport."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "stop at plane 1",
+        "purpose": "prefers-reduced-motion removes planes 2-4, collapses the track to auto height, makes the narrative running text, and never starts the live-value interval."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "cabinet",
+        "value": "1180px"
+      },
+      {
+        "name": "acceso-chapas",
+        "value": "900px",
+        "purpose": "The access screen's two footer plates go one-up."
+      },
+      {
+        "name": "works",
+        "value": "860px"
+      },
+      {
+        "name": "rail",
+        "value": "760px"
+      }
+    ],
+    "typeScale": {
+      "step": "1/16rem",
+      "note": "One named ramp carries every fixed font-size on the panel face. The steps are fine because tiny silkscreen, labels, readings and a wordmark share one typeface on one plane.",
+      "steps": [
+        {
+          "name": "--t1",
+          "value": "0.5rem",
+          "purpose": "Designation and label inside a readout; the smallest legible stamp."
+        },
+        {
+          "name": "--t2",
+          "value": "0.5625rem",
+          "purpose": "Standard circuit designation and instrument caption. The most used step in the build."
+        },
+        {
+          "name": "--t3",
+          "value": "0.625rem",
+          "purpose": "Table column headers."
+        },
+        {
+          "name": "--t4",
+          "value": "0.6875rem",
+          "purpose": "Standard silkscreen label: panel legends, equipment names, bar labels."
+        },
+        {
+          "name": "--t5",
+          "value": "0.75rem",
+          "purpose": "Field labels, reading units, the mobile nav row."
+        },
+        {
+          "name": "--t6",
+          "value": "0.8125rem",
+          "purpose": "Help lines and secondary status text."
+        },
+        {
+          "name": "--t7",
+          "value": "0.875rem",
+          "purpose": "Desktop nav links and detail cells."
+        },
+        {
+          "name": "--t8",
+          "value": "0.9375rem",
+          "purpose": "Dense table and list body text."
+        },
+        {
+          "name": "--t9",
+          "value": "1rem",
+          "purpose": "Page body; the ramp's anchor."
+        },
+        {
+          "name": "--t10",
+          "value": "1.0625rem",
+          "purpose": "Hull names and short emphatic inline identifiers."
+        },
+        {
+          "name": "--t11",
+          "value": "1.2rem",
+          "purpose": "The wordmark."
+        }
+      ],
+      "outOfScope": [
+        {
+          "value": "clamp() heading roles",
+          "reason": "Fluid viewport functions, not ramp steps: display, headline, title, and the plate-mounted display-chapa / headline-chapa / .obra__buque (clamp(1.15rem, 2.2vw, 1.7rem))."
+        },
+        {
+          "value": "8px / 12px / 13px / 15px",
+          "reason": "font-size inside SVG viewBox coordinate space (.bornera__num, .sinoptico__rotulo, .buque__lectura, .sinoptico__barra-valor). User units that scale with the drawing, not CSS pixels. File-scoped detector ignores recorded in .impeccable/config.json under the documenter's name."
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "name": "Interruptor (Primary Button)",
+      "kind": "button",
+      "refersTo": "interruptor",
+      "description": "The page's one call to action, built at the size of a real panel pushbutton: an illuminated lens in a threaded bezel, hard-jointed to an engraved legend plate.",
+      "html": "<button class=\"ds-interruptor\"><span class=\"ds-interruptor__bisel\"><span class=\"ds-interruptor__rosca\"></span><span class=\"ds-interruptor__lente\"></span></span><span class=\"ds-interruptor__chapa\"><span class=\"ds-interruptor__designacion\">−S1</span><span class=\"ds-interruptor__rotulo\">Pedir demo</span></span></button>",
+      "css": ".ds-interruptor { display: inline-flex; align-items: stretch; border: 0; padding: 0; background: none; cursor: pointer; color: inherit; font-family: var(--fuente-sora), ui-sans-serif, system-ui, sans-serif; } .ds-interruptor__bisel { position: relative; display: grid; place-items: center; width: 58px; flex: 0 0 auto; background: #2b3036; border: 1px solid #0a0d0f; border-right: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.66); } .ds-interruptor__rosca { position: absolute; width: 38px; height: 38px; border-radius: 50%; background: #0c0f11; box-shadow: inset 0 2px 0 rgba(0,0,0,0.72), inset 0 -1px 0 rgba(255,255,255,0.055); } .ds-interruptor__lente { position: relative; width: 26px; height: 26px; border-radius: 50%; background: #ff8929; border: 1px solid var(--naranja-lente, #ffc48f); transition: background-color 0.14s cubic-bezier(0.16,1,0.3,1); } .ds-interruptor__lente::after { content: ''; position: absolute; inset: 4px 12px 14px 5px; border-radius: 50%; background: rgba(255,255,255,0.42); } .ds-interruptor__chapa { display: grid; align-content: center; gap: 1px; padding: 0.75rem 1.5rem; background: #22262b; border: 1px solid #0a0d0f; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.66); text-align: left; } .ds-interruptor__designacion { font-size: 0.5625rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #727577; } .ds-interruptor__rotulo { font-size: 1rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; } .ds-interruptor:hover .ds-interruptor__lente { background: var(--naranja-alto, #ffa053); } .ds-interruptor:hover .ds-interruptor__chapa { background: #2a2f35; } .ds-interruptor:active .ds-interruptor__bisel, .ds-interruptor:active .ds-interruptor__chapa { box-shadow: inset 0 2px 0 rgba(0,0,0,0.72), inset 0 -1px 0 rgba(255,255,255,0.055); } .ds-interruptor:active .ds-interruptor__lente { background: #db4d1b; } .ds-interruptor:focus-visible { outline: 2px solid #ff8929; outline-offset: 3px; } .ds-interruptor:disabled { cursor: not-allowed; } .ds-interruptor:disabled .ds-interruptor__lente { background: #727577; border-color: #454b52; } .ds-interruptor:disabled .ds-interruptor__rotulo { color: #727577; }"
+    },
+    {
+      "name": "Campo (Input Field)",
+      "kind": "input",
+      "refersTo": "campo-entrada",
+      "description": "A terminal in the board: a borderless input mounted inside a hueco recess. The housing, not the input, carries focus and error state.",
+      "html": "<p class=\"ds-campo\"><span class=\"ds-campo__cabeza\"><label class=\"ds-campo__etiqueta\" for=\"ds-buque\">Buque</label><span class=\"ds-campo__designacion\">−X2:1</span></span><span class=\"ds-hueco-campo\"><input class=\"ds-campo__entrada\" id=\"ds-buque\" type=\"text\" placeholder=\"BP Luigi\"></span><span class=\"ds-campo__ayuda\">Nombre del casco tal como figura en el plano.</span></p>",
+      "css": ".ds-campo { display: grid; gap: 0.5rem; margin: 0; font-family: var(--fuente-sora), ui-sans-serif, system-ui, sans-serif; } .ds-campo__cabeza { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; } .ds-campo__etiqueta { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #9aa1a8; } .ds-campo__designacion { font-size: 0.5625rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #727577; } .ds-hueco-campo { display: block; position: relative; background: #101418; border: 1px solid #0a0d0f; box-shadow: inset 0 2px 0 rgba(0,0,0,0.72), inset 0 -1px 0 rgba(255,255,255,0.055); } .ds-campo__entrada { display: block; width: 100%; font-family: inherit; font-size: 1rem; color: #ffffff; background: transparent; border: 0; padding: 0.75rem 1rem; } .ds-campo__entrada:focus { outline: none; } .ds-hueco-campo:focus-within { border-color: #ff8929; box-shadow: inset 0 2px 0 rgba(0,0,0,0.72), inset 0 -1px 0 rgba(255,255,255,0.055), inset 0 0 0 1px #ff8929; } .ds-campo__entrada[aria-invalid='true'] { color: var(--alarma-texto, #ffd9d4); } .ds-hueco-campo:has(.ds-campo__entrada[aria-invalid='true']) { border-color: #ff4734; box-shadow: inset 0 2px 0 rgba(0,0,0,0.72), inset 0 -1px 0 rgba(255,255,255,0.055), inset 0 0 0 1px #ff4734; } .ds-campo__ayuda { font-size: 0.8125rem; color: #9aa1a8; }"
+    },
+    {
+      "name": "Chapa (Engraved Plate)",
+      "kind": "card",
+      "refersTo": "chapa",
+      "description": "There are no cards; there is a bolted steel plate. Square corners, proud bevel, four screws pinned at 5px in the corners.",
+      "html": "<div class=\"ds-chapa\"><svg class=\"ds-tornillo\" viewBox=\"0 0 12 12\" aria-hidden=\"true\"><circle cx=\"6\" cy=\"6\" r=\"5\" fill=\"#0e1215\" stroke=\"#545b63\" stroke-width=\"1.2\"/><path d=\"M3 4.5 L9 7.5\" stroke=\"#545b63\" stroke-width=\"1.2\"/></svg><svg class=\"ds-tornillo\" viewBox=\"0 0 12 12\" aria-hidden=\"true\"><circle cx=\"6\" cy=\"6\" r=\"5\" fill=\"#0e1215\" stroke=\"#545b63\" stroke-width=\"1.2\"/><path d=\"M3 7.5 L9 4.5\" stroke=\"#545b63\" stroke-width=\"1.2\"/></svg><svg class=\"ds-tornillo\" viewBox=\"0 0 12 12\" aria-hidden=\"true\"><circle cx=\"6\" cy=\"6\" r=\"5\" fill=\"#0e1215\" stroke=\"#545b63\" stroke-width=\"1.2\"/><path d=\"M4.5 3 L7.5 9\" stroke=\"#545b63\" stroke-width=\"1.2\"/></svg><svg class=\"ds-tornillo\" viewBox=\"0 0 12 12\" aria-hidden=\"true\"><circle cx=\"6\" cy=\"6\" r=\"5\" fill=\"#0e1215\" stroke=\"#545b63\" stroke-width=\"1.2\"/><path d=\"M3 6 L9 6\" stroke=\"#545b63\" stroke-width=\"1.2\"/></svg><span class=\"ds-chapa__equipo\">Tablero principal · PNA</span><span class=\"ds-chapa__buque\">BP <span class=\"ds-chapa__nombre\">Luigi</span></span><span class=\"ds-chapa__linea\">Mar del Plata · 182 mn a puerto</span></div>",
+      "css": ".ds-chapa { position: relative; display: grid; gap: 2px; background: #22262b; border: 1px solid #0a0d0f; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.66); padding: 1rem 1.5rem; font-family: var(--fuente-sora), ui-sans-serif, system-ui, sans-serif; } .ds-tornillo { position: absolute; width: 11px; height: 11px; } .ds-tornillo:nth-of-type(1) { top: 5px; left: 5px; } .ds-tornillo:nth-of-type(2) { top: 5px; right: 5px; } .ds-tornillo:nth-of-type(3) { bottom: 5px; left: 5px; } .ds-tornillo:nth-of-type(4) { bottom: 5px; right: 5px; } .ds-chapa__equipo { font-size: 0.5625rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #9aa1a8; } .ds-chapa__buque { font-size: 1.0625rem; font-weight: 700; color: #c9cdd2; letter-spacing: 0.05em; } .ds-chapa__nombre { color: #ffffff; } .ds-chapa__linea { font-size: 0.6875rem; color: #9aa1a8; }"
+    },
+    {
+      "name": "Lectura (Digital Readout)",
+      "kind": "custom",
+      "refersTo": "lectura",
+      "description": "A digital instrument value mounted in a recess, with its circuit designation stamped at the top-right and tabular figures so digits never shift width.",
+      "html": "<div class=\"ds-lectura\"><span class=\"ds-lectura__designacion\">−P2</span><span class=\"ds-lectura__etiqueta\">Tensión de barra</span><span class=\"ds-lectura__valor ds-cifra\">381.4<span class=\"ds-lectura__unidad\">V</span></span></div>",
+      "css": ".ds-lectura { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 1rem 1rem 0.75rem; background: #101418; border: 1px solid #0a0d0f; box-shadow: inset 0 2px 0 rgba(0,0,0,0.72), inset 0 -1px 0 rgba(255,255,255,0.055); font-family: var(--fuente-sora), ui-sans-serif, system-ui, sans-serif; } .ds-lectura__designacion { position: absolute; top: 5px; right: 7px; font-size: 0.5rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #727577; } .ds-lectura__etiqueta { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #9aa1a8; } .ds-cifra { font-variant-numeric: tabular-nums lining-nums; font-feature-settings: 'tnum' 1, 'lnum' 1; letter-spacing: -0.01em; } .ds-lectura__valor { font-size: 1.5rem; font-weight: 700; color: #ffffff; line-height: 1.05; } .ds-lectura__unidad { font-size: 0.75rem; font-weight: 600; color: #9aa1a8; margin-left: 3px; }"
+    },
+    {
+      "name": "Medidor (Analog Gauge)",
+      "kind": "custom",
+      "refersTo": "hueco",
+      "description": "The analog instrument: an SVG dial in a recessed housing, orange needle easing to each new reading over 0.85s, turning alarm red out of range.",
+      "html": "<figure class=\"ds-hueco ds-hueco--aguja\"><span class=\"ds-hueco__designacion\">−P1</span><svg class=\"ds-medidor\" viewBox=\"0 0 120 86\" aria-hidden=\"true\"><rect class=\"ds-medidor__caja\" x=\"2\" y=\"2\" width=\"116\" height=\"82\"/><path class=\"ds-medidor__esfera\" d=\"M14 70 A46 46 0 0 1 106 70 Z\"/><path class=\"ds-medidor__marca\" d=\"M26 62 L31 58 M60 26 L60 32 M94 62 L89 58\"/><path class=\"ds-medidor__marca ds-medidor__marca--mayor\" d=\"M20 70 L28 70 M100 70 L92 70\"/><path class=\"ds-medidor__aguja\" d=\"M60 70 L78 40\"/><circle class=\"ds-medidor__eje\" cx=\"60\" cy=\"70\" r=\"5\"/><text class=\"ds-medidor__unidad\" x=\"60\" y=\"80\">A</text></svg><figcaption class=\"ds-medidor__pie\">Corriente generador 1</figcaption></figure>",
+      "css": ".ds-hueco { position: relative; background: #101418; border: 1px solid #0a0d0f; box-shadow: inset 0 2px 0 rgba(0,0,0,0.72), inset 0 -1px 0 rgba(255,255,255,0.055); font-family: var(--fuente-sora), ui-sans-serif, system-ui, sans-serif; } .ds-hueco--aguja { display: grid; place-items: center; padding: 1rem 0.5rem 0.75rem; } .ds-hueco__designacion { position: absolute; top: 5px; right: 7px; font-size: 0.5rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #727577; } .ds-medidor { display: block; width: 100%; max-width: 132px; } .ds-medidor__caja { fill: #0a0d0f; stroke: #4d545c; stroke-width: 2.5; } .ds-medidor__esfera { fill: #15191d; stroke: #2c3238; stroke-width: 1; } .ds-medidor__marca { stroke: var(--acero-marca, #7b838b); stroke-width: 1; } .ds-medidor__marca--mayor { stroke: #c9cdd2; stroke-width: 1.8; } .ds-medidor__aguja { stroke: #ff8929; stroke-width: 2.6; stroke-linecap: round; transition: all 0.85s cubic-bezier(0.16,1,0.3,1); } .ds-medidor__eje { fill: #2b3036; stroke: #4d545c; stroke-width: 1; } .ds-medidor__unidad { fill: #9aa1a8; font-size: 11px; font-weight: 600; text-anchor: middle; letter-spacing: 0.08em; } .ds-medidor__pie { margin-top: 0.5rem; display: block; font-size: 0.5625rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; line-height: 1.3; text-align: center; color: #9aa1a8; }"
+    },
+    {
+      "name": "Riel (Navigation Rail)",
+      "kind": "nav",
+      "refersTo": "riel",
+      "description": "A 62px sticky steel rail, landing variant: wordmark with an orange bracket at left, section anchors right, the panel pushbutton at the far end. App routes use the minimo variant instead.",
+      "html": "<header class=\"ds-riel\"><div class=\"ds-riel__marco\"><a class=\"ds-marca\" href=\"#\"><span class=\"ds-marca__corchete\"></span><span class=\"ds-marca__nombre\">Tecvol</span><span class=\"ds-marca__linea\">Monitoreo</span></a><nav class=\"ds-riel__nav\"><a href=\"#flota\">Flota</a><a href=\"#alcance\">Alcance</a><a href=\"#obras\">Obras</a></nav></div></header>",
+      "css": ".ds-riel { position: sticky; top: 0; z-index: 40; background: #22262b; border-bottom: 1px solid #0a0d0f; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.66); font-family: var(--fuente-sora), ui-sans-serif, system-ui, sans-serif; } .ds-riel__marco { display: flex; align-items: center; gap: 1.5rem; min-height: 62px; width: min(92vw, 1440px); margin-inline: auto; } .ds-marca { display: flex; align-items: baseline; gap: 0.5rem; text-decoration: none; flex-shrink: 0; } .ds-marca__corchete { width: 4px; height: 20px; background: #ff8929; align-self: center; } .ds-marca__nombre { font-size: 1.2rem; font-weight: 800; letter-spacing: 0.02em; color: #ffffff; } .ds-marca__linea { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #ff8929; } .ds-riel__nav { display: flex; gap: 1.5rem; margin-left: auto; font-size: 0.875rem; } .ds-riel__nav a { text-decoration: none; color: #9aa1a8; padding-block: 0.5rem; border-bottom: 1px solid transparent; transition: color 0.18s cubic-bezier(0.16,1,0.3,1), border-color 0.18s cubic-bezier(0.16,1,0.3,1); } .ds-riel__nav a:hover { color: #ffffff; border-bottom-color: #ff8929; } .ds-riel__nav a:focus-visible { outline: 2px solid #ff8929; outline-offset: 3px; }"
+    },
+    {
+      "name": "Fila de Flota (Status Row)",
+      "kind": "list-item",
+      "refersTo": "hueco",
+      "description": "A fleet table row: a drilled pilot lamp whose color is the vessel's state, the hull name in white, and a status line that goes alarm red when the reading is out of range. No-link rows drop to 50% opacity rather than changing color.",
+      "html": "<table class=\"ds-tabla-flota\"><thead><tr><th>Buque</th><th>Estado</th><th>Última lectura</th></tr></thead><tbody><tr class=\"ds-fila ds-fila--navegando\"><th><span class=\"ds-fila__piloto\"></span>BP Luigi</th><td class=\"ds-fila__estado\">Navegando</td><td class=\"ds-fila__detalle ds-cifra\">381.4 V · hace 40 s</td></tr><tr class=\"ds-fila ds-fila--alarma\"><th><span class=\"ds-fila__piloto\"></span>BP Anita</th><td class=\"ds-fila__estado\">Temperatura alta</td><td class=\"ds-fila__detalle ds-cifra\">92.6 °C · hace 12 s</td></tr><tr class=\"ds-fila ds-fila--puerto\"><th><span class=\"ds-fila__piloto\"></span>BP Domaio</th><td class=\"ds-fila__estado\">En puerto</td><td class=\"ds-fila__detalle ds-cifra\">0.0 A · hace 3 min</td></tr></tbody></table>",
+      "css": ".ds-tabla-flota { width: 100%; border-collapse: collapse; font-size: 0.9375rem; font-family: var(--fuente-sora), ui-sans-serif, system-ui, sans-serif; color: #c9cdd2; } .ds-tabla-flota th, .ds-tabla-flota td { text-align: left; padding: 1rem; border-bottom: 1px solid #33373d; } .ds-tabla-flota thead th { font-size: 0.625rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #9aa1a8; padding-block: 0.75rem; } .ds-fila th { font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 0.75rem; } .ds-fila__piloto { width: 9px; height: 9px; border-radius: 50%; background: #727577; flex: 0 0 auto; box-shadow: 0 0 0 1px #0a0d0f; } .ds-fila--navegando .ds-fila__piloto { background: #4ea86a; } .ds-fila--alarma .ds-fila__piloto { background: #ff4734; } .ds-fila--puerto .ds-fila__piloto { background: #ff8929; } .ds-fila__estado { font-size: 0.8125rem; color: #9aa1a8; } .ds-fila--alarma .ds-fila__estado { color: #ff4734; font-weight: 700; } .ds-fila__detalle { color: #c9cdd2; font-size: 0.875rem; } .ds-cifra { font-variant-numeric: tabular-nums lining-nums; font-feature-settings: 'tnum' 1, 'lnum' 1; letter-spacing: -0.01em; } .ds-fila--sin-enlace { opacity: 0.5; }"
+    },
+    {
+      "name": "Salida (Utility Chip)",
+      "kind": "chip",
+      "refersTo": "riel-salida",
+      "description": "The steel utility chip for secondary and exit actions, where a lit pushbutton would overstate the act. Serves as both <a> and <button>.",
+      "html": "<div><a class=\"ds-salida\" href=\"#\">Volver al sitio</a> <button class=\"ds-salida\" type=\"button\">Salir</button></div>",
+      "css": ".ds-salida { display: inline-block; font-family: var(--fuente-sora), ui-sans-serif, system-ui, sans-serif; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #9aa1a8; background: #2b3036; border: 1px solid #0a0d0f; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.66); padding: 0.5rem 1rem; text-decoration: none; cursor: pointer; transition: color 0.16s cubic-bezier(0.16,1,0.3,1), background-color 0.16s cubic-bezier(0.16,1,0.3,1); } .ds-salida:hover { color: #ffffff; background: #343a41; } .ds-salida:active { box-shadow: inset 0 2px 0 rgba(0,0,0,0.72), inset 0 -1px 0 rgba(255,255,255,0.055); } .ds-salida:focus-visible { outline: 2px solid #ff8929; outline-offset: 3px; }"
+    },
+    {
+      "name": "Riel mínimo (App Route Rail)",
+      "kind": "nav",
+      "refersTo": "riel",
+      "description": "The same rail on an app route: no section nav, the wordmark is the way home, and a right-hand slot carries the session line and the exit chip. The session line is hidden below 760px.",
+      "html": "<header class=\"ds-rielm\"><div class=\"ds-rielm__marco\"><a class=\"ds-rielm__marca\" href=\"/\"><span class=\"ds-rielm__corchete\"></span><span class=\"ds-rielm__nombre\">TECVOL</span><span class=\"ds-rielm__linea\">Monitoreo</span></a><div class=\"ds-rielm__derecha\"><span class=\"ds-rielm__sesion\">Sesión <span class=\"ds-rielm__cifra\">demo</span></span><button class=\"ds-rielm__salida\" type=\"button\">Salir</button></div></div></header>",
+      "css": ".ds-rielm { position: sticky; top: 0; background: #22262b; border-bottom: 1px solid #0a0d0f; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.66); font-family: var(--fuente-sora), ui-sans-serif, system-ui, sans-serif; } .ds-rielm__marco { display: flex; align-items: center; gap: 1.5rem; min-height: 62px; width: min(92vw, 1440px); margin-inline: auto; } .ds-rielm__marca { display: flex; align-items: baseline; gap: 0.5rem; text-decoration: none; } .ds-rielm__corchete { width: 4px; height: 20px; background: #ff8929; align-self: center; } .ds-rielm__nombre { font-size: 1.2rem; font-weight: 800; letter-spacing: 0.02em; color: #ffffff; } .ds-rielm__linea { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #ff8929; } .ds-rielm__derecha { display: flex; align-items: center; gap: 1rem; margin-left: auto; } .ds-rielm__sesion { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #727577; } .ds-rielm__cifra { color: #c9cdd2; font-variant-numeric: tabular-nums lining-nums; letter-spacing: -0.01em; } .ds-rielm__salida { font-family: inherit; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #9aa1a8; background: #2b3036; border: 1px solid #0a0d0f; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.66); padding: 0.5rem 1rem; cursor: pointer; transition: color 0.16s cubic-bezier(0.16,1,0.3,1), background-color 0.16s cubic-bezier(0.16,1,0.3,1); } .ds-rielm__salida:hover { color: #ffffff; background: #343a41; } .ds-rielm__salida:active { box-shadow: inset 0 2px 0 rgba(0,0,0,0.72), inset 0 -1px 0 rgba(255,255,255,0.055); } @media (max-width: 760px) { .ds-rielm__sesion { display: none; } .ds-rielm__derecha { gap: 0.75rem; } }"
+    },
+    {
+      "name": "Regleta (Access Rail)",
+      "kind": "custom",
+      "refersTo": "regleta",
+      "description": "The access screen's composition and the reference pattern for any form longer than two fields: a casco panel with a silkscreened legend strip, then a flex rail of borne blocks butt-jointed on the system's 1px cut line — two wired terminals, the free terminal strip, and the enabling switch at the end.",
+      "html": "<form class=\"ds-regleta\"><div class=\"ds-regleta__chapa\"><span class=\"ds-regleta__legenda\">−X0 · Bornera de acceso</span></div><div class=\"ds-regleta__riel\"><p class=\"ds-borne\"><span class=\"ds-borne__cabeza\"><label class=\"ds-borne__etiqueta\" for=\"ds-usuario\">Usuario</label><span class=\"ds-borne__designacion\">−X0:1</span></span><span class=\"ds-borne__hueco\"><input class=\"ds-borne__entrada\" id=\"ds-usuario\" type=\"text\"></span></p><p class=\"ds-borne\"><span class=\"ds-borne__cabeza\"><label class=\"ds-borne__etiqueta\" for=\"ds-clave\">Contraseña</label><span class=\"ds-borne__designacion\">−X0:2</span></span><span class=\"ds-borne__hueco\"><input class=\"ds-borne__entrada\" id=\"ds-clave\" type=\"password\"></span></p><div class=\"ds-borne ds-borne--regleta\"><div class=\"ds-borne__hueco ds-regleta__libres\"><svg viewBox=\"0 0 132 40\" aria-hidden=\"true\"><g><rect x=\"3\" y=\"6\" width=\"18\" height=\"28\" fill=\"#22262b\" stroke=\"#0a0d0f\"/><circle cx=\"12\" cy=\"16\" r=\"4\" fill=\"#0c0f11\" stroke=\"#545b63\"/><text x=\"12\" y=\"31\" fill=\"#727577\" font-size=\"8\" text-anchor=\"middle\" font-family=\"inherit\">3</text><rect x=\"24.5\" y=\"6\" width=\"18\" height=\"28\" fill=\"#22262b\" stroke=\"#0a0d0f\"/><circle cx=\"33.5\" cy=\"16\" r=\"4\" fill=\"#0c0f11\" stroke=\"#545b63\"/><text x=\"33.5\" y=\"31\" fill=\"#727577\" font-size=\"8\" text-anchor=\"middle\" font-family=\"inherit\">4</text><rect x=\"46\" y=\"6\" width=\"18\" height=\"28\" fill=\"#22262b\" stroke=\"#0a0d0f\"/><circle cx=\"55\" cy=\"16\" r=\"4\" fill=\"#0c0f11\" stroke=\"#545b63\"/><text x=\"55\" y=\"31\" fill=\"#727577\" font-size=\"8\" text-anchor=\"middle\" font-family=\"inherit\">5</text><rect x=\"67.5\" y=\"6\" width=\"18\" height=\"28\" fill=\"#22262b\" stroke=\"#0a0d0f\"/><circle cx=\"76.5\" cy=\"16\" r=\"4\" fill=\"#0c0f11\" stroke=\"#545b63\"/><text x=\"76.5\" y=\"31\" fill=\"#727577\" font-size=\"8\" text-anchor=\"middle\" font-family=\"inherit\">6</text><rect x=\"89\" y=\"6\" width=\"18\" height=\"28\" fill=\"#22262b\" stroke=\"#0a0d0f\"/><circle cx=\"98\" cy=\"16\" r=\"4\" fill=\"#0c0f11\" stroke=\"#545b63\"/><text x=\"98\" y=\"31\" fill=\"#727577\" font-size=\"8\" text-anchor=\"middle\" font-family=\"inherit\">7</text><rect x=\"110.5\" y=\"6\" width=\"18\" height=\"28\" fill=\"#22262b\" stroke=\"#0a0d0f\"/><circle cx=\"119.5\" cy=\"16\" r=\"4\" fill=\"#0c0f11\" stroke=\"#545b63\"/><text x=\"119.5\" y=\"31\" fill=\"#727577\" font-size=\"8\" text-anchor=\"middle\" font-family=\"inherit\">8</text></g></svg></div></div><div class=\"ds-borne ds-borne--llave\"><button class=\"ds-regleta__llave\" type=\"submit\"><span class=\"ds-regleta__bisel\"><span class=\"ds-regleta__lente\"></span></span><span class=\"ds-regleta__chapa-llave\"><span class=\"ds-borne__designacion\">−Q0</span><span class=\"ds-regleta__rotulo\">Entrar</span></span></button></div></div></form>",
+      "css": ".ds-regleta { background: #16191d; border: 1px solid #0a0d0f; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.66); font-family: var(--fuente-sora), ui-sans-serif, system-ui, sans-serif; } .ds-regleta__chapa { padding: 0.75rem 1.5rem; background: #22262b; border-bottom: 1px solid #0a0d0f; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.66); } .ds-regleta__legenda { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #c9cdd2; } .ds-regleta__riel { display: flex; flex-wrap: wrap; align-items: stretch; gap: 1px; background: #0a0d0f; margin: 1.5rem; border: 1px solid #0a0d0f; } .ds-borne { margin: 0; flex: 1 1 240px; max-width: 20rem; min-width: 0; display: grid; gap: 0.5rem; align-content: start; padding: 1rem; background: #22262b; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.66); } .ds-borne__cabeza { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; } .ds-borne__etiqueta { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #9aa1a8; } .ds-borne__designacion { font-size: 0.5625rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #9aa1a8; } .ds-borne__hueco { display: block; background: #101418; border: 1px solid #0a0d0f; box-shadow: inset 0 2px 0 rgba(0,0,0,0.72), inset 0 -1px 0 rgba(255,255,255,0.055); } .ds-borne__entrada { display: block; width: 100%; font-family: inherit; font-size: 1rem; color: #ffffff; background: transparent; border: 0; padding: 0.75rem 1rem; } .ds-borne__entrada:focus { outline: none; } .ds-borne__hueco:focus-within { border-color: #ff8929; box-shadow: inset 0 2px 0 rgba(0,0,0,0.72), inset 0 -1px 0 rgba(255,255,255,0.055), inset 0 0 0 1px #ff8929; } .ds-borne--regleta { flex: 1 1 8rem; max-width: none; display: grid; align-content: center; padding: 1rem 0.75rem; } .ds-regleta__libres { padding: 0.5rem; } .ds-regleta__libres svg { display: block; width: 100%; height: 2.5rem; } .ds-borne--llave { flex: 0 0 auto; display: grid; place-items: center; padding: 1rem; } .ds-regleta__llave { display: inline-flex; align-items: stretch; border: 0; padding: 0; background: none; cursor: pointer; font-family: inherit; } .ds-regleta__bisel { display: grid; place-items: center; width: 58px; background: #2b3036; border: 1px solid #0a0d0f; border-right: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.66); } .ds-regleta__lente { width: 26px; height: 26px; border-radius: 50%; background: #ff8929; border: 1px solid #ffc48f; transition: background-color 0.14s cubic-bezier(0.16,1,0.3,1); } .ds-regleta__chapa-llave { display: grid; align-content: center; gap: 1px; padding: 0.75rem 1.5rem; background: #22262b; border: 1px solid #0a0d0f; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.66); text-align: left; } .ds-regleta__rotulo { font-size: 1rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; } .ds-regleta__llave:hover .ds-regleta__lente { background: #ffa053; } .ds-regleta__llave:active .ds-regleta__bisel, .ds-regleta__llave:active .ds-regleta__chapa-llave { box-shadow: inset 0 2px 0 rgba(0,0,0,0.72), inset 0 -1px 0 rgba(255,255,255,0.055); } .ds-regleta__llave:active .ds-regleta__lente { background: #db4d1b; } .ds-regleta__llave:focus-visible { outline: 2px solid #ff8929; outline-offset: 3px; } @media (max-width: 760px) { .ds-regleta__riel { margin: 1rem; } .ds-borne, .ds-borne--llave { flex: 1 1 100%; max-width: none; } .ds-borne--regleta { order: 5; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Remote Engine Room",
+    "overview": "The interface is the front of a naval switchboard, not a dashboard about one. Every surface is folded sheet steel: a light edge along the top, a dark edge along the bottom, and nothing else standing between the eye and the metal. Instruments do not float on cards; they are mounted into recessed housings cut into the panel. Depth is a physical fact of the material, never an atmospheric effect.\n\nThe world is dark because an engine room is dark and because the product is read on deck in direct sun and in an office at night with equal seriousness. The greys are steel greys, close together and low-chroma, which leaves brand orange with nowhere to hide: when orange appears, something is reporting. The typographic voice is engraved silkscreen — uppercase Sora at label size with wide tracking, riding as circuit designations, equipment legends and panel headers, exactly as a real board carries them.\n\nThe world now carries three routes — the landing, the access screen at /login and its provisional destination at /tablero — and the second surface was built by mounting parts that already existed (the pushbutton, the housing, the terminal strip, the plate) rather than re-authoring them locally. That is how a route joins this world.\n\nThe build's one authored motion is a four-plane camera that pulls back from the panel to the hull to the fleet to the office, while the same live readings continue to run at every scale. Confirmed rejections: no gradients, no glass, no soft drop shadows, no decorative blur, no rounded card language.",
+    "keyCharacteristics": [
+      "Bevel-only relief; every box-shadow in the build is inset",
+      "Brand orange strictly reserved for live signal and focus",
+      "Square corners everywhere except round hardware (lenses, screw heads, indicator lamps)",
+      "Circuit designations (−P1, −Q3, −X2:1) as a real cross-surface system",
+      "One live-data source feeding every instrument on the page",
+      "One easing curve, one authored motion moment",
+      "One named type ramp on a 1/16rem step (--t1…--t11) carrying every size on the panel face",
+      "One rail in two variants (landing, minimo) serving all three routes"
+    ],
+    "rules": [
+      {
+        "name": "The Live-Signal Rule",
+        "body": "Orange means something is reporting right now, or the user is about to act. If a surface is not live and not interactive, it is steel. An element that would look \"nicer\" in orange without carrying signal is a defect.",
+        "section": "colors"
+      },
+      {
+        "name": "The Inherited Brand Rule",
+        "body": "Sora and #ff8929 come from tecvol.com.ar and are pinned as-is. They are constraints this system honors, not choices it made, and they are not open to retuning for contrast or taste on new surfaces.",
+        "section": "colors"
+      },
+      {
+        "name": "The Steel Ground Rule",
+        "body": "Backgrounds step only through the greys negro → casco → acero → acero-alto. Never interpolate a new grey between them, and never introduce a colored surface tint.",
+        "section": "colors"
+      },
+      {
+        "name": "The Engraved Caps Rule",
+        "body": "h1 and h2 are uppercase with a 1.14 line-height floor and only -0.012em tracking. In caps the letterforms need less negative tracking, and Spanish accents sit above cap height — closing the leading makes the Á of ESTÁ eat the line above it. Do not tighten either value.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Measurement Rule",
+        "body": "Any number that is a reading carries .cifra (tabular + lining numerals, -0.01em). A digit that changes width as it updates is a broken instrument.",
+        "section": "typography"
+      },
+      {
+        "name": "The Designation Rule",
+        "body": "Circuit tags (−P1…−P8, −H1…H4, −Q0…−Q4, −W0, −W1, −X0:1, −X0:2, −X1, −X2:1…4, −S1, −S2) are a single real numbering scheme shared by the panel, the single-line diagram, the form and the access surface. New surfaces extend the scheme; they never invent a decorative code that looks like one.",
+        "section": "typography"
+      },
+      {
+        "name": "The Two Scenes Rule",
+        "body": "Desktop and mobile are both first-class. Never solve a narrow viewport by scaling the panel down; drop the element that has stopped being legible and re-mount the rest. This extends to an instrument's part count: the access rail mounts a 14-terminal Bornera on desktop and a separate 6-terminal one below 760px, because fourteen terminals at phone width fall to 22px and the numbers stop reading. Two mounted instances, not one scaled.",
+        "section": "layout"
+      },
+      {
+        "name": "The Bevel-Only Rule",
+        "body": "Relief comes from a light top edge and a dark bottom edge and from nothing else. No box-shadow in this system may have a blur radius or an offset outside the element. No linear-gradient, no radial-gradient, no backdrop-filter. Audit test: every box-shadow value in the stylesheet contains inset or is a zero-blur 1px ring.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Housing Rule",
+        "body": "Every instrument is mounted inside a hueco — a recessed housing with a filo-negro border and the rebaje bevel. Instruments never sit loose on a panel, and a proud plate is never used as a container for a reading.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Press Rule",
+        "body": "A control's pressed state is the bevel inverting (proa → rebaje), which is what a real button does. No lift, no translate, no scale.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Cut-Line Rule",
+        "body": "Two surfaces meet on a 1px filo-negro border, optionally lit by a 1px inset highlight on the proud side. Never on a rounded corner, never on a gap of empty page.",
+        "section": "shapes"
+      },
+      {
+        "name": "The Single Source Rule",
+        "body": "Every live number on the page — gauges, hull badges, fleet drawings, the monitor list, the #flota table — reads from the one ProveedorVivo context. A second live-data source would turn one camera into four unrelated illustrations. Never introduce one.",
+        "section": "components"
+      },
+      {
+        "name": "The One Moment Rule",
+        "body": "The travelling is the page's single piece of motion. Everything else is a state change under 0.2s. Do not add scroll reveals, parallax layers or entrance animations.",
+        "section": "components"
+      },
+      {
+        "name": "The Lit Rim Rule",
+        "body": "A lamp is a saturated body with a lighter rim of its own hue (naranja-lente, alarma-lente, ok-lente). One rim token per signal color, shared by every lamp of that color on every surface: the pushbutton lens and the pilot lamp take the same orange rim, not two rims three percent apart. Never light a rim with white, and never add a fourth signal hue in order to need a fourth rim.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ramp Rule",
+        "body": "Every fixed font-size in CSS is a step of --t1…--t11. If a size feels wrong, move a step; do not write a literal between two steps. The only exemptions are the heading clamp() roles and font-size inside an SVG viewBox, where the value is a user unit.",
+        "section": "typography"
+      },
+      {
+        "name": "The Mounted Display Rule",
+        "body": "A heading set on a component — a plate, a row, a housing — drops to the plate-mounted display scale rather than the page display scale. The type shrinks because the surface it is printed on shrank.",
+        "section": "typography"
+      },
+      {
+        "name": "The Stamped Ink Rule",
+        "body": "A designation is quiet, never faint. On the dark ground of a hueco it may be gris-hondo; printed on acero it takes gris. Known inconsistency the build carries: the landing's .interruptor__designacion is still gris-hondo on acero (≈3.3:1, under the readability floor), and it is queued for the landing's next pass. That is a defect, not a precedent — never \"harmonize\" the access surface's .borne__designacion back down to match it.",
+        "section": "colors"
+      },
+      {
+        "name": "The Operate Heading Rule",
+        "body": "A page-ground heading on a utility route takes the headline clamp, not the display clamp: /login's h1 is clamp(1.7rem, 3.4vw, 2.9rem). Display is the landing's single voice; a 57px title on a screen whose whole job is to be passed through fights the task. Landing keeps display; Operate routes start at headline.",
+        "section": "typography"
+      },
+      {
+        "name": "The Filled Rail Rule",
+        "body": "Where blocks are separated by 1px gaps over a filo-negro ground, every block fills the row's cross axis and the blocks consume the row along the main axis. Any leftover is black showing through as a surface, and the cut line stops reading as a line. In the access rail this is why the terminal-strip section runs flex: 1 1 8rem; max-width: none and centers its own content instead of stretching to its neighbours' height.",
+        "section": "layout"
+      }
+    ],
+    "dos": [
+      "Do build relief from the two bevel tokens only — --proa for parts standing proud, --rebaje for parts cut in.",
+      "Do mount every instrument, readout and input inside a hueco recess.",
+      "Do reserve #ff8929 for live signal, live intent and focus; leave everything else steel.",
+      "Do set every reading in .cifra so digits keep their width as values update.",
+      "Do separate surfaces with a 1px #0a0d0f cut line rather than a gap or a radius.",
+      "Do give each new panel element a real circuit designation that extends the existing −P/−Q/−W/−X/−S/−H scheme.",
+      "Do draw hardware and diagrams as inline SVG with stroked steel fills.",
+      "Do take every fixed font-size from the --t1…--t11 ramp, and give a lamp its rim from the matching *-lente token.",
+      "Do shrink a heading to the plate-mounted display scale when it is silkscreened onto a component instead of the page ground.",
+      "Do keep uppercase headings at 1.14 line-height so Spanish accents clear the line above.",
+      "Do read live values from ProveedorVivo and label synthetic data with the demo tag.",
+      "Do solve narrow viewports by dropping or re-mounting elements, not by scaling the panel — including an instrument's part count.",
+      "Do leave .unifilar__diagrama::before alone: it is the single-line diagram's busbar — a conductor with branch lines, IEC breaker symbols, −Q designations and a feeder entering its head. The detector's side-tab rule flags it; both the finish review and this pass judged it a false positive, and a file-scoped ignore is recorded in .impeccable/config.json under the documenter's name.",
+      "Do mount the part this world already owns (Bornera, Interruptor, hueco, chapa, Tornillo) when a new surface needs it, instead of re-authoring a local copy.",
+      "Do put a plate's designation at its top-right corner, derived from the plate's own padding and clearing the screw.",
+      "Do take the headline clamp for a page-ground heading on an Operate route, and leave the display clamp to the landing.",
+      "Do reach for the riel__salida chip for utility and secondary actions, and keep the Interruptor for the one real act of a screen.",
+      "Do print a designation on acero in gris, and keep gris-hondo for the dark grounds.",
+      "Do fill a cut-line rail completely — every block to the cross axis, the row consumed along the main axis — so filo-negro stays a line and never becomes a surface.",
+      "Do carry a demo or limits disclosure as a bordered footnote line in gris at --t6, visible on every branch of the screen."
+    ],
+    "donts": [
+      "Don't use a box-shadow with a blur radius or an outside offset. Every shadow in this system is inset.",
+      "Don't use a gradient of any kind — linear, radial, conic — or backdrop-filter, or glass.",
+      "Don't round a plate, field, bar or cell. 50% is for genuinely round hardware only.",
+      "Don't paint orange on a surface that is neither live nor interactive, and don't use it as a heading color or a background fill.",
+      "Don't introduce a second live-data source, a second easing curve, or a second type family.",
+      "Don't invent a grey between the steel steps or tint a surface with a hue.",
+      "Don't write a literal font-size or a literal signal color into a stylesheet when a ramp step or a tint token exists; and don't add a step between two ramp steps to split a 1/16rem difference.",
+      "Don't treat a font-size inside an SVG viewBox as a type-ramp violation — it is a drawing unit, and the four in this build are recorded as out of scope.",
+      "Don't lift, translate or scale a control on press; invert its bevel instead.",
+      "Don't add scroll reveals or parallax beyond the four-plane camera.",
+      "Don't present a synthetic reading without its demo label, or a stale reading as if it were live.",
+      "Don't stack a serigrafia label above a heading as a kicker or eyebrow. Legends belong on their own mounted strip (regleta__chapa) or at a plate's top-right corner; the label-over-title stack is not a pattern in this system.",
+      "Don't set a circuit designation in gris-hondo on acero, and don't cite the landing's .interruptor__designacion as precedent — it is a logged defect awaiting its pass.",
+      "Don't let a section of a cut-line rail come up short on the cross axis; the black gap reads as a surface and breaks the joint.",
+      "Don't treat the access screen's credential check as an authentication or security pattern. It is a demonstration gate that displays the credential it validates against, and every branch of the destination says so on screen.",
+      "Don't rebuild the landing's full-bleed cabinet on an app route; app routes are a centered marco column under the same rail."
+    ]
+  }
+}

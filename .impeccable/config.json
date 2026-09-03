@@ -1,0 +1,53 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "app/mundo.css"
+        ],
+        "createdAt": "2026-09-03T03:26:11.273Z",
+        "reason": "Claude, no el usuario: es la barra colectora del unifilar de #alcance (.unifilar__circuitos::before), no un borde de tarjeta. Lleva ramales horizontales, simbolos IEC de interruptor y designaciones -Q, esta separada de los items 4.5rem y los items no tienen borde izquierdo. Dispositivo nativo del mundo de tablero que la marca dejo fijado. Enviado tambien al finish-reviewer para segunda opinion."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "8px",
+        "files": [
+          "app/mundo.css"
+        ],
+        "createdAt": "2026-09-03T05:42:36.451Z",
+        "reason": "Claude, no el usuario: es font-size dentro de un SVG con viewBox (bornera, sinoptico, buque). Son unidades de usuario que escalan con el dibujo, no pixeles CSS, asi que no pertenecen a la rampa tipografica de la pagina."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "12px",
+        "files": [
+          "app/mundo.css"
+        ],
+        "createdAt": "2026-09-03T05:42:38.310Z",
+        "reason": "Claude, no el usuario: es font-size dentro de un SVG con viewBox (bornera, sinoptico, buque). Son unidades de usuario que escalan con el dibujo, no pixeles CSS, asi que no pertenecen a la rampa tipografica de la pagina."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "13px",
+        "files": [
+          "app/mundo.css"
+        ],
+        "createdAt": "2026-09-03T05:42:40.166Z",
+        "reason": "Claude, no el usuario: es font-size dentro de un SVG con viewBox (bornera, sinoptico, buque). Son unidades de usuario que escalan con el dibujo, no pixeles CSS, asi que no pertenecen a la rampa tipografica de la pagina."
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "15px",
+        "files": [
+          "app/mundo.css"
+        ],
+        "createdAt": "2026-09-03T05:42:42.051Z",
+        "reason": "Claude, no el usuario: es font-size dentro de un SVG con viewBox (bornera, sinoptico, buque). Son unidades de usuario que escalan con el dibujo, no pixeles CSS, asi que no pertenecen a la rampa tipografica de la pagina."
+      }
+    ]
+  }
+}
