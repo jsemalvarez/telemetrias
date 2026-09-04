@@ -2808,3 +2808,210 @@
     border-top: 1px solid var(--borde);
   }
 }
+
+/* ------------------------- Convite de instalación -------------------------
+
+   Chapa atornillada que sube desde el borde inferior. No es una tarjeta: no
+   flota, no tiene sombra difusa y su relieve sale del mismo bisel de dos filos
+   que el resto del tablero.
+-------------------------------------------------------------------------- */
+
+.convite {
+  position: fixed;
+  z-index: 60;
+  inset-inline: var(--e3);
+  bottom: var(--e3);
+  background: var(--acero);
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+  animation: convite-sube 0.42s var(--sale) both;
+}
+
+/* La chapa se atornilla por el filo de arriba: el de abajo apoya en el borde. */
+.convite .tornillo {
+  position: absolute;
+  top: 6px;
+}
+.convite .tornillo:nth-of-type(1) { left: 6px; }
+.convite .tornillo:nth-of-type(2) { right: 6px; }
+
+@media (min-width: 620px) {
+  .convite {
+    inset-inline: auto var(--e5);
+    bottom: var(--e5);
+    width: 380px;
+  }
+}
+
+.convite__cuerpo {
+  display: grid;
+  gap: var(--e4);
+  /* En iOS la gaveta llega al filo de la pantalla: el último borde respeta el
+     indicador de inicio. */
+  padding: var(--e5) var(--e5) max(var(--e4), env(safe-area-inset-bottom));
+}
+
+.convite__cabeza {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e3);
+}
+
+.convite__marca {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  min-width: 0;
+}
+
+/* El ícono es una chapa más chica: mismo filo, misma física. */
+.convite__icono {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+}
+
+.convite__nombre {
+  font-size: var(--t8);
+  font-weight: 700;
+  color: var(--blanco);
+  letter-spacing: -0.01em;
+}
+
+.convite__linea {
+  margin-top: 3px;
+  color: var(--naranja);
+}
+
+.convite__cerrar {
+  margin-left: auto;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  background: var(--casco);
+  color: var(--gris);
+  border: 1px solid var(--borde);
+  font-size: var(--t5);
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.18s var(--sale), border-color 0.18s var(--sale);
+}
+.convite__cerrar:hover {
+  color: var(--blanco);
+  border-color: var(--borde-vivo);
+}
+
+.convite__texto {
+  font-size: var(--t6);
+  line-height: 1.55;
+  color: var(--gris);
+}
+
+.convite__mandos {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+}
+.convite__mandos .interruptor {
+  margin-left: auto;
+}
+
+.convite__ahora-no {
+  padding: var(--e2) var(--e3);
+  background: none;
+  border: 0;
+  color: var(--gris-hondo);
+  font-size: var(--t6);
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.18s var(--sale);
+}
+.convite__ahora-no:hover {
+  color: var(--serigrafia);
+}
+
+/* ------------------------------ Variante iOS ------------------------------ */
+
+.convite__fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: rgba(6, 8, 10, 0.66);
+  animation: convite-vela 0.24s var(--sale) both;
+}
+
+@media (max-width: 619px) {
+  /* En el teléfono el paso a paso se acuesta contra el borde inferior, como una
+     gaveta que se abre. */
+  .convite--ios {
+    inset-inline: 0;
+    bottom: 0;
+    border-inline: 0;
+    border-bottom: 0;
+  }
+}
+
+.convite__pasos {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--borde);
+  border: 1px solid #0a0d0f;
+}
+
+.convite__paso {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4);
+  background: var(--casco);
+}
+
+.convite__num {
+  color: var(--gris-hondo);
+  font-variant-numeric: tabular-nums;
+}
+
+.convite__simbolo {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  color: var(--naranja);
+  background: var(--negro);
+  border: 1px solid var(--borde);
+}
+
+.convite__paso-texto {
+  font-size: var(--t6);
+  line-height: 1.45;
+  color: var(--gris);
+}
+.convite__paso-texto strong {
+  font-weight: 700;
+  color: var(--blanco);
+}
+
+@keyframes convite-sube {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes convite-vela {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .convite,
+  .convite__fondo {
+    animation-duration: 0.01ms;
+  }
+}

@@ -384,6 +384,7 @@ export function Interruptor({
   href,
   type,
   disabled,
+  onClick,
   icono,
   className = '',
 }: {
@@ -392,6 +393,7 @@ export function Interruptor({
   href?: string;
   type?: 'submit' | 'button';
   disabled?: boolean;
+  onClick?: () => void;
   /** Símbolo grabado a la izquierda del rótulo, en la chapa. */
   icono?: React.ReactNode;
   className?: string;
@@ -420,7 +422,12 @@ export function Interruptor({
     );
   }
   return (
-    <button className={`interruptor ${className}`} type={type ?? 'button'} disabled={disabled}>
+    <button
+      className={`interruptor ${className}`}
+      type={type ?? 'button'}
+      disabled={disabled}
+      onClick={onClick}
+    >
       {dentro}
     </button>
   );

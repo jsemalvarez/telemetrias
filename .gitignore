@@ -3,6 +3,13 @@ node_modules/
 out/
 .env*.local
 *.tsbuildinfo
+
+# Service worker: lo genera next-pwa en cada build, no es fuente.
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map
+public/fallback-*.js
 next-env.d.ts
 .impeccable/live/
 
