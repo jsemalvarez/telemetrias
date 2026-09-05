@@ -1895,6 +1895,107 @@
   box-shadow: var(--rebaje);
 }
 
+/* ---------------------- Llave selectora de modo (−S1) ----------------------
+   Un usuario con varios roles mira con un sombrero por vez. La pieza es una
+   llave selectora de tablero: un chip que dice en qué posición está y una
+   chapa de posiciones con un piloto encendido en la que rige.
+
+   La chapa cuelga del riel, que ya es sticky y va a z-index 40: la de abajo
+   sube a 41 para no quedar cortada por el borde inferior del riel. */
+
+.selector {
+  position: relative;
+}
+
+.selector__llave {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+}
+
+.selector__posicion {
+  color: var(--serigrafia);
+}
+
+.selector__llave:hover .selector__posicion {
+  color: var(--blanco);
+}
+
+.selector__flecha {
+  width: 10px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.selector__panel {
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  z-index: 41;
+  min-width: 258px;
+  gap: 1px;
+  padding: var(--e5) var(--e4) var(--e3);
+  text-align: left;
+}
+
+/* La designación va al ángulo superior derecho de la chapa, derivada de su
+   propio padding y despejando el tornillo, como toda chapa del sistema. */
+.selector__legenda {
+  position: absolute;
+  top: var(--e3);
+  right: var(--e4);
+  color: var(--gris);
+}
+
+.selector__opcion {
+  font-family: inherit;
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #101418;
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--rebaje);
+  padding: var(--e2) var(--e3);
+  cursor: pointer;
+  transition: background-color 0.16s var(--sale);
+}
+
+.selector__opcion:hover:not(:disabled) {
+  background: #161b20;
+}
+
+.selector__opcion:disabled {
+  cursor: progress;
+}
+
+/* Cada posición es un piloto rotulado. La serigrafía sube del tamaño de
+   instrumento al del riel: acá el nombre del modo es la etiqueta que se lee,
+   no el pie de un aparato. */
+.selector__opcion .piloto__etiqueta {
+  font-size: var(--t6);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gris);
+}
+
+.selector__opcion[aria-checked='true'] .piloto__etiqueta {
+  color: var(--blanco);
+}
+
+@media (max-width: 760px) {
+  /* Igual que la línea de sesión: en el muelle sobra la palabra y lo que tiene
+     que sobrevivir es el control. */
+  .selector__rotulo {
+    display: none;
+  }
+  .selector__panel {
+    min-width: 200px;
+  }
+}
+
 /* ------------------------- Destino provisorio ------------------------- */
 
 .obra {
