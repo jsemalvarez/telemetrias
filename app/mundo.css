@@ -2034,7 +2034,8 @@
   max-width: none;
 }
 /* Revelación, no titular: se lee, no grita — pero se lee. */
-.obra__nota {
+.obra__nota,
+.registro__nota {
   color: var(--gris);
   font-size: var(--t6);
   padding-top: var(--e3);
@@ -3114,5 +3115,346 @@
   .convite,
   .convite__fondo {
     animation-duration: 0.01ms;
+  }
+}
+
+/* ================== Cabina y botonera de mandos (−S0) ==================
+   La navegación de las rutas de aplicación es un banco de pulsadores
+   enclavados montado sobre el gabinete. El que está apretado es la pantalla
+   en la que estás: el bisel invertido lo dice, la lente encendida lo firma, y
+   no hace falta ninguna barra de color que este mundo no tiene.
+
+   Dos escenas, dos montajes. En el muelle el banco baja al filo de abajo, que
+   es adonde llega el pulgar; en la oficina va en el flanco izquierdo, en
+   columna y con su leyenda. Es la misma pieza remontada, no una encogida. */
+
+.cabina {
+  /* El marco pasa a medirse contra la columna y no contra la ventana: con el
+     flanco puesto, un ancho en vw se sale del gabinete por la derecha. */
+  --marco: min(92%, 1440px);
+  --flanco: 7rem;
+  --banco: 5rem;
+  display: grid;
+}
+
+/* Sin esto una faja ancha estira la columna y desborda la cabina. */
+.cabina > main {
+  min-width: 0;
+}
+
+.botonera {
+  background: var(--acero);
+  box-shadow: var(--proa);
+}
+
+/* La leyenda del banco es una chapa montada, como la de la bornera de acceso:
+   una tira de acero con su designación, no un rótulo flotando. */
+.botonera__legenda {
+  display: block;
+  padding: var(--e2);
+  font-size: var(--t2);
+  letter-spacing: 0.1em;
+  text-align: center;
+  background: var(--casco);
+  border-bottom: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+}
+
+.botonera__banco {
+  list-style: none;
+  margin: 0;
+  padding: var(--e3);
+  display: grid;
+  gap: var(--e2);
+}
+
+/* Pulsador enclavado: chapa al frente, símbolo grabado, rótulo y lámpara. */
+.mando {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--e2);
+  padding: var(--e3) var(--e2);
+  background: var(--acero-alto);
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+  color: var(--gris);
+  text-align: center;
+  text-decoration: none;
+  transition: color 0.16s var(--sale), background-color 0.16s var(--sale);
+}
+.mando:hover {
+  color: var(--blanco);
+  background: #343a41;
+}
+.mando:active {
+  box-shadow: var(--rebaje);
+}
+
+/* Apretado y enclavado: el bisel se invierte y se queda adentro. */
+.mando--puesto {
+  background: var(--acero);
+  box-shadow: var(--rebaje);
+  color: var(--blanco);
+}
+
+/* La lámpara del pulsador, barrenada en la chapa: apagada es vidrio oscuro y
+   encendida es la única señal naranja del banco. */
+.mando__lampara {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1b1f23;
+  border: 1px solid #2a2f34;
+  box-shadow: 0 0 0 1px #0a0d0f;
+}
+.mando--puesto .mando__lampara {
+  background: var(--naranja);
+  border-color: var(--naranja-lente);
+}
+
+.mando__rotulo {
+  font-size: var(--t3);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.14;
+}
+
+/* El símbolo grabado de cada mando: cualquier SVG montado en un pulsador toma
+   el mismo trazo y tamaño, así un mando nuevo sólo trae su dibujo. */
+.mando svg {
+  width: 22px;
+  height: 22px;
+}
+.mando svg path,
+.mando svg circle,
+.mando svg rect,
+.mando svg line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linejoin: miter;
+}
+
+/* La oficina: el banco es el flanco izquierdo del gabinete y acompaña toda la
+   caída de la pantalla, pegado bajo el riel. */
+@media (min-width: 761px) {
+  .cabina {
+    grid-template-columns: var(--flanco) minmax(0, 1fr);
+    align-items: start;
+  }
+  .cabina--sin-banco {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .botonera {
+    position: sticky;
+    top: 62px;
+    align-self: start;
+    min-height: calc(100vh - 62px);
+    border-right: 1px solid #0a0d0f;
+  }
+  .botonera__banco {
+    align-content: start;
+  }
+  .mando {
+    min-height: 4.75rem;
+  }
+}
+
+/* El muelle: el banco baja al filo, la leyenda se cae —no se achica— y el
+   pulsador crece hasta ser un objetivo que se acierta con guante. */
+@media (max-width: 760px) {
+  .cabina {
+    padding-bottom: calc(var(--banco) + env(safe-area-inset-bottom));
+  }
+  .botonera {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 45;
+    border-top: 1px solid #0a0d0f;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .botonera__legenda {
+    display: none;
+  }
+  .botonera__banco {
+    grid-auto-flow: column;
+    justify-content: center;
+    padding: var(--e2);
+  }
+  .mando {
+    min-width: 5.5rem;
+    min-height: 3.1rem;
+    gap: var(--e1);
+    padding: var(--e2) var(--e3);
+  }
+  .mando__lampara {
+    width: 7px;
+    height: 7px;
+  }
+  /* En el muelle el mando es sólo el símbolo: el rótulo se cae de la vista
+     —no se achica— igual que la leyenda del banco. Sigue en el DOM para el
+     lector de pantalla, que es lo que le da nombre al enlace. */
+  .mando__rotulo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+/* ================ Registro: los listados del panel (−A0/−A2/−A3) ================
+   El mismo panel para el padrón de clientes (super), el de personal (admin) y
+   el de dispositivos (encargado). Cada renglón va en su propio alojamiento
+   rebajado: un registro es una lectura, no una tarjeta, y los alojamientos se
+   separan con acero a la vista porque son barrenados distintos de la misma
+   chapa. Una superficie que necesita este panel lo monta; no lo re-dibuja. */
+
+.registro {
+  padding-block: var(--e8);
+}
+
+.registro__panel {
+  max-width: 56rem;
+  margin-inline: auto;
+}
+
+.registro__cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--e5);
+  padding: var(--e5);
+}
+.registro__cabeza h1 {
+  font-size: clamp(1.6rem, 2.35vw, 2.35rem);
+}
+.registro__texto p {
+  margin: var(--e3) 0 0;
+  max-width: 52ch;
+  color: var(--serigrafia);
+  font-size: var(--t8);
+}
+.registro__accion {
+  flex: 0 0 auto;
+}
+
+.registro__lista {
+  list-style: none;
+  margin: 0 var(--e5);
+  padding: 0;
+  display: grid;
+  gap: var(--e2);
+}
+
+/* Un renglón: título y sub a la izquierda, lo que sea al costado derecho. */
+.fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--e1) var(--e5);
+  padding: var(--e4) var(--e5);
+}
+.fila__titulo {
+  grid-column: 1;
+  font-size: var(--t10);
+  letter-spacing: -0.02em;
+}
+.fila__sub {
+  grid-column: 1;
+  font-size: var(--t6);
+  color: var(--gris);
+}
+.fila__aside {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--e2);
+}
+/* El costado del padrón de clientes: una cifra grande y su unidad, apiladas. */
+.fila__cuenta {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--e1);
+}
+.fila__numero {
+  font-size: var(--t11);
+  font-weight: 700;
+  color: var(--blanco);
+  line-height: 1.06;
+}
+/* Cada rol de un miembro, como un rótulo grabado —chapa de acero, sin señal—. */
+.fila__rol {
+  padding: var(--e1) var(--e2);
+  background: var(--acero-alto);
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+  color: var(--serigrafia);
+  font-size: var(--t3);
+}
+
+/* Alojamiento vacío: una bornera sin nada conectado, no un error. */
+.vacio {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--e3);
+  padding: var(--e8) var(--e5);
+  text-align: center;
+}
+.vacio .persianas {
+  width: 96px;
+  opacity: 0.55;
+}
+.vacio__titulo {
+  margin: 0;
+  color: var(--serigrafia);
+  font-size: var(--t9);
+  font-weight: 700;
+}
+.vacio__detalle {
+  margin: 0;
+  color: var(--gris-hondo);
+}
+
+.registro__nota {
+  margin: var(--e5);
+}
+
+@media (max-width: 760px) {
+  .registro {
+    padding-block: var(--e7);
+  }
+  .registro__cabeza {
+    padding: var(--e4);
+    gap: var(--e4);
+  }
+  /* Dos escenas: la acción se monta a lo ancho en vez de quedar de costado. */
+  .registro__accion {
+    width: 100%;
+  }
+  .registro__accion .interruptor__chapa {
+    flex: 1;
+  }
+  .registro__lista,
+  .registro__nota {
+    margin: var(--e4);
+  }
+  .fila {
+    padding: var(--e3) var(--e4);
+  }
+  .vacio {
+    padding: var(--e7) var(--e4);
   }
 }

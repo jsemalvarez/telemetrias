@@ -1,69 +1,52 @@
 import type { Metadata } from 'next';
-import { Riel } from '@/components/secciones';
-import { Salida, SinHabilitacion } from '@/components/Sesion';
+import { Clientes } from '@/components/Clientes';
 import { Registrador } from '@/components/Registrador';
-import { Conmutador } from '@/components/Conmutador';
-import { modoPorDefecto, modosDisponibles, permisosDe, puede } from '@/lib/auth/roles';
+import { SinHabilitacion } from '@/components/Sesion';
+import { modoPorDefecto, permisosDe, puede } from '@/lib/auth/roles';
 import { sesionActual } from '@/lib/auth/servidor';
+import { clientes } from '@/lib/auth/usuarios';
 
 export const metadata: Metadata = {
-  title: 'Tablero — Monitoreo Tecvol',
-  description: 'Registrador de faja de la flota: estado, alarmas e historia de las últimas 24 h.',
+  title: 'Resumen — Monitoreo Tecvol',
+  description: 'El resumen del panel: lo que tiene delante quien entró, según lo que puede.',
   robots: { index: false, follow: false },
 };
 
 /**
- * Ruta protegida.
+ * El resumen: el destino del mando de la botonera y la primera pantalla de la
+ * aplicación.
  *
- * El middleware ya garantizó que hay sesión válida —sin ella no se llega hasta
- * acá—, así que lo que se decide en esta página es el permiso: quién entró
- * puede no alcanzar para ver lecturas. Se pregunta por el permiso, nunca por el
- * rol, así que sumar un rol nuevo no obliga a volver a tocar esta pantalla.
+ * Es una sola ruta, y lo que muestra lo decide el permiso del modo puesto. No
+ * hay una ruta por rol —eso repartiría la misma pantalla en tres y obligaría a
+ * elegir destino antes de saber quién entró—: hay un resumen, y el resumen de
+ * cada uno es la pregunta que ese uno trae.
+ *
+ * Quien cruza el corte entre empresas ve el padrón de clientes; quien lee su
+ * propia instalación ve sus mediciones. Un super administrador puede las dos
+ * cosas y las mira de a una, girando la llave −S1 del riel.
  */
-export default async function TableroRuta() {
+export default async function ResumenRuta() {
   const sesion = await sesionActual();
-  const habilitado = puede(sesion, 'lectura:ver');
+
+  if (puede(sesion, 'cliente:cruzar')) {
+    return <Clientes clientes={await clientes()} puedeCrear={puede(sesion, 'cliente:crear')} />;
+  }
+
+  if (puede(sesion, 'lectura:ver')) return <Registrador />;
 
   /* Si el permiso está entre los de todos sus roles pero no entre los del modo
      puesto, el candado lo puso el propio usuario al girar la llave. Es la misma
      pantalla con otra salida: en un caso pide un alta, en el otro se resuelve
-     solo. */
-  const porElModo = !habilitado && sesion !== null && permisosDe(sesion.roles).has('lectura:ver');
-
-  /* A qué posición volver: el modo de mayor alcance entre los roles del usuario
-     que sí abren esta pantalla. */
-  const modoQueHabilita = porElModo
-    ? modoPorDefecto((sesion?.roles ?? []).filter((rol) => permisosDe([rol]).has('lectura:ver')))
-    : null;
-
-  /* Las posiciones que la llave puede tomar. Una llave de una sola posición no
-     es una llave: ahí no se monta. */
-  const modos = modosDisponibles(sesion?.roles ?? []);
+     solo, volviendo al modo de mayor alcance que sí abre esta pantalla. */
+  const rolesQueLeen = (sesion?.roles ?? []).filter((rol) =>
+    permisosDe([rol]).has('lectura:ver'),
+  );
+  const porElModo = rolesQueLeen.length > 0;
 
   return (
-    <>
-      <Riel
-        variante="minimo"
-        derecha={
-          sesion ? (
-            <>
-              {modos.length > 1 && sesion.modo ? (
-                <Conmutador modos={modos} modo={sesion.modo} />
-              ) : null}
-              <Salida sesion={sesion} />
-            </>
-          ) : (
-            <a className="riel__salida" href="/login">
-              Ir al acceso
-            </a>
-          )
-        }
-      />
-      {habilitado ? (
-        <Registrador />
-      ) : (
-        <SinHabilitacion porElModo={porElModo} modoQueHabilita={modoQueHabilita} />
-      )}
-    </>
+    <SinHabilitacion
+      porElModo={porElModo}
+      modoQueHabilita={porElModo ? modoPorDefecto(rolesQueLeen) : null}
+    />
   );
 }

@@ -33,6 +33,8 @@ export const ROTULO_ROL: Record<Rol, string> = {
 export const PERMISOS = [
   'lectura:ver',
   'umbral:definir',
+  'personal:ver',
+  'personal:crear',
   'cliente:crear',
   'cliente:cruzar',
 ] as const;
@@ -45,14 +47,26 @@ export type Permiso = (typeof PERMISOS)[number];
  * producto promete —cada cliente ve lo suyo— y por eso lo tiene un solo rol,
  * declarado explícito y no derivado de la jerarquía.
  *
- * El encargado **no** lee el tablero: su trabajo es fijar los umbrales que
- * disparan las alertas. Leer es del admin para arriba. Si esa separación no es
- * la real, el arreglo es sumar `lectura:ver` a esa línea y nada más.
+ * El encargado **sí** lee las mediciones: lo confirmó el usuario el 2026-09-05 y
+ * con eso se cerró la interpretación que PRODUCT.md dejaba abierta. Fijar un
+ * umbral sin ver la lectura que ese umbral vigila era trabajar a ciegas.
+ *
+ * `personal:ver` y `personal:crear` son lo único que queda separando a un admin
+ * de un encargado. El admin ve y da de alta al personal de su empresa
+ * (administradores y encargados); el encargado no. Sin ese corte los dos roles
+ * habilitarían exactamente lo mismo, y entonces `modosDisponibles` le ofrecería
+ * la posición de administrador a un encargado puro: la llave lo dejaría subir,
+ * que es lo que nunca puede pasar.
+ *
+ * La jerarquía se mantiene: el admin conserva `umbral:definir`, así que ve la
+ * pantalla de Dispositivos además de la de Personal —puede todo lo que puede el
+ * encargado—, y lo que distingue al encargado es que a él le falta Personal.
+ * Confirmado por el usuario el 2026-09-05.
  */
 const POR_ROL: Record<Rol, readonly Permiso[]> = {
-  superadmin: ['lectura:ver', 'umbral:definir', 'cliente:crear', 'cliente:cruzar'],
-  admin: ['lectura:ver', 'umbral:definir'],
-  encargado: ['umbral:definir'],
+  superadmin: ['lectura:ver', 'umbral:definir', 'personal:ver', 'personal:crear', 'cliente:crear', 'cliente:cruzar'],
+  admin: ['lectura:ver', 'umbral:definir', 'personal:ver', 'personal:crear'],
+  encargado: ['lectura:ver', 'umbral:definir'],
 };
 
 export function esRol(valor: unknown): valor is Rol {

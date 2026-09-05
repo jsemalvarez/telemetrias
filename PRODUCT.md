@@ -33,10 +33,18 @@ Los tres de arriba son **perfiles de usuario**: describen quién entra y con qu�
 **Roles del sistema (2026-09-04), jerárquicos — cada uno contiene al de abajo:**
 
 - **`superadmin`**: crea clientes, y puede ser admin y encargado **de cada cliente**. Es el único rol que cruza el corte entre empresas.
-- **`admin`**: lee, y puede ser encargado, **de su propia empresa**.
-- **`encargado`**: establece los valores mínimos y máximos que disparan las alertas de los elementos monitoreados.
+- **`admin`**: lee, da de alta encargados y puede ser encargado, **de su propia empresa**.
+- **`encargado`**: lee, y establece los valores mínimos y máximos que disparan las alertas de los elementos monitoreados.
 
-*Interpretación a confirmar:* que el encargado **no** lea el tablero. Es lo único que distingue a `admin` de `encargado`, porque si el encargado leyera, los dos roles habilitarían lo mismo. Si el encargado necesita ver las lecturas para fijar umbrales, hay que corregirlo.
+*Resuelto por el usuario el 2026-09-05:* el encargado **sí** lee. Fijar un umbral sin ver la lectura que ese umbral vigila era trabajar a ciegas. Lo que distingue a `admin` de `encargado` pasa a ser el **personal** (`personal:ver` / `personal:crear`): el admin ve y da de alta a los administradores y encargados de su empresa; el encargado no. La jerarquía se mantiene —el admin conserva `umbral:definir`, así que también ve los dispositivos—, y lo que le falta al encargado es Personal.
+
+**Pantallas del panel y datos de fantasía (2026-09-05).** El panel de aplicación tiene una botonera de mandos (riel izquierdo en escritorio, faja inferior en móvil) que muestra los destinos según el permiso del modo puesto:
+
+- **Resumen** (todos): el super ve el padrón de clientes; el admin y el encargado ven las métricas.
+- **Personal** (`personal:ver`, admin y super): lista de administradores y encargados de la empresa, con alta. El encargado no la ve.
+- **Dispositivos** (`umbral:definir`, encargado, admin y super): los microcontroladores de la empresa. Hoy está vacía a propósito: el monitoreo no está instalado en ningún lado.
+
+Para poder mostrar los tres niveles antes de que exista el alta real, el padrón está sembrado con **datos de fantasía, marcados para borrar cuando llegue la base**: una sola empresa, **Tecvol**, con `demo` como administrador y `encargado` como encargado (clave `tecvol` en ambos), y un `superadmin@test.com` (clave `admin123`) que es el super de Tecvol y no es parte de la demo pública del acceso. Todas las altas (cliente, personal, dispositivo) quedan sin tensión hasta que esté conectada la base.
 
 Un usuario lleva **varios roles a la vez** — la lista es estructura del modelo, no un campo que se amplíe después — aunque con roles jerárquicos casi siempre alcance con uno.
 
