@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Riel } from '@/components/secciones';
 import { Acceso } from '@/components/Acceso';
+import { destinoSeguro } from '@/lib/auth/cookies';
 
 export const metadata: Metadata = {
   title: 'Acceso — Monitoreo Tecvol',
@@ -8,7 +9,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function Login() {
+/**
+ * `destino` es a dónde iba el usuario cuando lo mandamos a identificarse. Se
+ * lava acá y no en el cliente: es un parámetro de la URL, o sea, de cualquiera.
+ */
+export default function Login({ searchParams }: { searchParams?: { destino?: string } }) {
   return (
     <>
       <Riel
@@ -19,7 +24,7 @@ export default function Login() {
           </a>
         }
       />
-      <Acceso />
+      <Acceso destino={destinoSeguro(searchParams?.destino)} />
     </>
   );
 }

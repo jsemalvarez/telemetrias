@@ -1,7 +1,9 @@
 node_modules/
 .next/
 out/
-.env*.local
+# Ningún .env entra al repositorio; el único versionado es la plantilla.
+.env*
+!.env.example
 *.tsbuildinfo
 
 # Service worker: lo genera next-pwa en cada build, no es fuente.

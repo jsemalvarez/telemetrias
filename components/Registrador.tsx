@@ -4,7 +4,6 @@ import { useEffect, useId, useMemo, useState } from 'react';
 import { FLOTA_DEMO, LECTURAS } from '@/lib/datos';
 import { ProveedorVivo, useVivo } from '@/lib/vivo';
 import { Pluma, SimboloQ, Sinoptico, Tornillo, type Posicion } from './instrumentos';
-import { Cargando, SinHabilitacion, leerSesion } from './Sesion';
 import {
   AUXILIARES,
   CANALES,
@@ -536,7 +535,7 @@ function Panel() {
 
         <p className="registrador__nota">
           Registro de demostración: trazas sintéticas y umbrales de ejemplo, a fijar con Tecvol.
-          Los nombres de buque son obras reales. El acceso no es autenticación.
+          Los nombres de buque son obras reales.
         </p>
       </div>
     </main>
@@ -544,22 +543,13 @@ function Panel() {
 }
 
 /**
- * La pantalla de operación. La habilitación se lee en el cliente, así que la
- * ruta arranca diciendo que está leyendo en vez de dibujar un tablero que
- * todavía no sabe de quién es.
+ * La pantalla de operación.
+ *
+ * La habilitación ya la resolvió el servidor: el middleware exige sesión antes
+ * de que esta ruta se renderice, y la página comprueba el permiso. Acá abajo no
+ * se vuelve a preguntar quién entró — si se está dibujando, corresponde.
  */
 export function Registrador() {
-  const [usuario, setUsuario] = useState<string | null>(null);
-  const [montado, setMontado] = useState(false);
-
-  useEffect(() => {
-    setUsuario(leerSesion());
-    setMontado(true);
-  }, []);
-
-  if (!montado) return <Cargando />;
-  if (!usuario) return <SinHabilitacion />;
-
   /* Una sola fuente de lecturas vivas, igual que en la landing: la cifra de la
      ventana y la que alimenta el sinóptico son el mismo número. */
   return (

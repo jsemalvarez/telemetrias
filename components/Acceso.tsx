@@ -8,18 +8,22 @@ import { Interruptor, Tornillo } from './instrumentos';
 /**
  * Pantalla de acceso.
  *
- * ESTO NO ES AUTENTICACIÓN. Es una compuerta de demostración: valida contra una
- * credencial fija que la propia pantalla muestra, para que delante del cliente
- * se vea la validación y el error funcionando. No hay backend, no hay sesión
- * real y no hay nada que proteger todavía. Cuando exista el proveedor de
- * autenticación, `validar` pasa a ser una llamada al servidor y el resto del
- * componente no cambia.
+ * La validación es real: `/api/auth/entrar` verifica la contraseña contra su
+ * hash y, si está bien, deja la sesión en dos cookies httpOnly. Esta pantalla
+ * nunca ve el token — no puede, y ese es el punto.
+ *
+ * Lo que sigue siendo de demostración es el padrón: los usuarios están
+ * sembrados en `lib/auth/usuarios.ts` hasta que exista la base de datos.
  */
-const DEMO = { usuario: 'demo', clave: 'tecvol' };
+
+/* Espejo de la semilla del padrón, para poder mostrar la credencial en pantalla
+   sin importar el módulo del servidor (que lleva hashes y no puede viajar al
+   navegador). Las dos chapas de abajo se retiran cuando haya altas reales. */
+const DEMOSTRACION = { usuario: 'demo', clave: 'tecvol' };
 
 type Estado = 'listo' | 'validando' | 'ok';
 
-export function Acceso() {
+export function Acceso({ destino = '/tablero' }: { destino?: string }) {
   const router = useRouter();
   const [usuario, setUsuario] = useState('');
   const [clave, setClave] = useState('');
@@ -27,7 +31,7 @@ export function Acceso() {
   const [estado, setEstado] = useState<Estado>('listo');
   const aviso = useRef<HTMLDivElement>(null);
 
-  const enviar = (ev: React.FormEvent) => {
+  const enviar = async (ev: React.FormEvent) => {
     ev.preventDefault();
 
     if (!usuario.trim() || !clave.trim()) {
@@ -39,21 +43,41 @@ export function Acceso() {
     setError(null);
     setEstado('validando');
 
-    window.setTimeout(() => {
-      if (usuario.trim() !== DEMO.usuario || clave !== DEMO.clave) {
-        setEstado('listo');
-        setError('Usuario o contraseña incorrectos. La credencial de demostración está abajo a la izquierda.');
-        aviso.current?.focus();
-        return;
-      }
-      try {
-        sessionStorage.setItem('tecvol:demo', usuario.trim());
-      } catch {
-        /* Navegador con almacenamiento bloqueado: el destino lo resuelve solo. */
-      }
-      setEstado('ok');
-      router.push('/tablero');
-    }, 520);
+    let respuesta: Response;
+    try {
+      respuesta = await fetch('/api/auth/entrar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario: usuario.trim(), clave }),
+      });
+    } catch {
+      /* En este producto quedarse sin señal es normal, no una falla: el aviso
+         tiene que decir eso y no "error inesperado". */
+      setEstado('listo');
+      setError('No hay enlace con el servidor. Revisá la conexión y probá de nuevo.');
+      aviso.current?.focus();
+      return;
+    }
+
+    const cuerpo = await respuesta.json().catch(() => null);
+
+    if (!respuesta.ok) {
+      setEstado('listo');
+      const base = typeof cuerpo?.mensaje === 'string' ? cuerpo.mensaje : 'No se pudo habilitar el acceso.';
+      setError(
+        cuerpo?.error === 'credenciales'
+          ? `${base} La credencial de demostración está abajo a la izquierda.`
+          : base,
+      );
+      aviso.current?.focus();
+      return;
+    }
+
+    setEstado('ok');
+    /* `replace` para que el botón de volver no rebote al acceso ya cumplido, y
+       `refresh` para que el servidor relea la cookie recién puesta. */
+    router.replace(destino);
+    router.refresh();
   };
 
   const malo = Boolean(error);
@@ -149,11 +173,11 @@ export function Acceso() {
             <dl className="acceso__credencial">
               <div>
                 <dt className="serigrafia">Usuario</dt>
-                <dd className="cifra">{DEMO.usuario}</dd>
+                <dd className="cifra">{DEMOSTRACION.usuario}</dd>
               </div>
               <div>
                 <dt className="serigrafia">Contraseña</dt>
-                <dd className="cifra">{DEMO.clave}</dd>
+                <dd className="cifra">{DEMOSTRACION.clave}</dd>
               </div>
             </dl>
           </div>

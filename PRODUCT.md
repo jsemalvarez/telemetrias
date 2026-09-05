@@ -10,6 +10,12 @@ web
 
 Next.js (elección del usuario). Objetivo de despliegue: **sin decidir** — Vercel es el default natural de Next.js, pero no fue confirmado y no debe asumirse.
 
+**Autenticación — decidido por el usuario el 2026-09-04:** propia, dentro de la misma app Next. Route handlers en `/api/auth/*`, JWT firmado con HS256, y la sesión en dos cookies httpOnly (acceso corto, refresco largo). Se descartaron explícitamente un proveedor externo (Supabase Auth) y un backend separado que emitiera el token.
+
+**Base de datos — decidido por el usuario el 2026-09-04:** PostgreSQL. En local se levanta con Docker; en stage y producción se usa Supabase. Supabase entra como Postgres administrado: la autenticación sigue siendo la propia de la app, no Supabase Auth.
+
+Hasta que esa base esté conectada, el padrón de usuarios está sembrado en código y aislado en un solo módulo.
+
 ## Users
 
 Usuarios primarios: personal de las empresas cliente de Tecvol (armadores, astilleros y operadores de flota pesquera). Es un producto B2B: el cliente entra a ver su propio equipamiento, no el de Tecvol.
@@ -22,7 +28,34 @@ Conviven **varios perfiles con permisos distintos** desde el día uno, y cada un
 
 Roles y permisos son estructurales, no una función posterior.
 
-**Sin confirmar:** si el propio equipo de Tecvol usa el sistema con una vista interna o de administración. Es probable, pero no fue establecido.
+Los tres de arriba son **perfiles de usuario**: describen quién entra y con qué pregunta. No son los roles de permisos del sistema, que son otra cosa y los fijó el usuario el 2026-09-04.
+
+**Roles del sistema (2026-09-04), jerárquicos — cada uno contiene al de abajo:**
+
+- **`superadmin`**: crea clientes, y puede ser admin y encargado **de cada cliente**. Es el único rol que cruza el corte entre empresas.
+- **`admin`**: lee, da de alta encargados y puede ser encargado, **de su propia empresa**.
+- **`encargado`**: lee, y establece los valores mínimos y máximos que disparan las alertas de los elementos monitoreados.
+
+*Resuelto por el usuario el 2026-09-05:* el encargado **sí** lee. Fijar un umbral sin ver la lectura que ese umbral vigila era trabajar a ciegas. Lo que distingue a `admin` de `encargado` pasa a ser el **personal** (`personal:ver` / `personal:crear`): el admin ve y da de alta a los administradores y encargados de su empresa; el encargado no. La jerarquía se mantiene —el admin conserva `umbral:definir`, así que también ve los dispositivos—, y lo que le falta al encargado es Personal.
+
+**Pantallas del panel y datos de fantasía (2026-09-05).** El panel de aplicación tiene una botonera de mandos (riel izquierdo en escritorio, faja inferior en móvil) que muestra los destinos según el permiso del modo puesto:
+
+- **Resumen** (todos): el super ve el padrón de clientes; el admin y el encargado ven las métricas.
+- **Personal** (`personal:ver`, admin y super): lista de administradores y encargados de la empresa, con alta. El encargado no la ve.
+- **Dispositivos** (`umbral:definir`, encargado, admin y super): los microcontroladores de la empresa. Hoy está vacía a propósito: el monitoreo no está instalado en ningún lado.
+
+Para poder mostrar los tres niveles antes de que exista el alta real, el padrón está sembrado con **datos de fantasía, marcados para borrar cuando llegue la base**: una sola empresa, **Tecvol**, con `demo` como administrador y `encargado` como encargado (clave `tecvol` en ambos), y un `superadmin@test.com` (clave `admin123`) que es el super de Tecvol y no es parte de la demo pública del acceso. Todas las altas (cliente, personal, dispositivo) quedan sin tensión hasta que esté conectada la base.
+
+Un usuario lleva **varios roles a la vez** — la lista es estructura del modelo, no un campo que se amplíe después — aunque con roles jerárquicos casi siempre alcance con uno.
+
+De ahí salen dos reglas que valen para toda superficie futura:
+
+1. **Se pregunta por permiso, nunca por rol** (`umbral:definir`, no `es encargado`). Un rol nuevo, o uno que cambia de alcance, se resuelve en el catálogo y no obliga a recorrer pantallas.
+2. **Bajar de nivel es legítimo; subir, nunca.** Quien tiene un rol puede mirar el sistema como cualquier rol contenido en el suyo, porque eso no le da nada que no tuviera.
+
+**Modo de vista (2026-09-04):** quien puede tomar más de una posición mira con una por vez y lo elige él, en una llave selectora del riel. El modo **recorta** el alcance al rol elegido y nunca lo amplía: se valida contra los roles reales en cada pedido, así que es una preferencia del usuario y no una credencial. Quien sólo puede tomar una posición no ve la llave.
+
+El uso interno **quedó confirmado** el 2026-09-04, cuando el usuario definió que el `superadmin` crea los clientes: eso sólo puede hacerlo alguien de Tecvol. Lo que sigue sin establecerse es si esa administración tiene pantallas propias o se resuelve entrando como admin de cada cliente.
 
 ## Product Purpose
 
@@ -53,7 +86,11 @@ Lo que **no** es la propuesta: que haya que comprarle el tablero a Tecvol para p
 **Confirmado:**
 
 - Los dispositivos reportan **status y métricas** vía microcontroladores.
-- Múltiples perfiles de usuario con permisos diferenciados.
+- Múltiples perfiles de usuario con permisos diferenciados, **varios roles por usuario** y permisos derivados de los roles.
+- **Varios clientes en el mismo sistema** (2026-09-04). Cada empresa ve lo suyo; sólo el rol `superadmin` cruza ese corte.
+- **Alertas por umbral** (2026-09-04): los elementos monitoreados tienen valores mínimo y máximo que las disparan, y esos valores los configura un usuario con rol `encargado`. No está confirmado por qué medio se notifica una alerta.
+- Autenticación propia con JWT y sesión en cookies httpOnly, dentro de la app Next (2026-09-04).
+- PostgreSQL como base: Docker en local, Supabase en stage y producción (2026-09-04).
 - Escritorio y móvil como escenas de primera clase, por igual.
 - Stack Next.js sobre web.
 
@@ -63,9 +100,9 @@ Lo que **no** es la propuesta: que haya que comprarle el tablero a Tecvol para p
 
 - Qué métricas concretas se reportan (tensión, corriente, temperatura, carga de generador, horas de servicio, etc.).
 - Transporte y cadencia de la telemetría (MQTT/HTTP, celular/satelital, frecuencia de reporte, retención histórica).
-- Si hay alarmas, umbrales o notificaciones dentro del alcance.
-- Backend, base de datos, origen de datos y proveedor de autenticación.
-- Modelo de multi-tenencia. La combinación de clientes B2B y permisos **implica** que cada cliente sólo debe ver su propia flota; el límite exacto de aislamiento no está confirmado y hay que establecerlo antes de modelar datos.
+- Por qué medio se notifica una alerta disparada (en pantalla, correo, push, mensaje). Que las alertas existen y se disparan por umbral quedó confirmado el 2026-09-04; cómo salen del sistema, no.
+- Backend de telemetría y origen de datos. El **proveedor de autenticación y el motor de base de datos salieron de esta lista el 2026-09-04** (ver Stack); por dónde llegan las lecturas de los microcontroladores, no.
+- Detalle del modelo multi-cliente. Que el sistema sirve a varios clientes y que sólo `superadmin` cruza el corte quedó confirmado el 2026-09-04, y cada sesión ya viaja con su cliente. Falta la política fina: qué pasa con un astillero que trabaja para varios armadores, si un usuario puede pertenecer a más de un cliente, y quién da de alta a los usuarios de un cliente nuevo. Hay que establecerlo antes de modelar datos.
 - Objetivo de despliegue.
 
 ## Brand Commitments

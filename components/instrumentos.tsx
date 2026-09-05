@@ -432,3 +432,73 @@ export function Interruptor({
     </button>
   );
 }
+
+/**
+ * Símbolo grabado del frente de tablero: la puerta, su moldura, el instrumento
+ * y las lecturas al costado.
+ *
+ * El resumen se dibuja como lo que es —el frente entero de un vistazo— y no
+ * como una casa, que en una sala de máquinas no significa nada. Toma el color
+ * del rótulo: es serigrafía sobre la chapa, no una segunda señal naranja.
+ */
+export function SimboloFrente() {
+  return (
+    <svg className="simbolo-frente" viewBox="0 0 24 24" aria-hidden="true">
+      {/* la puerta y su moldura */}
+      <path d="M2.8 3.8 H21.2 V20.2 H2.8 Z" />
+      <path d="M2.8 7.6 H21.2" />
+      {/* el instrumento, con la aguja fuera del cero */}
+      <circle cx="8.6" cy="14.2" r="3.4" />
+      <path d="M8.6 14.2 L10.7 11.9" />
+      {/* las lecturas */}
+      <path d="M14.4 11.6 H19" />
+      <path d="M14.4 14.4 H19" />
+      <path d="M14.4 17.2 H17.2" />
+    </svg>
+  );
+}
+
+/**
+ * Símbolo grabado de Personal: dos operarios.
+ *
+ * El personal de la empresa son los administradores y encargados que la operan;
+ * el dibujo es la gente, no una tarjeta de identidad. Toma el color del rótulo.
+ */
+export function SimboloPersonal() {
+  return (
+    <svg className="simbolo-frente" viewBox="0 0 24 24" aria-hidden="true">
+      {/* el de adelante */}
+      <circle cx="9" cy="8.2" r="3.2" />
+      <path d="M3.5 19.5 C3.5 15.4 5.9 13.6 9 13.6 C12.1 13.6 14.5 15.4 14.5 19.5" />
+      {/* el de atrás, corrido */}
+      <circle cx="16.6" cy="9.2" r="2.5" />
+      <path d="M15.2 14 C18.2 14 20.5 15.6 20.5 19.2" />
+    </svg>
+  );
+}
+
+/**
+ * Símbolo grabado de Dispositivos: un microcontrolador con sus patas.
+ *
+ * Es lo que el producto instala sobre el equipo para que reporte: un integrado
+ * con su núcleo y sus pines. No es un engranaje ni una tuerca —eso sería el
+ * equipo, no el que lo mide—. Toma el color del rótulo.
+ */
+export function SimboloDispositivos() {
+  return (
+    <svg className="simbolo-frente" viewBox="0 0 24 24" aria-hidden="true">
+      {/* el cuerpo y el núcleo */}
+      <rect x="7" y="7" width="10" height="10" />
+      <rect x="10" y="10" width="4" height="4" />
+      {/* las patas: dos por lado */}
+      <path d="M10 7 V4.4" />
+      <path d="M14 7 V4.4" />
+      <path d="M10 17 V19.6" />
+      <path d="M14 17 V19.6" />
+      <path d="M7 10 H4.4" />
+      <path d="M7 14 H4.4" />
+      <path d="M17 10 H19.6" />
+      <path d="M17 14 H19.6" />
+    </svg>
+  );
+}
