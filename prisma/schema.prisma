@@ -1,0 +1,107 @@
+// Database schema.
+//
+// This first version is the roster: clients, users and their roles. It is what
+// lib/auth/usuarios.ts has been declaring since day one would become a table.
+// Measurements are deliberately absent: their shape is defined by the
+// microcontroller that reports them, and that is not decided yet.
+//
+// Models are singular PascalCase because that is how the Prisma client names
+// them; tables are plural snake_case, which is how they read in Adminer and in
+// a dump. Plural also sidesteps `user`, a reserved word in Postgres that would
+// need quoting in every hand-written query.
+//
+// Note: enum VALUES stay in Spanish. They are domain data, not identifiers —
+// they travel inside already-issued JWTs and lib/auth/roles.ts is built on
+// them. Renaming those is part of the wider refactor, not of this file.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // Migrations do not go through the pooler: see .env.example.
+  directUrl = env("DIRECT_URL")
+}
+
+/// The three hierarchical roles from lib/auth/roles.ts.
+///
+/// A Postgres enum rather than free text: a mistyped role would be accepted by
+/// a text column and sit there, granting nothing, until someone cannot work.
+/// Adding a role costs a migration, which is exactly the right amount of
+/// ceremony.
+enum Role {
+  superadmin
+  admin
+  encargado
+
+  @@map("role")
+}
+
+/// A registered company. This is the system's isolation boundary: each client
+/// sees only its own, and only the `cliente:cruzar` permission crosses it.
+model Client {
+  /// A hand-picked slug — "tecvol" — not a generated id: it travels inside
+  /// every session token and is read in logs.
+  id     String  @id
+  label  String
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  users User[]
+
+  @@map("clients")
+}
+
+model User {
+  /// Generated, except for seeded users, which keep theirs: the id travels
+  /// inside already-issued JWTs and changing it signs everyone out.
+  id String @id @default(cuid())
+
+  /// Always stored normalised — trimmed and lowercased — because the unique
+  /// index is case-sensitive and "Demo" and "demo" would be two people.
+  /// Whoever writes goes through the same normalisation as whoever looks up.
+  username String @unique
+  name     String
+
+  /// scrypt$N$r$p$salt$hash — see lib/auth/contrasena.ts. Never leaves the
+  /// server: the types that travel to the client carry no hash.
+  hash String
+
+  clientId String @map("client_id")
+
+  /// Credential version. Bumping it invalidates that user's open sessions on
+  /// their next refresh, with no revoked-token list to keep. It is bumped when
+  /// the password changes or a role is taken away.
+  credentialVersion Int @default(1) @map("credential_version")
+
+  /// Soft delete. A user is never removed: records keep naming them.
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  client Client     @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  roles  UserRole[]
+
+  @@index([clientId])
+  @@map("users")
+}
+
+/// A user's roles, one per row.
+///
+/// A table and not a column, because a user really can hold several: the
+/// product shows an administrator who may or may not also be an encargado, and
+/// a single column cannot express that.
+model UserRole {
+  userId    String   @map("user_id")
+  role      Role
+  grantedAt DateTime @default(now()) @map("granted_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, role])
+  @@map("user_roles")
+}

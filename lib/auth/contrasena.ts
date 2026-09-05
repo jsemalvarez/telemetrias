@@ -29,6 +29,12 @@ const P = 1;
 const LARGO = 32;
 const MAXMEM = 64 * 1024 * 1024;
 
+/* El largo mínimo de una contraseña vive en ./reglas y no acá: también lo
+   necesita la pantalla del alta, que no puede importar este módulo porque
+   arrastra `node:crypto` al navegador. Se reexporta para que quien ya hashea no
+   tenga que saber de dos archivos. */
+export { CLAVE_MINIMA } from './reglas';
+
 export async function hashear(clave: string) {
   const sal = randomBytes(16);
   const hash = (await scryptAsync(clave.normalize('NFKC'), sal, LARGO, {
