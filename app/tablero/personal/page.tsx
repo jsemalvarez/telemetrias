@@ -25,7 +25,7 @@ export default async function PersonalRuta() {
 
   return (
     <Personal
-      empresa={rotuloCliente(sesion.cliente)}
+      empresa={await rotuloCliente(sesion.cliente)}
       personal={await personalDe(sesion.cliente)}
       puedeCrear={puede(sesion, 'personal:crear')}
     />

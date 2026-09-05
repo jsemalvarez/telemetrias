@@ -22,5 +22,5 @@ export default async function DispositivosRuta() {
   const sesion = await sesionActual();
   if (!puede(sesion, 'umbral:definir') || !sesion) redirect('/tablero');
 
-  return <Dispositivos empresa={rotuloCliente(sesion.cliente)} />;
+  return <Dispositivos empresa={await rotuloCliente(sesion.cliente)} />;
 }

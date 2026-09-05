@@ -36,8 +36,9 @@ export function Personal({
             <div className="registro__texto">
               <h1>Personal</h1>
               <p>
-                Los administradores y encargados de {empresa}. El administrador da de alta al
-                personal de su empresa; el encargado no llega a esta pantalla.
+                Los administradores y encargados de {empresa} — el personal que opera la
+                empresa. El administrador los da de alta; el encargado no llega a esta
+                pantalla.
               </p>
             </div>
 
@@ -65,8 +66,8 @@ export function Personal({
           </ul>
 
           <p className="registro__nota">
-            El alta queda sin tensión hasta que esté conectada la base: hoy el personal está
-            sembrado en código y esta lista lo lee de ahí.
+            Esta lista sale de la base. El alta de personal es lo próximo que se conecta: hoy
+            el alta la hace Tecvol junto con la de la empresa.
           </p>
         </div>
       </div>

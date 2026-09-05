@@ -1,3 +1,9 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { CLAVE_MINIMA } from '@/lib/auth/reglas';
+import { aIdentificador } from '@/lib/identificador';
 import type { Cliente } from '@/lib/auth/usuarios';
 import { Interruptor } from './instrumentos';
 
@@ -10,14 +16,13 @@ import { Interruptor } from './instrumentos';
  * es una lectura del padrón, no una tarjeta— con el identificador que viaja en
  * el token de sus sesiones.
  *
- * Usa el panel de registro (`registro`, `fila`) que comparten los tres listados
- * del panel: no re-dibuja un panel propio, monta el que este mundo ya tiene.
- *
- * El alta existe como pulsador y está sin tensión: no hay base todavía, y una
- * pantalla de este mundo no finge un alta que no puede guardar. La lámpara
- * apagada es exactamente eso, y el pie de la chapa dice por qué.
+ * El alta ya tiene tensión: −S5 baja el riel −X5 y el alta va a la base. Da de
+ * alta la empresa y su primer administrador de una sola vez, porque una empresa
+ * sin administrador no la puede abrir nadie.
  */
 export function Clientes({ clientes, puedeCrear }: { clientes: Cliente[]; puedeCrear: boolean }) {
+  const [abierto, setAbierto] = useState(false);
+
   return (
     <main className="registro" id="contenido">
       <div className="marco">
@@ -36,11 +41,17 @@ export function Clientes({ clientes, puedeCrear }: { clientes: Cliente[]; puedeC
             </div>
 
             {puedeCrear ? (
-              <Interruptor designacion="−S5" className="registro__accion" disabled>
-                Crear cliente
+              <Interruptor
+                designacion="−S5"
+                className="registro__accion"
+                onClick={() => setAbierto((estaba) => !estaba)}
+              >
+                {abierto ? 'Cerrar alta' : 'Crear cliente'}
               </Interruptor>
             ) : null}
           </div>
+
+          {puedeCrear && abierto ? <AltaCliente alCerrar={() => setAbierto(false)} /> : null}
 
           <ul className="registro__lista">
             {clientes.map((cliente) => (
@@ -54,13 +65,228 @@ export function Clientes({ clientes, puedeCrear }: { clientes: Cliente[]; puedeC
               </li>
             ))}
           </ul>
-
-          <p className="registro__nota">
-            El alta queda sin tensión hasta que esté conectada la base: hoy el padrón está sembrado
-            en código y esta lista lo lee de ahí.
-          </p>
         </div>
       </div>
     </main>
+  );
+}
+
+type Estado = 'listo' | 'dando' | 'ok';
+
+/**
+ * El riel del alta (−X5).
+ *
+ * Un solo formulario para las dos cosas. El identificador no se tipea: se
+ * deriva del nombre y se muestra mientras se escribe, porque es lo que va a
+ * viajar en el token de esa empresa y quien da el alta tiene derecho a verlo
+ * antes de apretar. El servidor lo vuelve a derivar por su cuenta — lo que
+ * llega del navegador no se usa para nombrar nada.
+ */
+function AltaCliente({ alCerrar }: { alCerrar: () => void }) {
+  const router = useRouter();
+  const [empresa, setEmpresa] = useState('');
+  const [nombre, setNombre] = useState('');
+  const [usuario, setUsuario] = useState('');
+  const [clave, setClave] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [estado, setEstado] = useState<Estado>('listo');
+  const aviso = useRef<HTMLDivElement>(null);
+  const primero = useRef<HTMLInputElement>(null);
+
+  /* El riel se abrió por una acción del usuario: el foco va al primer borne y
+     no lo obliga a buscarlo con el tabulador. */
+  useEffect(() => {
+    primero.current?.focus();
+  }, []);
+
+  const identificador = aIdentificador(empresa);
+
+  const enviar = async (ev: React.FormEvent) => {
+    ev.preventDefault();
+
+    if (!empresa.trim() || !nombre.trim() || !usuario.trim() || !clave) {
+      setError('Faltan datos: hay que completar los cuatro bornes.');
+      aviso.current?.focus();
+      return;
+    }
+
+    setError(null);
+    setEstado('dando');
+
+    let respuesta: Response;
+    try {
+      respuesta = await fetch('/api/clientes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          empresa: empresa.trim(),
+          admin: { usuario: usuario.trim(), nombre: nombre.trim(), clave },
+        }),
+      });
+    } catch {
+      /* En este producto quedarse sin señal es normal, no una falla. */
+      setEstado('listo');
+      setError('No hay enlace con el servidor. Revisá la conexión y probá de nuevo.');
+      aviso.current?.focus();
+      return;
+    }
+
+    const cuerpo = await respuesta.json().catch(() => null);
+
+    if (!respuesta.ok) {
+      setEstado('listo');
+      setError(typeof cuerpo?.mensaje === 'string' ? cuerpo.mensaje : 'No se pudo dar el alta.');
+      aviso.current?.focus();
+      return;
+    }
+
+    setEstado('ok');
+    alCerrar();
+    /* La lista la arma el servidor: se le pide que la relea en vez de meter la
+       fila a mano acá, así lo que se ve es lo que quedó guardado. */
+    router.refresh();
+  };
+
+  const malo = Boolean(error);
+
+  return (
+    <form className="regleta regleta--alta" onSubmit={enviar} noValidate>
+      <div className="regleta__chapa">
+        <span className="serigrafia">−X5 · Alta de empresa</span>
+      </div>
+
+      {error && (
+        <div className="aviso aviso--error regleta__aviso" role="alert" tabIndex={-1} ref={aviso}>
+          {error}
+        </div>
+      )}
+
+      <div className="regleta__riel">
+        <p className="borne">
+          <span className="borne__cabeza">
+            <label className="campo__etiqueta" htmlFor="empresa">
+              Empresa
+            </label>
+            <span className="serigrafia borne__designacion" aria-hidden="true">
+              −X5:1
+            </span>
+          </span>
+          <span className="hueco hueco--campo">
+            <input
+              id="empresa"
+              name="empresa"
+              type="text"
+              className="campo__entrada"
+              value={empresa}
+              onChange={(e) => setEmpresa(e.target.value)}
+              ref={primero}
+              autoComplete="organization"
+              spellCheck={false}
+              aria-describedby="empresa-id"
+              aria-invalid={malo || undefined}
+            />
+          </span>
+          <span className="borne__pie" id="empresa-id">
+            {identificador ? (
+              <>
+                Identificador: <span className="cifra">{identificador}</span>
+              </>
+            ) : (
+              'El identificador sale del nombre.'
+            )}
+          </span>
+        </p>
+
+        <p className="borne">
+          <span className="borne__cabeza">
+            <label className="campo__etiqueta" htmlFor="admin-nombre">
+              Administrador
+            </label>
+            <span className="serigrafia borne__designacion" aria-hidden="true">
+              −X5:2
+            </span>
+          </span>
+          <span className="hueco hueco--campo">
+            <input
+              id="admin-nombre"
+              name="admin-nombre"
+              type="text"
+              className="campo__entrada"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              autoComplete="name"
+              aria-describedby="admin-nombre-pie"
+              aria-invalid={malo || undefined}
+            />
+          </span>
+          <span className="borne__pie" id="admin-nombre-pie">
+            Su nombre, como se muestra en pantalla.
+          </span>
+        </p>
+
+        <p className="borne">
+          <span className="borne__cabeza">
+            <label className="campo__etiqueta" htmlFor="admin-usuario">
+              Usuario
+            </label>
+            <span className="serigrafia borne__designacion" aria-hidden="true">
+              −X5:3
+            </span>
+          </span>
+          <span className="hueco hueco--campo">
+            <input
+              id="admin-usuario"
+              name="admin-usuario"
+              type="text"
+              className="campo__entrada"
+              value={usuario}
+              onChange={(e) => setUsuario(e.target.value)}
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              aria-describedby="admin-usuario-pie"
+              aria-invalid={malo || undefined}
+            />
+          </span>
+          <span className="borne__pie" id="admin-usuario-pie">
+            Con esto entra al sistema.
+          </span>
+        </p>
+
+        <p className="borne">
+          <span className="borne__cabeza">
+            <label className="campo__etiqueta" htmlFor="admin-clave">
+              Contraseña
+            </label>
+            <span className="serigrafia borne__designacion" aria-hidden="true">
+              −X5:4
+            </span>
+          </span>
+          <span className="hueco hueco--campo">
+            <input
+              id="admin-clave"
+              name="admin-clave"
+              type="password"
+              className="campo__entrada"
+              value={clave}
+              onChange={(e) => setClave(e.target.value)}
+              autoComplete="new-password"
+              aria-describedby="admin-clave-pie"
+              aria-invalid={malo || undefined}
+            />
+          </span>
+          <span className="borne__pie" id="admin-clave-pie">
+            Mínimo {CLAVE_MINIMA} caracteres. Se la entregás vos; el sistema no la muestra
+            nunca más.
+          </span>
+        </p>
+
+        <div className="borne borne--llave">
+          <Interruptor type="submit" designacion="−Q5" disabled={estado !== 'listo'}>
+            {estado === 'listo' ? 'Dar de alta' : 'Dando de alta…'}
+          </Interruptor>
+        </div>
+      </div>
+    </form>
   );
 }

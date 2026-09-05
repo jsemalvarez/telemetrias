@@ -1814,6 +1814,23 @@
   padding: var(--e4);
 }
 
+/* El riel del alta baja dentro del panel del padron: se alinea con la lista
+   -mismo margen lateral- y deja aire abajo para no quedar pegado a la primera
+   fila. Se lee como un modulo que se monto sobre el riel, no como una fila mas.
+   El fondo y el filo se los da .regleta, que ya lleva puestos. */
+.regleta--alta {
+  margin: 0 var(--e5) var(--e5);
+}
+
+/* La leyenda bajo un borne: que se espera ahi, o que va a quedar guardado.
+   No lleva .serigrafia a proposito -esa es versalita con tracking ancho, que
+   sirve para rotular -X5:1 y vuelve ilegible una frase entera-. */
+.borne__pie {
+  font-size: var(--t4);
+  color: var(--gris);
+  line-height: 1.45;
+}
+
 /* --------------------------- Chapas del pie --------------------------- */
 
 .acceso__chapas {
