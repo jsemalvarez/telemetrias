@@ -32,6 +32,7 @@ export default async function PersonalRuta() {
   return (
     <Personal
       empresa={await rotuloCliente(sesion.cliente)}
+      cliente={sesion.cliente}
       personal={await personalDe(sesion.cliente)}
       otorgables={otorgables}
       yo={sesion.id}

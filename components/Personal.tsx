@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CLAVE_MINIMA, esCorreo } from '@/lib/auth/reglas';
 import { ROTULO_ROL, type Rol } from '@/lib/auth/roles';
 import type { Miembro } from '@/lib/auth/usuarios';
-import { Interruptor } from './instrumentos';
+import { Interruptor, Piloto } from './instrumentos';
 
 /**
  * Padrón de personal (−A2): lo que ve el administrador de una empresa.
@@ -33,16 +33,26 @@ type Panel = null | { tipo: 'alta' } | { tipo: 'clave'; miembro: Miembro };
 
 export function Personal({
   empresa,
+  cliente,
   personal,
   otorgables,
   yo,
+  volver,
 }: {
   empresa: string;
+  /** El identificador de la empresa, que es lo que viaja en el alta. */
+  cliente: string;
   personal: Miembro[];
   /** Los roles que esta sesión puede dar de alta, ya resueltos por el servidor. */
   otorgables: Rol[];
   /** Quién está mirando. Nadie se restablece su propia clave desde acá. */
   yo: string;
+  /**
+   * Por dónde se sale, cuando se entró desde algún lado. El admin está en su
+   * propia empresa y no tiene de dónde volver; el super entró desde el padrón
+   * de clientes y tiene que poder ver que está adentro de una, y salir.
+   */
+  volver?: { href: string; rotulo: string };
 }) {
   const [panel, setPanel] = useState<Panel>(null);
   const puedeCrear = otorgables.length > 0;
@@ -65,6 +75,11 @@ export function Personal({
 
           <div className="registro__cabeza">
             <div className="registro__texto">
+              {volver ? (
+                <a className="registro__volver" href={volver.href}>
+                  <span aria-hidden="true">←</span> {volver.rotulo}
+                </a>
+              ) : null}
               <h1>Personal</h1>
               <p>
                 Los administradores y encargados de {empresa} — el personal que opera la
@@ -87,7 +102,11 @@ export function Personal({
           </div>
 
           {puedeCrear && panel?.tipo === 'alta' ? (
-            <AltaMiembro rol={otorgables[0]} alCerrar={() => setPanel(null)} />
+            <AltaMiembro
+              cliente={cliente}
+              otorgables={otorgables}
+              alCerrar={() => setPanel(null)}
+            />
           ) : null}
 
           {panel?.tipo === 'clave' ? (
@@ -130,18 +149,26 @@ type Estado = 'listo' | 'dando' | 'ok';
 /**
  * El riel del alta (−X6).
  *
- * Tres bornes y ninguna llave de rol: para un administrador `rolesQueOtorga`
- * devuelve uno solo —encargado—, y una llave de una sola posición no es una
- * llave. Por eso el rol va grabado en la chapa en lugar de elegirse: quien da
- * el alta ve qué está por crear sin tener que decidirlo.
+ * La llave de rol (−S8) se monta sólo si hay más de una posición. Para un
+ * administrador `rolesQueOtorga` devuelve una sola —encargado— y una llave de
+ * una sola posición no es una llave: ahí el rol va grabado en la chapa y no se
+ * elige. El super parado adentro de un cliente puede otorgar dos, así que a él
+ * la llave le aparece. Es la misma pieza decidiendo las dos veces; la pantalla
+ * no sabe de roles, dibuja lo que el servidor le pasó.
  *
- * El día que entre alguien que pueda otorgar más de uno —un super parado
- * adentro de una empresa, que hoy no tiene por dónde—, acá va una llave
- * selectora con las posiciones que traiga `otorgables`. El servidor ya la
- * valida: `rolesQueOtorga` decide, este formulario sólo la dibuja.
+ * La chapa dice siempre qué se está por crear, gire donde gire la llave.
  */
-function AltaMiembro({ rol, alCerrar }: { rol: Rol; alCerrar: () => void }) {
+function AltaMiembro({
+  cliente,
+  otorgables,
+  alCerrar,
+}: {
+  cliente: string;
+  otorgables: Rol[];
+  alCerrar: () => void;
+}) {
   const router = useRouter();
+  const [rol, setRol] = useState<Rol>(otorgables[0]);
   const [nombre, setNombre] = useState('');
   const [correo, setCorreo] = useState('');
   const [clave, setClave] = useState('');
@@ -190,6 +217,9 @@ function AltaMiembro({ rol, alCerrar }: { rol: Rol; alCerrar: () => void }) {
           /* Va una lista porque una persona puede llevar varios roles; hoy la
              pantalla manda uno. Cuál puede ser lo decidió el servidor. */
           roles: [rol],
+          /* La empresa donde cae el alta. El servidor no la cree: la pasa por
+             `alcanzaCliente` antes de escribir nada. */
+          cliente,
         }),
       });
     } catch {
@@ -231,6 +261,34 @@ function AltaMiembro({ rol, alCerrar }: { rol: Rol; alCerrar: () => void }) {
       )}
 
       <div className="regleta__riel">
+        {otorgables.length > 1 ? (
+          <p className="borne">
+            <span className="borne__cabeza">
+              <span className="campo__etiqueta" id="miembro-rol">
+                Rol
+              </span>
+              <span className="serigrafia borne__designacion" aria-hidden="true">
+                −S8
+              </span>
+            </span>
+            <span className="borne__posiciones" role="radiogroup" aria-labelledby="miembro-rol">
+              {otorgables.map((posicion) => (
+                <button
+                  key={posicion}
+                  type="button"
+                  role="radio"
+                  aria-checked={posicion === rol}
+                  className="borne__posicion"
+                  onClick={() => setRol(posicion)}
+                >
+                  <Piloto encendida={posicion === rol} etiqueta={ROTULO_ROL[posicion]} />
+                </button>
+              ))}
+            </span>
+            <span className="borne__pie">Con qué alcance entra al sistema.</span>
+          </p>
+        ) : null}
+
         <p className="borne">
           <span className="borne__cabeza">
             <label className="campo__etiqueta" htmlFor="miembro-nombre">

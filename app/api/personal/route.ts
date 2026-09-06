@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 import { hashear } from '@/lib/auth/contrasena';
 import { CLAVE_MINIMA, esCorreo, normalizarCorreo } from '@/lib/auth/reglas';
-import { ROTULO_ROL, esRol, normalizarRoles, puede, rolesQueOtorga } from '@/lib/auth/roles';
+import {
+  ROTULO_ROL,
+  alcanzaCliente,
+  esRol,
+  normalizarRoles,
+  puede,
+  rolesQueOtorga,
+} from '@/lib/auth/roles';
 import { sesionActual } from '@/lib/auth/servidor';
 import { crearMiembro, duenoDelCorreo } from '@/lib/auth/usuarios';
 
@@ -12,13 +19,17 @@ export const dynamic = 'force-dynamic';
 /**
  * Alta de una persona en el padrón de una empresa.
  *
- * Es el alta del administrador: da de alta a los encargados que operan su
- * empresa. Dos cosas la sostienen, y las dos son estructurales y no chequeos de
- * trámite:
+ * Es el alta del administrador —da de alta a los encargados que operan su
+ * empresa— y también la del super parado adentro de un cliente. Dos cosas la
+ * sostienen, y las dos son estructurales y no chequeos de trámite:
  *
- *   — **La empresa no viaja en el pedido.** Sale de la sesión. Un `cliente` que
- *     llegara del navegador sería un campo para sembrar usuarios en el padrón
- *     ajeno, y el aislamiento que promete el producto se cae por ahí.
+ *   — **La empresa se decide con `alcanzaCliente`.** Puede venir en el pedido,
+ *     porque el super da de alta adentro de una empresa que no es la suya, pero
+ *     no se usa sin pasar por ahí: quien no cruza el corte sólo alcanza la
+ *     propia, y mandar el identificador de otra no lo lleva a ningún lado.
+ *     Ausente, es la de la sesión. Lo que nunca puede pasar es que un
+ *     administrador siembre usuarios en el padrón de al lado, y eso lo decide
+ *     el permiso, no la ausencia del campo.
  *
  *   — **El rol pedido se valida contra `rolesQueOtorga`.** Sin eso,
  *     `personal:crear` es un permiso plano y alcanza con pedir `superadmin` en
@@ -30,7 +41,13 @@ export const dynamic = 'force-dynamic';
  * quién la firmó.
  */
 
-type Cuerpo = { correo?: unknown; nombre?: unknown; clave?: unknown; roles?: unknown };
+type Cuerpo = {
+  correo?: unknown;
+  nombre?: unknown;
+  clave?: unknown;
+  roles?: unknown;
+  cliente?: unknown;
+};
 
 const SIN_CACHE = { 'Cache-Control': 'no-store' };
 
@@ -63,6 +80,14 @@ export async function POST(pedido: Request) {
   const correo = normalizarCorreo(texto(cuerpo.correo));
   const nombre = texto(cuerpo.nombre);
   const clave = typeof cuerpo.clave === 'string' ? cuerpo.clave : '';
+
+  /* La empresa del alta. Sin `alcanzaCliente` esta línea sería el agujero por
+     donde un administrador escribe en el padrón ajeno; con ella, el campo sólo
+     le sirve a quien ya podía cruzar el corte. */
+  const cliente = texto(cuerpo.cliente) || sesion.cliente;
+  if (!alcanzaCliente(sesion, cliente)) {
+    return error('cliente', 'Esta sesión no alcanza esa empresa.', 403);
+  }
 
   if (!correo || !nombre || !clave) {
     return error('faltan', 'Faltan datos: hay que completar los tres bornes.', 400);
@@ -104,7 +129,7 @@ export async function POST(pedido: Request) {
        corto a propósito — el índice de correos es único en todo el sistema, y
        decir de quién es sería contarle el padrón ajeno a alguien que no cruza
        ese corte. */
-    const alcanza = tomado.cliente === sesion.cliente || puede(sesion, 'cliente:cruzar');
+    const alcanza = tomado.cliente === cliente || puede(sesion, 'cliente:cruzar');
     return error(
       'correo-repetido',
       alcanza
@@ -118,7 +143,7 @@ export async function POST(pedido: Request) {
 
   try {
     const miembro = await crearMiembro({
-      cliente: sesion.cliente,
+      cliente,
       correo,
       nombre,
       hash,

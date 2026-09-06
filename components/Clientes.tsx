@@ -55,8 +55,16 @@ export function Clientes({ clientes, puedeCrear }: { clientes: Cliente[]; puedeC
 
           <ul className="registro__lista">
             {clientes.map((cliente) => (
-              <li className="hueco fila" key={cliente.id}>
-                <h2 className="fila__titulo">{cliente.rotulo}</h2>
+              <li className="hueco fila fila--enlace" key={cliente.id}>
+                {/* El enlace envuelve sólo al titular y se estira sobre la fila
+                    entera con un pseudoelemento: así el alojamiento sigue
+                    siendo la grilla que era, y lo que anuncia un lector de
+                    pantalla es el nombre de la empresa y no todo el renglón. */}
+                <h2 className="fila__titulo">
+                  <a className="fila__enlace" href={`/tablero/clientes/${cliente.id}`}>
+                    {cliente.rotulo}
+                  </a>
+                </h2>
                 <span className="fila__sub cifra">{cliente.id}</span>
                 <span className="fila__aside fila__cuenta">
                   <span className="cifra fila__numero">{cliente.usuarios}</span>

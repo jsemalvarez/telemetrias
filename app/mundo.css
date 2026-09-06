@@ -3582,3 +3582,64 @@
 .fila__accion:active {
   box-shadow: var(--rebaje);
 }
+
+/* Una fila que lleva a algún lado. El enlace envuelve el titular y se estira
+   sobre el alojamiento con un pseudoelemento: la grilla no se toca y lo que se
+   anuncia sigue siendo el nombre, no el renglón entero. */
+.fila--enlace {
+  position: relative;
+}
+.fila__enlace {
+  color: inherit;
+  text-decoration: none;
+}
+.fila__enlace::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.fila--enlace:hover .fila__titulo {
+  color: var(--naranja);
+}
+.fila__enlace:focus-visible::after {
+  outline: 2px solid var(--naranja);
+  outline-offset: -2px;
+}
+
+/* La salida de una pantalla en la que se entró desde otra. Va arriba del
+   titular y no al pie: quien está adentro de un cliente tiene que ver dónde
+   está antes de leer qué hay. */
+.registro__volver {
+  display: inline-block;
+  margin-bottom: var(--e2);
+  font-size: var(--t5);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gris);
+  text-decoration: none;
+}
+.registro__volver:hover,
+.registro__volver:focus-visible {
+  color: var(--naranja);
+}
+
+/* Las posiciones de una llave adentro de un borne. Mismo instrumento que la
+   llave de modo del riel —una lámpara por posición, encendida la que rige—,
+   montado en el riel de un formulario en vez de en una chapa colgante. */
+.borne__posiciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e4);
+}
+.borne__posicion {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.borne__posicion:hover .piloto__etiqueta {
+  color: var(--blanco);
+}
