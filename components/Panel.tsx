@@ -49,12 +49,20 @@ export function Panel({
   const { dispositivos, ahora, enlace, modo } = usePanelVivo(iniciales, ahoraDelServidor, cliente);
   const vivo = enlace === 'vivo';
 
-  /* La lámpara dice tres cosas distintas y no dos, porque son tres estados que
-     le importan a quien mira: el dato le está llegando empujado, lo está yendo
-     a buscar, o no hay enlace. Decir «en vivo» cuando en realidad se está
-     preguntando cada cinco segundos sería la clase de mentira chica que este
-     producto no se permite. */
-  const lampara = !vivo ? 'Sin enlace' : modo === 'empuje' ? 'En vivo' : 'Sondeo';
+  /* La lámpara dice cuatro cosas y no dos, porque son cuatro estados que le
+     importan a quien mira: el dato le llega empujado, lo va a buscar, no hay
+     enlace, o la sesión dejó de valer. Decir «en vivo» cuando en realidad se
+     pregunta cada cinco segundos —o «sin enlace» cuando el servidor está
+     perfecto y lo que venció es la sesión— es la clase de mentira chica que
+     este producto no se permite. */
+  const lampara =
+    enlace === 'sin-sesion'
+      ? 'Sin sesión'
+      : enlace === 'sin-enlace'
+        ? 'Sin enlace'
+        : modo === 'empuje'
+          ? 'En vivo'
+          : 'Sondeo';
 
   return (
     <main className="registro" id="contenido">
@@ -82,12 +90,24 @@ export function Panel({
               es lo que alguien a bordo necesita ver. Lo que no se hace es
               seguir presentándolo como si fuera de ahora — de eso se encarga
               la edad, que sigue corriendo abajo de cada número. */}
-          {vivo ? null : (
+          {enlace === 'sin-enlace' ? (
             <div className="aviso aviso--atencion regleta__aviso" role="status">
               Sin enlace con el servidor. Lo que ves es lo último que llegó, con su edad al
               pie de cada instrumento.
             </div>
-          )}
+          ) : null}
+
+          {/* Otra cosa distinta, y por eso otro cartel: el servidor puede estar
+              perfecto y la sesión haber vencido igual. Acá no hay nada que
+              esperar —hay que volver a entrar— así que lo que se ofrece es esa
+              puerta y no una explicación. */}
+          {enlace === 'sin-sesion' ? (
+            <div className="aviso aviso--error regleta__aviso" role="alert">
+              Tu sesión venció o dejó de alcanzar esta pantalla. Los números de abajo son los
+              últimos que llegaron y ya no se están actualizando.{' '}
+              <a href="/login?destino=/tablero">Volvé a entrar</a> para seguir viendo.
+            </div>
+          ) : null}
 
           {dispositivos.length ? (
             <div className="panel__equipos">

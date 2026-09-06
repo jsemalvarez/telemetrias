@@ -78,7 +78,20 @@ const ESPERA_MAXIMA_MS = 30_000;
 /** Con cuánta anticipación se renueva el pase del canal antes de que venza. */
 const MARGEN_RENOVACION_MS = 5 * 60_000;
 
-export type Enlace = 'vivo' | 'sin-enlace';
+/**
+ * En qué estado está lo que se ve.
+ *
+ * `sin-sesion` es un estado propio y no un caso de `sin-enlace`, y la
+ * distinción no es cosmética: el servidor puede estar perfecto y la sesión
+ * haber vencido igual. Decir «sin enlace con el servidor» ahí es echarle la
+ * culpa a la red por algo que es de la aplicación, y deja a quien mira
+ * revisando el wifi de un buque durante diez minutos. Además la salida es
+ * otra: sin enlace se espera, sin sesión se vuelve a entrar.
+ */
+export type Enlace = 'vivo' | 'sin-enlace' | 'sin-sesion';
+
+/** Lo que se levanta cuando ni el refresco alcanzó. */
+class SinSesion extends Error {}
 
 /** Por dónde está llegando el dato ahora mismo. */
 export type Modo = 'empuje' | 'sondeo';
@@ -145,9 +158,27 @@ export function usePanelVivo(
    * llegó a destino, que es otra cosa que si trajo novedades.
    */
   const refrescar = useCallback(async (): Promise<boolean> => {
-    const respuesta = await fetch(`/api/lecturas?cliente=${encodeURIComponent(cliente)}`, {
-      cache: 'no-store',
-    });
+    const pedir = () =>
+      fetch(`/api/lecturas?cliente=${encodeURIComponent(cliente)}`, { cache: 'no-store' });
+
+    let respuesta = await pedir();
+
+    /* El acceso dura media hora y el refresco treinta días, así que un 401 o un
+       403 acá casi siempre es un acceso vencido con un refresco intacto
+       esperando. El middleware lo renueva cuando alguien navega, pero una
+       pantalla abierta no navega nunca: se queda mirando y a la media hora
+       empieza a fallar sola. Por eso se renueva desde acá y se reintenta una
+       vez, que es exactamente para lo que existe el POST de esa ruta. */
+    if (respuesta.status === 401 || respuesta.status === 403) {
+      const renovado = await fetch('/api/auth/refrescar', { method: 'POST' });
+      if (!renovado.ok) throw new SinSesion();
+      respuesta = await pedir();
+      /* Renovó y sigue sin alcanzar: la sesión vive pero ya no habilita esta
+         pantalla —le retiraron un rol, cambió de modo—. La salida es la misma,
+         volver a entrar, y por eso comparten estado. */
+      if (respuesta.status === 401 || respuesta.status === 403) throw new SinSesion();
+    }
+
     if (!respuesta.ok) throw new Error(String(respuesta.status));
     const cuerpo = await respuesta.json();
 
@@ -197,8 +228,17 @@ export function usePanelVivo(
         fallos = 0;
         quietas.current = cambio ? 0 : quietas.current + 1;
         programar(proximaEspera());
-      } catch {
+      } catch (falla) {
         if (!montado) return;
+
+        /* Sin sesión no se reintenta. Seguir preguntando con una credencial que
+           no vale es ruido contra el servidor y, peor, deja el cartel de «sin
+           enlace» tapando el único mensaje que le sirve a quien mira. */
+        if (falla instanceof SinSesion) {
+          setEnlace('sin-sesion');
+          return;
+        }
+
         fallos += 1;
         /* No se declara la pérdida al primer tropiezo: un pedido que se cae es
            lo normal en un muelle. Se declara cuando ya no es un tropiezo. */
