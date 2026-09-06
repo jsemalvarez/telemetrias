@@ -5,6 +5,7 @@ import { puede } from '@/lib/auth/roles';
 import { sesionActual } from '@/lib/auth/servidor';
 import { rotuloCliente } from '@/lib/auth/usuarios';
 import { padronDe } from '@/lib/dispositivos/padron';
+import { ultimasDelPadron } from '@/lib/telemetria/mediciones';
 
 export const metadata: Metadata = {
   title: 'Dispositivos — Monitoreo Tecvol',
@@ -37,6 +38,8 @@ export default async function DispositivosRuta() {
       enServicio={padron.enServicio}
       fueraDeServicio={padron.fueraDeServicio}
       puedeAdministrar={puede(sesion, 'dispositivo:administrar')}
+      ultimas={await ultimasDelPadron(padron)}
+      ahora={Date.now()}
     />
   );
 }

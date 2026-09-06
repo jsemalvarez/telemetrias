@@ -13,6 +13,8 @@ import {
   umbralValido,
 } from '@/lib/dispositivos/reglas';
 import type { Hermana } from '@/lib/navegacion';
+import type { Lectura } from '@/lib/telemetria/mediciones';
+import { cifraTexto, edadTexto } from '@/lib/telemetria/reglas';
 import { Contexto, Interruptor, Persianas } from './instrumentos';
 
 /**
@@ -49,12 +51,100 @@ type Panel =
 const claveDe = (panel: Panel) =>
   panel ? `${panel.tipo}:${'dispositivo' in panel ? panel.dispositivo.id : ''}` : '';
 
+/* ------------------------------ Las lecturas ------------------------------ */
+
+/**
+ * Cada cuánto se vuelve a escribir la edad de un dato.
+ *
+ * Treinta segundos porque lo más chico que dice `edadTexto` es un minuto: más
+ * seguido no cambiaría nada de lo que se ve, y más espaciado dejaría un renglón
+ * diciendo «recién» cuando ya pasaron dos minutos.
+ */
+const TIC_MS = 30_000;
+
+/**
+ * El único reloj de la pantalla.
+ *
+ * Arranca en el instante que mandó el servidor —así el primer render del
+ * navegador escribe exactamente lo mismo que se envió y no hay desajuste de
+ * hidratación— y recién después de montar pasa al reloj de verdad.
+ *
+ * Uno solo para toda la pantalla, y no uno por fila: veinte renglones con su
+ * propio intervalo son veinte relojes que se desfasan entre sí, y dos filas que
+ * midieron lo mismo terminarían diciendo edades distintas.
+ *
+ * Que la edad corra no es un adorno: una pantalla abierta desde hace tres horas
+ * mostrando «hace 2 min» es exactamente lo que el segundo principio del
+ * producto prohíbe — presentar una lectura vieja como si fuera de ahora.
+ */
+function useReloj(inicial: number) {
+  const [ahora, setAhora] = useState(inicial);
+  useEffect(() => {
+    const tic = () => setAhora(Date.now());
+    tic();
+    const reloj = setInterval(tic, TIC_MS);
+    return () => clearInterval(reloj);
+  }, []);
+  return ahora;
+}
+
+/**
+ * Lo último que dijo un equipo: la más reciente de las lecturas de todas sus
+ * magnitudes.
+ *
+ * Se comparan las cadenas ISO directamente, sin parsearlas. Todas salen del
+ * mismo `toISOString()` del servidor —mismo formato, mismo largo, siempre en
+ * UTC— así que el orden alfabético y el cronológico son el mismo, y esto se
+ * ejecuta una vez por renglón en cada tic.
+ */
+function ultimoDe(dispositivo: Dispositivo, ultimas: Record<string, Lectura>): Lectura | null {
+  let masReciente: Lectura | null = null;
+  for (const magnitud of dispositivo.magnitudes) {
+    const lectura = ultimas[magnitud.id];
+    if (lectura && (!masReciente || lectura.medidoEn > masReciente.medidoEn)) {
+      masReciente = lectura;
+    }
+  }
+  return masReciente;
+}
+
+/**
+ * Qué tan viejo es lo último que dijo un equipo, al costado de su renglón.
+ *
+ * Es la primera pregunta que alguien le hace a un padrón donde ya entran
+ * lecturas, y por eso está en la lista y no adentro del riel: «¿este equipo
+ * está hablando?» se contesta antes de abrir nada.
+ *
+ * Un equipo que nunca reportó no se deja en blanco. El renglón dice que no hay
+ * reportes, que es un hecho sobre la instalación —el fierro está declarado y
+ * todavía no habló— y no un dato faltante.
+ *
+ * La edad se mide sobre `medidoEn` y no sobre `recibidoEn`, y ésa es la
+ * pregunta correcta: lo que interesa es qué tan vieja es la medición, no qué
+ * tan reciente fue la descarga. Un buque que vuelve a rango y sube quince días
+ * juntos tiene lecturas de quince días, aunque hayan llegado hace un minuto.
+ */
+function Reporte({ lectura, ahora }: { lectura: Lectura | null; ahora: number }) {
+  return (
+    <span className={`reporte${lectura ? '' : ' reporte--mudo'}`}>
+      <span className="cifra reporte__edad">
+        {lectura ? edadTexto(ahora - Date.parse(lectura.medidoEn)) : '—'}
+      </span>
+      <span className="serigrafia reporte__pie">
+        {lectura ? 'Último reporte' : 'Sin reportes'}
+      </span>
+    </span>
+  );
+}
+
 export function Dispositivos({
   empresa,
   cliente,
   enServicio,
   fueraDeServicio,
   puedeAdministrar,
+  ultimas,
+  ahora: ahoraDelServidor,
   volver,
   hermanas,
 }: {
@@ -67,6 +157,20 @@ export function Dispositivos({
   /** Si esta sesión puede declarar equipos, además de fijarles umbrales. */
   puedeAdministrar: boolean;
   /**
+   * La última lectura de cada magnitud, por id de magnitud. Lo que no está acá
+   * es una magnitud que todavía no reportó nunca, que es el caso normal hoy.
+   */
+  ultimas: Record<string, Lectura>;
+  /**
+   * El instante en que el servidor dibujó esto.
+   *
+   * Viene como prop y no se lee un reloj acá adentro porque el primer render
+   * del navegador tiene que escribir exactamente lo mismo que escribió el
+   * servidor, o React reporta desajuste de hidratación. Después de montar, el
+   * reloj de abajo lo reemplaza por el de verdad y sigue corriendo.
+   */
+  ahora: number;
+  /**
    * Por dónde se sale, cuando se entró desde algún lado. El admin está en su
    * propia empresa y no tiene de dónde volver; el super entró desde el padrón
    * de clientes y tiene que poder ver que está adentro de una, y salir.
@@ -76,6 +180,7 @@ export function Dispositivos({
   hermanas?: Hermana[];
 }) {
   const [panel, setPanel] = useState<Panel>(null);
+  const ahora = useReloj(ahoraDelServidor);
 
   /* Apretar el mando del riel que ya está bajado lo sube. Se compara por una
      clave y no campo por campo, para que «magnitudes de éste» y «magnitudes de
@@ -131,6 +236,8 @@ export function Dispositivos({
               key={panel.dispositivo.id}
               dispositivo={panel.dispositivo}
               puedeAdministrar={puedeAdministrar}
+              ultimas={ultimas}
+              ahora={ahora}
               alCerrar={() => setPanel(null)}
             />
           ) : null}
@@ -145,6 +252,7 @@ export function Dispositivos({
                     {dispositivo.ubicacion ? <> · {dispositivo.ubicacion}</> : null}
                   </span>
                   <span className="fila__aside">
+                    <Reporte lectura={ultimoDe(dispositivo, ultimas)} ahora={ahora} />
                     {/* El chip dice cuántas magnitudes hay y abre el riel donde
                         se tocan: el dato y la acción son la misma cosa, que es
                         como se lee un borne. */}
@@ -188,13 +296,16 @@ export function Dispositivos({
             <FueraDeServicio
               dispositivos={fueraDeServicio}
               puedeAdministrar={puedeAdministrar}
+              ultimas={ultimas}
+              ahora={ahora}
             />
           ) : null}
 
           <p className="registro__nota">
-            Un dispositivo declarado no es un dispositivo reportando: el monitoreo todavía
-            no está instalado en ningún lado y no hay por dónde entren las mediciones. Esto
-            es el padrón — lo que va a estar esperando cuando el primer equipo hable.
+            Un dispositivo declarado no es un dispositivo reportando. El monitoreo todavía
+            no está instalado en ningún lado; la puerta por donde entran las mediciones ya
+            existe, y lo que se vea acá entró por ahí. Cada lectura dice de cuándo es,
+            porque un dato viejo mostrado como nuevo es peor que ninguno.
           </p>
         </div>
       </div>
@@ -215,9 +326,13 @@ export function Dispositivos({
 function FueraDeServicio({
   dispositivos,
   puedeAdministrar,
+  ultimas,
+  ahora,
 }: {
   dispositivos: Dispositivo[];
   puedeAdministrar: boolean;
+  ultimas: Record<string, Lectura>;
+  ahora: number;
 }) {
   const router = useRouter();
   const [volviendo, setVolviendo] = useState<string | null>(null);
@@ -249,8 +364,14 @@ function FueraDeServicio({
               <span className="cifra">{dispositivo.serial}</span>
               {dispositivo.ubicacion ? <> · {dispositivo.ubicacion}</> : null}
             </span>
-            {puedeAdministrar ? (
-              <span className="fila__aside">
+            {/* Un equipo dado de baja que igual sigue reportando es justo lo
+                que hay que poder ver: sus lecturas se guardan —el fierro está
+                hablando y negarlo no lo hace callar— y acá se dice desde
+                cuándo. Se muestra aunque esta sesión no pueda devolverlo al
+                servicio: el hecho es el mismo para los dos permisos. */}
+            <span className="fila__aside">
+              <Reporte lectura={ultimoDe(dispositivo, ultimas)} ahora={ahora} />
+              {puedeAdministrar ? (
                 <button
                   type="button"
                   className="fila__accion"
@@ -260,8 +381,8 @@ function FueraDeServicio({
                   {volviendo === dispositivo.id ? 'Volviendo…' : 'Volver al servicio'}
                   <span className="oculto-visual"> a {dispositivo.rotulo}</span>
                 </button>
-              </span>
-            ) : null}
+              ) : null}
+            </span>
           </li>
         ))}
       </ul>
@@ -565,10 +686,14 @@ const enTexto = (valor: number | null) => (valor === null ? '' : String(valor));
 function Magnitudes({
   dispositivo,
   puedeAdministrar,
+  ultimas,
+  ahora,
   alCerrar,
 }: {
   dispositivo: Dispositivo;
   puedeAdministrar: boolean;
+  ultimas: Record<string, Lectura>;
+  ahora: number;
   alCerrar: () => void;
 }) {
   const router = useRouter();
@@ -724,6 +849,12 @@ function Magnitudes({
             key={magnitud.id}
             magnitud={magnitud}
             designacion={`−X4:${i + 1}`}
+            /* La lectura tiene designación propia y no la del borne: es un
+               instrumento montado adentro, no un campo más del formulario. −P9
+               en adelante, que es el tramo libre del esquema para una lectura. */
+            designacionLectura={`−P${9 + i}`}
+            ultima={ultimas[magnitud.id] ?? null}
+            ahora={ahora}
             borrador={borradores[magnitud.id]}
             puedeQuitar={puedeAdministrar}
             alTocar={(cambio) => tocar(magnitud.id, cambio)}
@@ -835,6 +966,18 @@ function Magnitudes({
 }
 
 /**
+ * Cuánto se tiene que haber demorado una lectura para que valga decirlo.
+ *
+ * Diez minutos: por debajo de eso la diferencia entre cuándo se midió y cuándo
+ * llegó es el viaje normal de un mensaje, y anotarla en cada borne sería una
+ * línea de ruido en todos ellos.
+ */
+const DEMORA_QUE_IMPORTA_MS = 10 * 60_000;
+
+const demorada = (lectura: Lectura) =>
+  Date.parse(lectura.recibidoEn) - Date.parse(lectura.medidoEn) > DEMORA_QUE_IMPORTA_MS;
+
+/**
  * Un borne de magnitud: lo que mide, entre qué valores, y si se va.
  *
  * Marcada para quitar, el borne se apaga y sus campos se bloquean en vez de
@@ -844,12 +987,19 @@ function Magnitudes({
 function BorneUmbral({
   magnitud,
   designacion,
+  designacionLectura,
+  ultima,
+  ahora,
   borrador,
   puedeQuitar,
   alTocar,
 }: {
   magnitud: Magnitud;
   designacion: string;
+  designacionLectura: string;
+  /** Lo último que reportó esta magnitud, o `null` si nunca reportó. */
+  ultima: Lectura | null;
+  ahora: number;
   borrador: Borrador;
   puedeQuitar: boolean;
   alTocar: (cambio: Partial<Borrador>) => void;
@@ -908,6 +1058,25 @@ function BorneUmbral({
           </span>
         </span>
 
+        {/* La lectura se monta como el instrumento que este mundo ya tiene
+            —`lectura`, con su alojamiento rebajado y su designación arriba a la
+            derecha— y no como un tercer campo. Es la única cifra medida de toda
+            la pantalla: lo demás son valores que alguien tipeó. */}
+        <span className={`lectura umbral__lectura${ultima ? '' : ' umbral__lectura--muda'}`}>
+          <span className="serigrafia lectura__designacion" aria-hidden="true">
+            {designacionLectura}
+          </span>
+          <span className="serigrafia lectura__etiqueta">
+            {ultima ? edadTexto(ahora - Date.parse(ultima.medidoEn)) : 'Sin reportes'}
+          </span>
+          <span className="lectura__valor cifra">
+            {ultima ? cifraTexto(ultima.valor) : '—'}
+            {ultima && magnitud.unidad ? (
+              <span className="lectura__unidad">{magnitud.unidad}</span>
+            ) : null}
+          </span>
+        </span>
+
         {puedeQuitar ? (
           <button
             type="button"
@@ -928,6 +1097,14 @@ function BorneUmbral({
           <>
             Vacío quiere decir que por ese lado no se vigila. La reporta como{' '}
             <span className="cifra">{magnitud.clave}</span>.
+            {/* Cuándo se midió y cuándo llegó son dos cosas, y separarlas
+                importa justo en el caso para el que se guardan las dos fechas:
+                un buque que vuelve a rango sube quince días juntos, y esa
+                lectura es vieja aunque haya llegado recién. Se dice sólo cuando
+                las dos fechas se separaron de veras — si no, es ruido. */}
+            {ultima && demorada(ultima) ? (
+              <> Llegó {edadTexto(ahora - Date.parse(ultima.recibidoEn))}.</>
+            ) : null}
           </>
         )}
       </span>

@@ -1,6 +1,7 @@
 import 'server-only';
 import { Prisma } from '@prisma/client';
 import { db } from '../db';
+import type { Dispositivo } from '../dispositivos/padron';
 
 /**
  * Las mediciones: lo que el fierro dijo, y cuándo.
@@ -114,6 +115,32 @@ export async function ultimaPorMagnitud(magnitudes: string[]): Promise<Map<strin
   `;
 
   return new Map(filas.map((f) => [f.magnitude_id, aLectura(f)]));
+}
+
+/**
+ * Lo mismo, pero tomando el padrón que la pantalla ya tiene cargado.
+ *
+ * Existe para que las dos rutas de Dispositivos —la propia y la del super
+ * adentro de un cliente— no escriban cada una el mismo recorrido: dos copias de
+ * la misma consulta son dos consultas que un día no van a ser iguales. Es
+ * además el único lugar donde este módulo mira la forma del padrón, y lo hace
+ * con un `import type`, que se borra al compilar.
+ *
+ * Devuelve un objeto y no un mapa porque de acá viaja a un componente cliente,
+ * y lo que cruza esa frontera conviene que sea lo más llano posible.
+ *
+ * Incluye los equipos fuera de servicio a propósito: un fierro dado de baja que
+ * igual está reportando es justo lo que hay que poder ver, y sus lecturas se
+ * guardan por esa misma razón.
+ */
+export async function ultimasDelPadron(padron: {
+  enServicio: Dispositivo[];
+  fueraDeServicio: Dispositivo[];
+}): Promise<Record<string, Lectura>> {
+  const magnitudes = [...padron.enServicio, ...padron.fueraDeServicio].flatMap((d) =>
+    d.magnitudes.map((m) => m.id),
+  );
+  return Object.fromEntries(await ultimaPorMagnitud(magnitudes));
 }
 
 /**

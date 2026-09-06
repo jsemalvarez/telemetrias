@@ -5,6 +5,7 @@ import { alcanzaCliente, puede } from '@/lib/auth/roles';
 import { sesionActual } from '@/lib/auth/servidor';
 import { clienteEnServicio, rotuloCliente } from '@/lib/auth/usuarios';
 import { padronDe } from '@/lib/dispositivos/padron';
+import { ultimasDelPadron } from '@/lib/telemetria/mediciones';
 import { hermanasDe } from '@/lib/navegacion';
 
 export const metadata: Metadata = {
@@ -59,6 +60,8 @@ export default async function DispositivosDelClienteRuta({
       enServicio={padron.enServicio}
       fueraDeServicio={padron.fueraDeServicio}
       puedeAdministrar={puede(sesion, 'dispositivo:administrar')}
+      ultimas={await ultimasDelPadron(padron)}
+      ahora={Date.now()}
       volver={{ href: '/tablero', rotulo: 'Padrón de clientes' }}
       hermanas={hermanasDe(sesion, params.id, 'dispositivos')}
     />

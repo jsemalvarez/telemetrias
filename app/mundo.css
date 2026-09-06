@@ -3738,6 +3738,66 @@
   border-color: var(--naranja);
 }
 
+/* ---------------------------- Lo que reportó ----------------------------
+   La única cifra medida del padrón. Todo lo demás en estas pantallas son
+   valores que alguien tipeó; esto lo dijo un fierro. */
+
+/* Lo último que dijo un equipo, al costado de su renglón. Va en la lista y no
+   adentro del riel porque «¿este equipo está hablando?» se pregunta antes de
+   abrir nada. Alineado a la derecha, como la cuenta del padrón de clientes: el
+   costado de un renglón es donde este mundo pone sus cifras. */
+.reporte {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  text-align: right;
+}
+.reporte__edad {
+  font-size: var(--t8);
+  font-weight: 700;
+  color: var(--blanco);
+  line-height: 1.1;
+}
+/* Serigrafía sobre el fondo hondo del alojamiento, que es donde va gris-hondo. */
+.reporte__pie {
+  font-size: var(--t2);
+  color: var(--gris-hondo);
+}
+/* Un equipo que nunca reportó no se deja en blanco: se apaga. El renglón sigue
+   diciendo algo —que no hay reportes—, y eso es un hecho sobre la instalación y
+   no un dato que falta. Una lámpara apagada también informa. */
+.reporte--mudo .reporte__edad {
+  color: var(--gris-hondo);
+}
+
+/* La lectura montada adentro de un borne de magnitud. Es el instrumento que
+   este mundo ya tiene —.lectura, con su alojamiento rebajado y su designación
+   arriba a la derecha— y no un tercer campo del formulario: el mínimo y el
+   máximo se escriben, esto se lee. Toma el ancho de un campo angosto para que
+   la fila siga leyéndose como una regleta. */
+.umbral__lectura {
+  /* La misma base que un campo angosto, y no una propia: apilados en el móvil
+     los tres bloques del borne tienen que terminar en la misma línea, o el riel
+     deja un diente contra el borde derecho. */
+  flex: 0 1 9rem;
+  min-width: 0;
+  border: 1px solid #0a0d0f;
+}
+/* La edad va en la etiqueta del instrumento. Sube de --t1 a --t4 porque acá no
+   rotula una magnitud conocida sino que dice el dato del que depende que el
+   número de abajo signifique algo. */
+.umbral__lectura .lectura__etiqueta {
+  font-size: var(--t4);
+}
+.umbral__lectura .lectura__valor {
+  font-size: var(--t11);
+}
+/* Sin señal el instrumento no desaparece: queda montado y marcando raya, que es
+   exactamente lo que hace un instrumento sin señal. */
+.umbral__lectura--muda .lectura__valor {
+  color: var(--gris-hondo);
+}
+
 .fila__accion:disabled {
   color: var(--gris-hondo);
   cursor: default;
