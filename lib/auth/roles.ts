@@ -33,6 +33,7 @@ export const ROTULO_ROL: Record<Rol, string> = {
 export const PERMISOS = [
   'lectura:ver',
   'umbral:definir',
+  'dispositivo:administrar',
   'personal:ver',
   'personal:crear',
   'cliente:crear',
@@ -62,10 +63,37 @@ export type Permiso = (typeof PERMISOS)[number];
  * pantalla de Dispositivos además de la de Personal —puede todo lo que puede el
  * encargado—, y lo que distingue al encargado es que a él le falta Personal.
  * Confirmado por el usuario el 2026-09-05.
+ *
+ * `dispositivo:administrar` corta el padrón de equipos por la mitad, y ésa es
+ * la mitad que importa (2026-09-06). El encargado **fija umbrales**: entra a la
+ * pantalla con `umbral:definir`, ve los dispositivos y les pone el mínimo y el
+ * máximo que disparan la alerta. Lo que no hace es dar de alta uno, editarlo ni
+ * darlo de baja, porque eso no es configurar una alerta: es declarar que se
+ * instaló un fierro, y quien responde por el parque de una empresa es su
+ * administrador.
+ *
+ * Se llama `administrar` y no `crear` a propósito, contra el nombre tentativo
+ * con que se pidió. El permiso gobierna tres actos —alta, edición y baja— y un
+ * permiso llamado `crear` que autoriza una baja miente en el catálogo, que es
+ * el único lugar donde alguien va a ir a leer qué puede cada rol.
+ *
+ * Darlo a admin y super no mueve nada de lo que ya estaba: sigue estrictamente
+ * contenido en el super y sigue conteniendo estrictamente al encargado, así que
+ * `modosDisponibles` y `rolesQueOtorga` devuelven exactamente lo mismo que
+ * antes. Un permiso que se le agrega al admin y no al encargado ensancha esa
+ * distancia; uno que se le agregara sólo al encargado la rompería.
  */
 const POR_ROL: Record<Rol, readonly Permiso[]> = {
-  superadmin: ['lectura:ver', 'umbral:definir', 'personal:ver', 'personal:crear', 'cliente:crear', 'cliente:cruzar'],
-  admin: ['lectura:ver', 'umbral:definir', 'personal:ver', 'personal:crear'],
+  superadmin: [
+    'lectura:ver',
+    'umbral:definir',
+    'dispositivo:administrar',
+    'personal:ver',
+    'personal:crear',
+    'cliente:crear',
+    'cliente:cruzar',
+  ],
+  admin: ['lectura:ver', 'umbral:definir', 'dispositivo:administrar', 'personal:ver', 'personal:crear'],
   encargado: ['lectura:ver', 'umbral:definir'],
 };
 

@@ -50,7 +50,8 @@ model Client {
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  users User[]
+  users   User[]
+  devices Device[]
 
   @@map("clients")
 }
@@ -112,6 +113,9 @@ model User {
   createdBy User?  @relation("Alta", fields: [createdById], references: [id], onDelete: Restrict)
   creados   User[] @relation("Alta")
 
+  /* Devices this person signed for. Same `Restrict` reasoning as above. */
+  devices Device[] @relation("AltaDispositivo")
+
   @@index([clientId])
   @@map("users")
 }
@@ -130,4 +134,115 @@ model UserRole {
 
   @@id([userId, role])
   @@map("user_roles")
+}
+
+/// A microcontroller installed on a piece of equipment so that it reports.
+///
+/// This table is the roster, not the time series. A row here says a device
+/// exists, belongs to one company and reports certain magnitudes; what it has
+/// actually measured is another table, on another layer, and that layer does
+/// not exist yet.
+///
+/// Thresholds are deliberately NOT here. One microcontroller reports several
+/// magnitudes — bus voltage, current, winding temperature, power factor — and
+/// each has its own minimum and maximum. A `min`/`max` pair on this row would
+/// have to be torn out the day a device reports two things, which is the
+/// normal case and not the exception. See `Magnitude`.
+model Device {
+  id String @id @default(cuid())
+
+  /// The hardware identity the device reports as its own.
+  ///
+  /// Unique across the whole system, and this is the column that will let an
+  /// incoming message be attributed to a row: the transport is not built yet,
+  /// but whatever it turns out to be, it arrives carrying this and nothing
+  /// else that the application chose. Generated ids cannot do that job — the
+  /// microcontroller does not know its own cuid.
+  ///
+  /// It is also what a broker topic gets derived from, rather than a topic
+  /// being stored alongside it: two columns that have to agree are two columns
+  /// that will eventually disagree.
+  serial String @unique
+
+  /// What it is called on screen — "Tablero principal", "Grupo 1".
+  label String
+
+  /// Where it is installed, in the trade's own words: a hull, an engine room,
+  /// a berth. Free text and optional, because the roster does not know what
+  /// the next installation will be mounted on.
+  location String?
+
+  clientId String @map("client_id")
+
+  /// Soft delete, like a user. A device is decommissioned, never erased: its
+  /// readings will name it, and its thresholds are worth keeping for the day
+  /// the same hardware goes back into service.
+  active Boolean @default(true)
+
+  /// Who signed for this device. Null is possible for rows that predate the
+  /// author column or come from a script.
+  createdById String? @map("created_by_id")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  client     Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  createdBy  User?       @relation("AltaDispositivo", fields: [createdById], references: [id], onDelete: Restrict)
+  magnitudes Magnitude[]
+
+  @@index([clientId])
+  @@map("devices")
+}
+
+/// One quantity a device reports, with the thresholds that raise its alarm.
+///
+/// A table and not a set of columns because PRODUCT.md is explicit that which
+/// metrics get reported is undecided. An enum or a fixed column per metric
+/// would be this project deciding it by accident, and every new magnitude
+/// would cost a migration. Here a magnitude is data: someone enters it.
+model Magnitude {
+  id String @id @default(cuid())
+
+  deviceId String @map("device_id")
+
+  /// The key the device reports this magnitude under, inside its message.
+  ///
+  /// Derived from the label the same way a client id is derived from a company
+  /// name (lib/identificador.ts) — never typed by hand — so it is stable,
+  /// URL-safe and readable in a log. Unique per device: one device does not
+  /// report the same quantity twice.
+  key String
+
+  /// "Tensión de barra". The label is what a person reads; `key` is what the
+  /// hardware says.
+  label String
+
+  /// "V", "A", "°C". Optional, because a power factor has no unit and a blank
+  /// unit column would have to be faked as one.
+  unit String?
+
+  /// The thresholds that raise the alarm. Nullable, and that is the point: a
+  /// winding temperature has a maximum and no meaningful minimum, and a null
+  /// says "no threshold on that side" where a zero would say "alarm below
+  /// zero" — two different instructions to whatever ends up watching them.
+  ///
+  /// Double precision and not `Decimal`: these are instrument readings, not
+  /// money, and a Prisma `Decimal` does not cross the server→client boundary
+  /// without a translation on every screen that shows one.
+  min Float?
+  max Float?
+
+  /// Soft delete, like its device. A magnitude that has been measured cannot
+  /// be erased without erasing the history that names it.
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  /* Cascade, unlike everything else in this schema: a magnitude has no life
+     of its own away from its device. Nothing hard-deletes a device anyway. */
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, key])
+  @@map("magnitudes")
 }
