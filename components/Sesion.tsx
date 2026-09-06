@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Sesion } from '@/lib/auth/sesion';
 import { ROTULO_ROL, type Rol } from '@/lib/auth/roles';
-import { Tornillo, Interruptor } from './instrumentos';
+import { Piloto, Tornillo, Interruptor } from './instrumentos';
 
 /**
  * Identificación de sesión y salida, montadas en el riel.
@@ -32,9 +32,26 @@ export function Salida({ sesion }: { sesion: Sesion }) {
 
   return (
     <>
-      <span className="riel__sesion serigrafia">
+      {/* La lámpara de clave provisoria. Encendida mientras la contraseña la
+          sepa alguien más que su dueño, y apagada por el único acto que arregla
+          eso. No se puede descartar: un aviso que se cierra y vuelve en la
+          sesión siguiente es el que la gente aprende a ignorar. Sobrevive al
+          angosto —donde la identidad se esconde— porque es lo que importa. */}
+      {sesion.claveProvisoria ? (
+        <a
+          className="riel__lampara"
+          href="/tablero/perfil"
+          title="Tu contraseña te la puso quien te dio de alta"
+        >
+          <Piloto encendida etiqueta="Clave provisoria" />
+        </a>
+      ) : null}
+
+      {/* Tu propia identidad es la puerta a tu credencial: no hace falta un
+          mando aparte para algo que ya está escrito en el riel. */}
+      <a className="riel__sesion serigrafia" href="/tablero/perfil">
         Sesión <span className="cifra">{sesion.correo}</span>
-      </span>
+      </a>
       <button className="riel__salida" type="button" onClick={salir} disabled={saliendo}>
         {saliendo ? 'Saliendo…' : 'Salir'}
       </button>

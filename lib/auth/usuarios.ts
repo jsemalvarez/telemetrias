@@ -257,3 +257,49 @@ export async function crearMiembro(datos: {
 
   return aMiembro(fila);
 }
+
+/**
+ * Cambio de los datos propios: el nombre y la dirección.
+ *
+ * No toca los roles ni la empresa —eso lo fija quien administra a esta persona,
+ * no ella misma— ni la versión de credenciales: la identidad del token es
+ * `sub`, y ésa no se mueve. Lo que sí queda viejo es el correo que el token
+ * lleva para mostrarlo, así que quien llama reemite la sesión.
+ */
+export async function cambiarDatos(
+  id: string,
+  datos: { nombre: string; correo: string },
+): Promise<Usuario> {
+  const fila = await db.user.update({
+    where: { id },
+    data: { name: datos.nombre, email: normalizarCorreo(datos.correo) },
+    include: CON_ROLES,
+  });
+  return aUsuario(fila);
+}
+
+/**
+ * Cambio de la contraseña propia.
+ *
+ * Sube la versión de credenciales en la misma escritura, y eso **cierra todas
+ * las sesiones abiertas** de esta persona en su próximo refresco. Es lo que
+ * tiene que pasar: la razón más común para cambiar una contraseña es sospechar
+ * que otro la sabe, y dejar viva la sesión que ese otro tiene abierta haría que
+ * el cambio no sirviera de nada.
+ *
+ * La sesión desde la que se hace el cambio queda cerrada también. Quien llama
+ * la reemite; si se olvida, la persona cambia su contraseña y el sistema la
+ * escupe al acceso.
+ *
+ * Y apaga `provisionalPassword`. Éste es el único lugar del sistema donde
+ * alguien tipea una contraseña que nadie le dictó, así que es el único que
+ * puede apagarlo.
+ */
+export async function cambiarClave(id: string, hash: string): Promise<Usuario> {
+  const fila = await db.user.update({
+    where: { id },
+    data: { hash, provisionalPassword: false, credentialVersion: { increment: 1 } },
+    include: CON_ROLES,
+  });
+  return aUsuario(fila);
+}

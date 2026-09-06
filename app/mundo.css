@@ -1855,9 +1855,14 @@
   color: var(--naranja);
 }
 
+/* Dos columnas mientras entren, y una cuando no. Con el usuario corto de antes
+   —«demo»— dos columnas fijas entraban siempre; una dirección de correo no, y
+   se montaba sobre la contraseña de al lado. `auto-fit` lo resuelve por ancho
+   disponible y no por punto de quiebre, que es lo correcto para una chapa que
+   no sabe de qué tamaño la van a montar. */
 .acceso__credencial {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
   gap: var(--e4);
   margin: 0;
 }
@@ -1867,6 +1872,8 @@
 }
 .acceso__credencial dd {
   margin: 0;
+  /* Una dirección larga se parte antes que desbordar la chapa. */
+  overflow-wrap: anywhere;
   font-size: var(--t10);
   font-weight: 700;
   color: var(--blanco);
@@ -3473,5 +3480,79 @@
   }
   .vacio {
     padding: var(--e7) var(--e4);
+  }
+}
+
+/* ==================== Tu credencial (/tablero/perfil) ====================
+   La única pantalla que una persona administra sola. Dos gabinetes y no uno,
+   porque son dos clases de acto: los datos se corrigen como cualquier campo, y
+   la credencial, al cambiarla, cierra las demás sesiones abiertas. Eso no
+   comparte panel con un cambio de nombre. */
+
+.perfil {
+  display: grid;
+  gap: var(--e5);
+}
+
+/* Lo que la persona no decide va grabado en chapa, no en un campo apagado: un
+   gris deshabilitado insinúa que en algún estado se edita, y no lo hay. */
+.perfil__fijo {
+  margin: 0 var(--e5) var(--e5);
+}
+
+.perfil__pares {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e4) var(--e7);
+  margin: var(--e2) 0 0;
+}
+.perfil__pares dt {
+  font-size: var(--t3);
+  color: var(--gris);
+}
+.perfil__pares dd {
+  margin: var(--e1) 0 0;
+  color: var(--serigrafia);
+}
+
+/* El gabinete con guarda. El canto pintado de la chapa avisa que lo que hay
+   adentro tiene efecto fuera de esta pantalla — cierra sesiones en otras
+   máquinas—, que es justamente lo que no se ve al apretar. */
+.regleta--guarda > .regleta__chapa {
+  box-shadow: inset 3px 0 0 var(--naranja), var(--proa);
+}
+
+/* Aviso de atención: no falló nada, pero hay algo abierto. Naranja, que en
+   este mundo es la señal activa, y no rojo, que es la falla. */
+.aviso--atencion {
+  border-color: var(--naranja);
+  background: var(--naranja-tenue);
+  color: var(--naranja-lente);
+}
+
+/* La lámpara de clave provisoria, montada en el riel. Sobrevive al angosto
+   —donde la identidad se esconde— porque es lo que hay que ver. */
+.riel__lampara {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--naranja-lente);
+}
+.riel__lampara .piloto__etiqueta {
+  color: inherit;
+}
+
+/* La identidad del riel es la puerta a la credencial propia. */
+.riel__sesion {
+  text-decoration: none;
+}
+.riel__sesion:hover .cifra,
+.riel__sesion:focus-visible .cifra {
+  color: var(--blanco);
+}
+
+@media (max-width: 720px) {
+  .riel__lampara .piloto__etiqueta {
+    display: none;
   }
 }
