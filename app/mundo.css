@@ -3361,6 +3361,14 @@
 .registro__cabeza h1 {
   font-size: clamp(1.6rem, 2.35vw, 2.35rem);
 }
+/* El texto cede el ancho antes que el mando baje de línea. Sin esto, una
+   cabecera con un mando de rótulo largo manda el pulsador a un renglón propio
+   y dos pantallas gemelas dejan de leerse iguales por doce píxeles. El párrafo
+   sigue topado en 52ch: acá se encoge, nunca se estira. */
+.registro__texto {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
 .registro__texto p {
   margin: var(--e3) 0 0;
   max-width: 52ch;
@@ -3475,8 +3483,26 @@
   .registro__nota {
     margin: var(--e4);
   }
+  /* Dos escenas, otra vez: en angosto el renglón se re-monta en una columna en
+     vez de encogerse. Con dos columnas a 375px, el costado se lleva el ancho y
+     lo que queda para el titular son sesenta píxeles: «Marcos R. Rios» baja a
+     tres líneas y el correo termina abajo del chip que lo tapa. El costado pasa
+     a su propia fila, alineado al mismo margen que el titular. */
   .fila {
     padding: var(--e3) var(--e4);
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .fila__aside {
+    grid-column: 1;
+    grid-row: auto;
+    justify-content: flex-start;
+    margin-top: var(--e2);
+  }
+  /* La cifra del padrón de clientes se apila a la derecha en ancho; acá, con la
+     fila a lo largo, se acuesta al lado de su unidad. */
+  .fila__cuenta {
+    flex-direction: row;
+    align-items: baseline;
   }
   .vacio {
     padding: var(--e7) var(--e4);
@@ -3642,4 +3668,106 @@
 }
 .borne__posicion:hover .piloto__etiqueta {
   color: var(--blanco);
+}
+
+/* ============== Padrón de dispositivos (−A3): bornes de umbral ==============
+   El riel de magnitudes se lee como una regleta de verdad: un borne por
+   magnitud, numerados correlativos, y el siguiente libre para conectar una
+   nueva. Por eso estos bornes ocupan el ancho entero en vez de repartirlo —un
+   borne de regleta no comparte fila con el de al lado— y por eso el pulsador
+   sigue siendo uno solo al final. */
+
+.borne--ancho {
+  flex: 1 1 100%;
+}
+
+/* Marcada para quitar: el borne se apaga y se bloquea, y no desaparece. Una
+   fila que se borra de la pantalla antes de guardar deja a quien la marcó sin
+   saber qué está por mandar ni cómo arrepentirse. */
+.borne--quitado {
+  background: var(--casco);
+}
+.borne--quitado .campo__etiqueta,
+.borne--quitado .borne__pie {
+  color: var(--gris-hondo);
+}
+.campo__entrada:disabled {
+  color: var(--gris-hondo);
+  -webkit-text-fill-color: var(--gris-hondo);
+}
+
+/* Los campos de un borne de umbral, en línea. Se envuelven en el angosto en vez
+   de encogerse: un borne de dos cifras que baja a 40px deja de ser un campo. */
+.umbral {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--e3);
+}
+.umbral__campo {
+  display: grid;
+  gap: var(--e1);
+  min-width: 0;
+}
+.umbral__campo--angosto {
+  flex: 0 1 9rem;
+}
+.umbral__campo--ancho {
+  flex: 1 1 14rem;
+}
+/* El rótulo de un campo adentro de un borne, más chico que el del borne: la
+   jerarquía es borne → campo, y la serigrafía de un tablero la respeta. */
+.umbral__rotulo {
+  font-size: var(--t3);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gris);
+}
+/* La unidad va con el nombre de la magnitud, no con el número: es parte de qué
+   se mide y no de cuánto. */
+.umbral__unidad {
+  color: var(--gris-hondo);
+}
+/* El chip se alinea con el pie de los campos, no con su etiqueta. */
+.umbral__quitar {
+  align-self: end;
+}
+.umbral__quitar[aria-pressed='true'] {
+  color: var(--naranja-lente);
+  border-color: var(--naranja);
+}
+
+.fila__accion:disabled {
+  color: var(--gris-hondo);
+  cursor: default;
+}
+.fila__accion:disabled:hover {
+  background: var(--acero-alto);
+  color: var(--gris-hondo);
+}
+
+/* Los equipos fuera de servicio, al pie del padrón. Van bajo su propia chapa y
+   apagados: siguen en el plano, pero no se espera nada de ellos. */
+.registro__baja {
+  margin: var(--e6) 0 0;
+  padding-top: var(--e5);
+  border-top: 1px solid #0a0d0f;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.registro__baja-chapa {
+  margin: 0 var(--e5) var(--e3);
+  color: var(--gris-hondo);
+}
+.fila--apagada .fila__titulo {
+  color: var(--gris);
+}
+.fila--apagada .fila__sub {
+  color: var(--gris-hondo);
+}
+
+@media (max-width: 760px) {
+  .registro__baja-chapa {
+    margin-inline: var(--e4);
+  }
 }
