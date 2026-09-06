@@ -18,15 +18,26 @@
  *     que ver lo suyo y nada de lo del vecino.
  *
  *     npm run simular-puente -- TVL-DEMO-01:luminosidad:0:4095
- *     npm run simular-puente -- TVL-DEMO-01:luminosidad:0:4095 AST-0007:corriente-de-linea:0:400
+ *     npm run simular-puente -- TVL-0001:tension-de-barra:378:418:23 TVL-0001:temperatura-de-bobinado:45:82:37
  *
- * Cada objetivo es `SERIAL:clave:desde:hasta`. La clave es la que el padrón
- * derivó del rótulo al declarar la magnitud, y se ve abajo del borne en la
- * pantalla de Dispositivos.
+ * Cada objetivo es `SERIAL:clave:desde:hasta` y, opcionalmente, `:periodo` en
+ * segundos. La clave es la que el padrón derivó del rótulo al declarar la
+ * magnitud, y se ve abajo del borne en la pantalla de Dispositivos.
+ *
+ * **Varias magnitudes del mismo serial viajan en un solo mensaje**, que es como
+ * va a reportar el equipo de verdad: un microcontrolador no manda un POST por
+ * sensor, manda uno con todo lo que midió en ese instante. Además de ser más
+ * fiel, es lo que hace que las tres agujas de un tablero compartan la marca de
+ * tiempo, en vez de quedar con edades distintas por milisegundos de diferencia.
+ *
+ * Cada magnitud puede llevar **su propio período**, y para una demostración eso
+ * importa: tres agujas barriendo al mismo ritmo se leen como una animación, y
+ * tres barriendo a ritmos distintos se leen como un tablero. Números primos
+ * entre sí y no vuelven a coincidir en un buen rato.
  *
  * Opciones: `--url` (por defecto http://localhost:3000), `--cada` en
- * milisegundos entre reportes, `--periodo` en segundos que tarda un barrido
- * completo de ida y vuelta, `--veces` para que termine solo.
+ * milisegundos entre reportes, `--periodo` en segundos para las magnitudes que
+ * no traigan el suyo, `--veces` para que termine solo.
  *
  * **El valor barre como una perilla y no como un sensor**: una sinusoide limpia
  * entre los dos extremos, sin ruido. Es a propósito — quien mira la demo tiene
@@ -75,23 +86,34 @@ function delEntorno(nombre: string): string | undefined {
 
 /* ------------------------------ Los argumentos ------------------------------ */
 
-type Objetivo = { serial: string; clave: string; desde: number; hasta: number };
+type Objetivo = {
+  serial: string;
+  clave: string;
+  desde: number;
+  hasta: number;
+  /** Su propio barrido, si lo trajo; si no, el general. */
+  periodo?: number;
+};
 
 const USO = `
-Uso:  npm run simular-puente -- SERIAL:clave:desde:hasta [...]
+Uso:  npm run simular-puente -- SERIAL:clave:desde:hasta[:periodo] [...]
 
   SERIAL      el que trae grabado el equipo, tal como está declarado
   clave       la que el padrón derivó del rótulo de la magnitud
   desde,hasta entre qué valores barre
+  periodo     segundos de un barrido completo, sólo para esta magnitud
+
+  Las magnitudes del mismo serial viajan juntas en un mensaje, como las
+  manda un equipo de verdad.
 
 Opciones:
-  --url <URL>      a dónde reportar        (http://localhost:3000)
-  --cada <ms>      entre reporte y reporte (1000)
-  --periodo <s>    un barrido completo     (20)
-  --veces <n>      cuántos reportes y para (sin límite)
+  --url <URL>      a dónde reportar             (http://localhost:3000)
+  --cada <ms>      entre reporte y reporte      (1000)
+  --periodo <s>    barrido de las que no traigan el suyo (20)
+  --veces <n>      cuántos reportes y para      (sin límite)
 
 Ejemplo:
-  npm run simular-puente -- TVL-DEMO-01:luminosidad:0:4095 AST-0007:corriente-de-linea:0:400
+  npm run simular-puente -- TVL-0001:tension-de-barra:378:418:23 TVL-0001:temperatura-de-bobinado:45:82:37
 `;
 
 function leerArgumentos(argv: string[]) {
@@ -118,16 +140,23 @@ function leerArgumentos(argv: string[]) {
     if (arg.startsWith('--')) throw new Error(`No conozco la opción ${arg}.`);
 
     const partes = arg.split(':');
-    if (partes.length !== 4) {
-      throw new Error(`«${arg}» no tiene forma de SERIAL:clave:desde:hasta.`);
+    if (partes.length !== 4 && partes.length !== 5) {
+      throw new Error(`«${arg}» no tiene forma de SERIAL:clave:desde:hasta[:periodo].`);
     }
-    const [serial, clave, desde, hasta] = partes;
+    const [serial, clave, desde, hasta, periodo] = partes;
     const a = Number(desde);
     const b = Number(hasta);
     if (!Number.isFinite(a) || !Number.isFinite(b) || a >= b) {
       throw new Error(`En «${arg}», «desde» tiene que ser un número menor que «hasta».`);
     }
-    objetivos.push({ serial: serial.toUpperCase(), clave, desde: a, hasta: b });
+    let propio: number | undefined;
+    if (periodo !== undefined) {
+      propio = Number(periodo);
+      if (!Number.isFinite(propio) || propio <= 0) {
+        throw new Error(`En «${arg}», el período tiene que ser un número mayor que cero.`);
+      }
+    }
+    objetivos.push({ serial: serial.toUpperCase(), clave, desde: a, hasta: b, periodo: propio });
   }
 
   if (!objetivos.length) throw new Error('Falta decir qué equipo mover.');
@@ -158,8 +187,10 @@ const hora = () => new Date().toTimeString().slice(0, 8);
 
 /* --------------------------------- El envío --------------------------------- */
 
-async function reportar(url: string, clave: string, objetivo: Objetivo, valor: number) {
-  const etiqueta = `${objetivo.serial} ${objetivo.clave}=${valor}`;
+async function reportar(url: string, clave: string, serial: string, lecturas: Record<string, number>) {
+  const etiqueta = `${serial}  ${Object.entries(lecturas)
+    .map(([k, v]) => `${k}=${v}`)
+    .join('  ')}`;
 
   let respuesta: Response;
   try {
@@ -167,10 +198,12 @@ async function reportar(url: string, clave: string, objetivo: Objetivo, valor: n
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${clave}` },
       body: JSON.stringify({
-        serial: objetivo.serial,
-        /* Lo sella el puente, como en la vida real: el equipo no tiene reloj. */
+        serial,
+        /* Lo sella el puente, como en la vida real: el equipo no tiene reloj.
+           Una sola marca para todas las magnitudes del mismo mensaje: es un
+           instante del equipo, no uno por sensor. */
         medidoEn: new Date().toISOString(),
-        lecturas: { [objetivo.clave]: valor },
+        lecturas,
       }),
     });
   } catch (falla) {
@@ -217,8 +250,20 @@ async function main() {
   console.log(
     `Un reporte cada ${opciones.cada} ms, barrido completo cada ${opciones.periodo} s.\n`,
   );
+  /* Agrupadas por serial, porque así salen: un mensaje por equipo. */
+  const porSerial: { serial: string; suyas: Objetivo[] }[] = [];
   for (const o of objetivos) {
-    console.log(`  ${o.serial}  ${o.clave}  ${o.desde} … ${o.hasta}`);
+    const grupo = porSerial.find((g) => g.serial === o.serial);
+    if (grupo) grupo.suyas.push(o);
+    else porSerial.push({ serial: o.serial, suyas: [o] });
+  }
+
+  for (const { serial, suyas } of porSerial) {
+    console.log(`  ${serial}`);
+    for (const o of suyas) {
+      const cada = o.periodo ?? opciones.periodo;
+      console.log(`      ${o.clave.padEnd(26)} ${o.desde} … ${o.hasta}   cada ${cada} s`);
+    }
   }
   console.log('\nCtrl+C para cortar.\n');
 
@@ -229,10 +274,15 @@ async function main() {
      un orden que se puede leer mientras corre. */
   while (vueltas < opciones.veces) {
     const t = (Date.now() - arranque) / 1000;
-    for (let i = 0; i < objetivos.length; i += 1) {
-      const objetivo = objetivos[i];
-      const fase = i / Math.max(objetivos.length, 2) / 2;
-      await reportar(opciones.url, clave, objetivo, valorEn(objetivo, t, opciones.periodo, fase));
+    let i = 0;
+    for (const { serial, suyas } of porSerial) {
+      const lecturas: Record<string, number> = {};
+      for (const o of suyas) {
+        const fase = i / Math.max(objetivos.length, 2) / 2;
+        lecturas[o.clave] = valorEn(o, t, o.periodo ?? opciones.periodo, fase);
+        i += 1;
+      }
+      await reportar(opciones.url, clave, serial, lecturas);
     }
     vueltas += 1;
     if (vueltas < opciones.veces) {
