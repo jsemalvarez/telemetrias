@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Personal } from '@/components/Personal';
-import { puede } from '@/lib/auth/roles';
+import { puede, rolesQueOtorga } from '@/lib/auth/roles';
 import { sesionActual } from '@/lib/auth/servidor';
 import { personalDe, rotuloCliente } from '@/lib/auth/usuarios';
 
@@ -23,11 +23,17 @@ export default async function PersonalRuta() {
   const sesion = await sesionActual();
   if (!puede(sesion, 'personal:ver') || !sesion) redirect('/tablero');
 
+  /* Se pregunta por el permiso —nunca por el rol— y recién después por qué
+     roles puede repartir esta sesión. Sin `personal:crear` no hay alta, aunque
+     la jerarquía dejara otorgar algo; con el permiso, el alcance lo fija
+     `rolesQueOtorga` y la pantalla no vuelve a decidirlo. */
+  const otorgables = puede(sesion, 'personal:crear') ? rolesQueOtorga(sesion) : [];
+
   return (
     <Personal
       empresa={await rotuloCliente(sesion.cliente)}
       personal={await personalDe(sesion.cliente)}
-      puedeCrear={puede(sesion, 'personal:crear')}
+      otorgables={otorgables}
     />
   );
 }

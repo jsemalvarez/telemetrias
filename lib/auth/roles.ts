@@ -154,6 +154,50 @@ export function modoValido(roles: readonly Rol[], candidato: unknown): Rol | nul
 }
 
 /**
+ * Los roles que este sujeto puede otorgar cuando da de alta a alguien.
+ *
+ * La regla es una sola: **se otorga todo rol cuyos permisos estén estrictamente
+ * contenidos en los propios**. Contenidos, porque nadie reparte lo que no
+ * tiene; y estrictamente, porque nadie da de alta a un par suyo. De ahí sale,
+ * sin escalera codificada:
+ *
+ *     super     → admin, encargado
+ *     admin     → encargado
+ *     encargado → nada
+ *
+ * Sale sobre `permisosEfectivos`, así que la llave −S1 también recorta acá: un
+ * super que bajó a modo administrador otorga lo que otorga un administrador. El
+ * modo restringe y nunca amplía, y esta función no es la excepción.
+ *
+ * Que un super no pueda crear a otro super es consecuencia de la regla, y es la
+ * consecuencia correcta: la credencial que abre el padrón de todas las empresas
+ * no se fabrica desde un navegador con una sesión abierta. Sale de la semilla o
+ * de `scripts/crear-admin.ts`, que corre una persona en una terminal. El día
+ * que tenga que salir de una pantalla va a ser una excepción escrita a mano acá
+ * adentro, y no un descuido.
+ *
+ * Sin esta pieza, `personal:crear` es un permiso plano: alcanzaría con que el
+ * cuerpo del pedido dijera `superadmin` para que un administrador se fabrique
+ * un jefe. Es lo único que separa un alta de personal de una escalada de
+ * privilegios con forma de formulario.
+ */
+export function rolesQueOtorga(
+  sujeto: { roles: readonly Rol[]; modo?: Rol | null } | null | undefined,
+): Rol[] {
+  if (!sujeto) return [];
+  const propios = permisosEfectivos(sujeto);
+
+  return ROLES.filter((rol) => {
+    const delRol = POR_ROL[rol];
+    for (const permiso of delRol) if (!propios.has(permiso)) return false;
+    /* Contenido y además más chico: si empatan es un par, no un subordinado.
+       Comparar las cuentas alcanza, porque recién se verificó que la lista está
+       contenida y en la tabla de arriba no hay permisos repetidos. */
+    return delRol.length < propios.size;
+  });
+}
+
+/**
  * Aislamiento por cliente. El sistema sirve a varias empresas y cada una ve lo
  * suyo: todo lo que consulte datos de un cliente pasa por acá, y no por una
  * comparación suelta de strings desperdigada por el código.

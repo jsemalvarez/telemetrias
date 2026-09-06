@@ -171,6 +171,18 @@ export type Miembro = {
   roles: Rol[];
 };
 
+type FilaMiembro = { id: string; email: string; name: string; roles: { role: Rol }[] };
+
+/** De la fila de la base al miembro que se puede mandar a la pantalla. */
+function aMiembro(fila: FilaMiembro): Miembro {
+  return {
+    id: fila.id,
+    correo: fila.email,
+    nombre: fila.name,
+    roles: normalizarRoles(fila.roles.map((r) => r.role)),
+  };
+}
+
 export async function personalDe(cliente: string): Promise<Miembro[]> {
   const filas = await db.user.findMany({
     where: {
@@ -182,10 +194,66 @@ export async function personalDe(cliente: string): Promise<Miembro[]> {
     include: CON_ROLES,
   });
 
-  return filas.map((u) => ({
-    id: u.id,
-    correo: u.email,
-    nombre: u.name,
-    roles: normalizarRoles(u.roles.map((r) => r.role)),
-  }));
+  return filas.map(aMiembro);
+}
+
+/**
+ * De quién es una dirección, si ya es de alguien.
+ *
+ * El índice de correos es único en todo el sistema, así que un alta puede
+ * chocar contra una empresa que quien la intenta no puede ver. Devuelve de
+ * quién es y de qué empresa, y **quien llama decide cuánto de eso dice**: no es
+ * lo mismo contestarle a un super, que cruza el corte, que a un administrador,
+ * que no.
+ */
+export async function duenoDelCorreo(
+  correo: string,
+): Promise<{ nombre: string; cliente: string } | null> {
+  const fila = await db.user.findUnique({
+    where: { email: normalizarCorreo(correo) },
+    select: { name: true, clientId: true },
+  });
+  return fila ? { nombre: fila.name, cliente: fila.clientId } : null;
+}
+
+/**
+ * Alta de una persona en el padrón de una empresa.
+ *
+ * La empresa llega como parámetro y sale siempre de la sesión de quien da el
+ * alta, nunca de lo que mandó el navegador: un `cliente` que viajara en el
+ * cuerpo del pedido sería un campo para sembrar usuarios en el padrón ajeno.
+ *
+ * `roles` es una lista y no un rol porque la tabla `user_roles` guarda una fila
+ * por rol y una persona puede tener varios. Quién puede otorgar cuáles no se
+ * decide acá: lo decide `rolesQueOtorga` y lo hace cumplir el handler, que es
+ * donde está la sesión. Este módulo escribe lo que le mandan.
+ *
+ * Nace con `provisionalPassword` en verdadero, siempre: la contraseña la
+ * eligió quien da el alta, no su dueño, y hasta que la cambie hay otra persona
+ * que la sabe.
+ */
+export async function crearMiembro(datos: {
+  cliente: string;
+  correo: string;
+  nombre: string;
+  /** Ya hasheada. Este módulo no ve contraseñas en claro. */
+  hash: string;
+  roles: Rol[];
+  /** El id de quien firma el alta. Queda en la fila y no se puede borrar. */
+  creadoPor: string;
+}): Promise<Miembro> {
+  const fila = await db.user.create({
+    data: {
+      email: normalizarCorreo(datos.correo),
+      name: datos.nombre,
+      hash: datos.hash,
+      clientId: datos.cliente,
+      provisionalPassword: true,
+      createdById: datos.creadoPor,
+      roles: { create: datos.roles.map((role) => ({ role })) },
+    },
+    include: CON_ROLES,
+  });
+
+  return aMiembro(fila);
 }
