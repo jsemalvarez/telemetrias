@@ -26,15 +26,32 @@ import type { DispositivoVivo } from './panel';
  */
 
 /**
- * Cada cuánto se vuelve a pedir el panel.
+ * Cada cuánto se vuelve a pedir el panel **cuando algo se está moviendo**.
  *
- * Un segundo es el número que hace que una perilla girando se vea girar. Es
- * también el que más caro sale en serverless —una invocación por segundo y por
- * pantalla abierta—, así que es el primero que baja cuando entre el empuje.
- * **Si en la demo la aguja se siente atrasada, éste es el número que se toca**,
- * junto con la transición de la aguja en `.medidor__aguja`.
+ * Un segundo es el número que hace que una perilla girando se vea girar. Si en
+ * la demo la aguja se siente atrasada, éste es el número que se toca, junto con
+ * la transición de la aguja en `.medidor__aguja`.
  */
 export const CADENCIA_MS = 1000;
+
+/**
+ * Y cada cuánto cuando hace rato que no cambia nada.
+ *
+ * **La cadencia la pide el dato, no el reloj.** Un pedido por segundo sostenido
+ * son unas 3.600 invocaciones por hora y por pantalla abierta, y en serverless
+ * eso se paga —además de dos consultas a la base cada vez— para traer, casi
+ * siempre, exactamente lo mismo que ya estaba en pantalla. Un tablero de buque
+ * no cambia sesenta veces por minuto: reporta cada tanto, y entre reporte y
+ * reporte no hay nada que pedir.
+ *
+ * Así que el sondeo afloja solo cuando la respuesta viene igual, y vuelve a un
+ * segundo en cuanto algo se mueve. La escalera es 1 s, 2 s, 4 s y de ahí el
+ * tope: llega al reposo después de unos siete segundos sin novedades, y ese
+ * tope es lo peor que puede tardar en verse el primer cambio después de una
+ * pausa. Cinco segundos y no treinta por eso mismo — quien gira una perilla no
+ * puede quedarse medio minuto mirando una aguja quieta.
+ */
+export const CADENCIA_REPOSO_MS = 5000;
 
 /** Cada cuánto se reescribe la edad de un dato. Nunca cambia más rápido. */
 const RELOJ_MS = 5000;
@@ -53,6 +70,19 @@ export type PanelVivo = {
   ahora: number;
   enlace: Enlace;
 };
+
+/**
+ * Una huella de lo que la pantalla dibuja, para saber si cambió algo.
+ *
+ * Es el objeto entero y no sólo las marcas de tiempo de las lecturas: si
+ * alguien declara un equipo, retoca un umbral o corrige una escala mientras el
+ * panel está abierto, eso también es un cambio que hay que ver. Serializar unos
+ * pocos kilobytes cuesta microsegundos y ahorra un render por segundo.
+ *
+ * `ahora` queda afuera a propósito —viene distinto en cada respuesta— o nada
+ * sería nunca igual a nada.
+ */
+const huellaDe = (dispositivos: DispositivoVivo[]) => JSON.stringify(dispositivos);
 
 /**
  * @param inicial   Lo que dibujó el servidor. El primer render del navegador
@@ -87,10 +117,17 @@ export function usePanelVivo(
     return () => clearInterval(reloj);
   }, []);
 
+  /* La última huella vista. En una ref y no en estado: cambia en cada respuesta
+     y no tiene por qué provocar un dibujo. */
+  const huella = useRef<string | null>(null);
+
   useEffect(() => {
     let montado = true;
     let turno: ReturnType<typeof setTimeout> | undefined;
     let fallos = 0;
+    /* Cuántas respuestas seguidas vinieron iguales. Es lo que decide la
+       cadencia: el dato manda el ritmo. */
+    let quietas = 0;
 
     const programar = (espera: number) => {
       if (montado) turno = setTimeout(tic, espera);
@@ -115,10 +152,23 @@ export function usePanelVivo(
         if (!montado) return;
 
         desfase.current = cuerpo.ahora - Date.now();
-        setDispositivos(cuerpo.dispositivos);
-        setAhora(cuerpo.ahora);
         setEnlace('vivo');
         fallos = 0;
+
+        const ahoraHuella = huellaDe(cuerpo.dispositivos);
+        if (ahoraHuella === huella.current) {
+          /* Nada cambió: no se toca el estado —un render por segundo para
+             redibujar lo mismo es trabajo tirado— y se afloja el sondeo. */
+          quietas += 1;
+          programar(Math.min(CADENCIA_MS * 2 ** quietas, CADENCIA_REPOSO_MS));
+          return;
+        }
+
+        huella.current = ahoraHuella;
+        setDispositivos(cuerpo.dispositivos);
+        setAhora(cuerpo.ahora);
+        /* Algo se movió: se vuelve a mirar seguido. */
+        quietas = 0;
         programar(CADENCIA_MS);
       } catch {
         if (!montado) return;
@@ -137,6 +187,9 @@ export function usePanelVivo(
       if (typeof document !== 'undefined' && !document.hidden) {
         clearTimeout(turno);
         fallos = 0;
+        /* Y se vuelve a la cadencia rápida: quien acaba de mirar la pantalla no
+           tiene por qué heredar el reposo en el que estaba. */
+        quietas = 0;
         void tic();
       }
     };
