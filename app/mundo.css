@@ -647,11 +647,25 @@
   stroke: var(--serigrafia);
   stroke-width: 1.8;
 }
+/* La aguja gira sobre el eje del instrumento, y esa rotación es lo que se
+   transiciona. Antes acá decía `transition: all` sobre una línea cuyos
+   extremos se movían por atributo — y los atributos x1/y1/x2/y2 de un <line>
+   no son propiedades CSS en ningún navegador, así que no transicionaba nada y
+   la aguja saltaba. `transform-box: view-box` es lo que hace que el origen se
+   lea en las unidades del viewBox y no en la caja del trazo. */
 .medidor__aguja {
   stroke: var(--naranja);
   stroke-width: 2.6;
   stroke-linecap: round;
-  transition: all 0.85s var(--sale);
+  transform-box: view-box;
+  transform-origin: 60px 60px;
+  transition: transform 0.85s var(--sale), stroke 0.14s var(--sale);
+}
+/* Un instrumento que barre solo al cargar la página no es información. */
+@media (prefers-reduced-motion: reduce) {
+  .medidor__aguja {
+    transition: none;
+  }
 }
 .medidor__aguja--atencion {
   stroke: var(--alarma);
@@ -3861,4 +3875,139 @@
 .registro__hermana[aria-current='page']:hover {
   color: var(--naranja-lente);
   background: var(--acero);
+}
+
+
+/* ------------------------- Panel de lecturas (−A6) -------------------------
+   La única pantalla del panel donde todo lo que se ve lo dijo un fierro. Monta
+   las piezas que este mundo ya tiene —el alojamiento rebajado, el medidor de
+   aguja, el piloto— y no inventa ninguna: lo nuevo acá es la disposición, no
+   el vocabulario. */
+
+/* La chapa del panel lleva la lámpara del enlace a la derecha. Es la única
+   señal naranja de la pantalla que no es un dato: dice que el dato está
+   llegando, que en este producto es la mitad de la información. */
+.panel__chapa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e4);
+}
+
+.panel__equipos {
+  display: grid;
+  gap: var(--e5);
+  margin: 0 var(--e5);
+}
+
+/* El chip que lleva a la demostración, al pie de la nota. */
+.panel__demo {
+  display: inline-block;
+  margin-left: var(--e2);
+  text-decoration: none;
+}
+
+/* Un equipo: su chapa de identificación y abajo su juego de instrumentos, como
+   un frente de tablero de verdad —la placa arriba, la instrumentación debajo—. */
+.equipo {
+  display: grid;
+  gap: 1px;
+  background: #0a0d0f;
+  border: 1px solid #0a0d0f;
+}
+
+.equipo__chapa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--e2) var(--e4);
+  padding: var(--e3) var(--e4);
+  background: var(--acero);
+  box-shadow: var(--proa);
+}
+.equipo__quien {
+  display: grid;
+  gap: var(--e1);
+  min-width: 0;
+}
+.equipo__rotulo {
+  font-size: var(--t10);
+  letter-spacing: -0.02em;
+}
+/* El serial va con la ubicación y en cifra: es lo que hay que poder cotejar
+   contra la chapita del equipo cuando un número no cierra. */
+.equipo__donde {
+  font-size: var(--t2);
+  color: var(--gris-hondo);
+}
+
+/* Los instrumentos, separados por el filo negro del sistema. Flex y no una
+   grilla de columnas fijas: con `auto-fit`, una última fila incompleta deja el
+   filo asomando como superficie, y ahí deja de leerse como una línea de corte.
+   Así cada instrumento absorbe su parte del sobrante. */
+.equipo__instrumentos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+}
+.equipo__instrumento {
+  flex: 1 1 9rem;
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: var(--e1);
+  padding: var(--e4) var(--e2) var(--e3);
+  border: 0;
+  text-align: center;
+}
+/* El medidor manda el alto; la magnitud sin esfera se alinea con él en vez de
+   quedar flotando arriba de un alojamiento a medio llenar. */
+.equipo__instrumento:not(.hueco--aguja) {
+  align-content: center;
+}
+/* Montado en la chapa de un equipo, el medidor va más grande que en la grilla
+   del gabinete de la landing: la superficie donde está atornillado es otra. Es
+   la misma pieza, con otro tamaño de montaje, no un instrumento nuevo. */
+.equipo__instrumento .medidor {
+  max-width: 156px;
+}
+.equipo__etiqueta {
+  color: var(--gris);
+  line-height: 1.3;
+}
+.equipo__valor {
+  font-size: var(--t11);
+  font-weight: 700;
+  color: var(--blanco);
+  line-height: 1.05;
+}
+/* Fuera del rango declarado. Pinta un hecho que está en pantalla y no dispara
+   nada: por qué medio sale una alerta sigue sin decidirse. */
+.equipo__valor--alarma {
+  color: var(--alarma);
+}
+.equipo__cuando {
+  font-size: var(--t1);
+  color: var(--gris-hondo);
+}
+
+.equipo__sin-magnitudes {
+  margin: 0;
+  padding: var(--e5) var(--e4);
+  background: #101418;
+  color: var(--gris-hondo);
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .panel__equipos {
+    margin: 0 var(--e4);
+  }
+  /* Dos escenas: en el móvil el instrumento se monta más ancho en vez de
+     encogerse. Un medidor de 60px deja de ser un medidor. */
+  .equipo__instrumento {
+    flex: 1 1 8rem;
+  }
 }

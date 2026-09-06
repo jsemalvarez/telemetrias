@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import { Clientes } from '@/components/Clientes';
-import { Registrador } from '@/components/Registrador';
+import { Panel } from '@/components/Panel';
 import { SinHabilitacion } from '@/components/Sesion';
 import { modoPorDefecto, permisosDe, puede } from '@/lib/auth/roles';
 import { sesionActual } from '@/lib/auth/servidor';
-import { clientes } from '@/lib/auth/usuarios';
+import { clientes, rotuloCliente } from '@/lib/auth/usuarios';
+import { panelDe } from '@/lib/telemetria/panel';
 
 export const metadata: Metadata = {
   title: 'Resumen — Monitoreo Tecvol',
@@ -24,6 +25,13 @@ export const metadata: Metadata = {
  * Quien cruza el corte entre empresas ve el padrón de clientes; quien lee su
  * propia instalación ve sus mediciones. Un super administrador puede las dos
  * cosas y las mira de a una, girando la llave −S1 del riel.
+ *
+ * Hasta el 2026-09-06 «sus mediciones» era el registrador de demostración, con
+ * datos de fantasía: no había lecturas reales que mostrar. Ahora las hay, así
+ * que acá va el panel de verdad — el que muestra lo que hay y nada cuando no
+ * hay nada. El registrador se mudó a /tablero/demostracion, entero y sin
+ * cambios: es la pantalla que dice a dónde va esto cuando haya parque
+ * instalado, y para eso hay que poder verla.
  */
 export default async function ResumenRuta() {
   const sesion = await sesionActual();
@@ -32,7 +40,16 @@ export default async function ResumenRuta() {
     return <Clientes clientes={await clientes()} puedeCrear={puede(sesion, 'cliente:crear')} />;
   }
 
-  if (puede(sesion, 'lectura:ver')) return <Registrador />;
+  if (sesion && puede(sesion, 'lectura:ver')) {
+    return (
+      <Panel
+        empresa={await rotuloCliente(sesion.cliente)}
+        cliente={sesion.cliente}
+        dispositivos={await panelDe(sesion.cliente)}
+        ahora={Date.now()}
+      />
+    );
+  }
 
   /* Si el permiso está entre los de todos sus roles pero no entre los del modo
      puesto, el candado lo puso el propio usuario al girar la llave. Es la misma

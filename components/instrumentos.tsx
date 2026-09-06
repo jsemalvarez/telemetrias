@@ -9,6 +9,16 @@ type MedidorProps = {
   unidad: string;
   decimales?: number;
   atencion?: boolean;
+  /**
+   * El instrumento está montado pero no hay lectura que mostrar.
+   *
+   * Dibuja la esfera y sus marcas, y **no dibuja la aguja**. Es la única forma
+   * honesta de decirlo: una aguja apoyada en el cero se lee como una medición
+   * de cero, y «no reportó nada» y «reportó cero» son dos hechos distintos que
+   * no pueden verse iguales. La esfera sigue ahí porque el instrumento sigue
+   * instalado; lo que falta es la señal.
+   */
+  sinSenal?: boolean;
 };
 
 /** Voltímetro / amperímetro de aguja. Escala de 240°, cero abajo a la izquierda. */
@@ -20,6 +30,7 @@ export function Medidor({
   unidad,
   decimales = 0,
   atencion = false,
+  sinSenal = false,
 }: MedidorProps) {
   const ARCO = 240;
   const INICIO = 150;
@@ -44,12 +55,32 @@ export function Medidor({
     return { x1, y1, x2, y2, mayor, key: i };
   });
 
-  const [ax, ay] = punto(angulo, 36);
-  const [cx, cy] = punto(angulo + 180, 6);
+  /* La aguja se dibuja SIEMPRE en la misma posición —apuntando a 0°, o sea a
+     la derecha— y se lleva a su ángulo con una rotación.
+
+     No es un capricho: `x1`/`y1`/`x2`/`y2` de un `<line>` no son propiedades
+     CSS en ningún navegador, así que la `transition` que este instrumento
+     declara desde el primer día nunca se aplicaba y la aguja saltaba de un
+     valor al otro. `transform` sí es una propiedad CSS y sí transiciona, así
+     que la aguja recién ahora barre como dice el sistema de diseño que barre.
+     Se nota cuando el valor cambia seguido, que es exactamente el caso para el
+     que existe un instrumento de aguja.
+
+     Redondeado, como los puntos de las marcas: el servidor y el cliente tienen
+     que escribir la misma cadena o React reporta desajuste de hidratación. */
+  const giro = angulo.toFixed(2);
 
   return (
     <figure className="medidor">
-      <svg viewBox="0 0 120 120" role="img" aria-label={`${etiqueta}: ${valor.toFixed(decimales)} ${unidad}`}>
+      <svg
+        viewBox="0 0 120 120"
+        role="img"
+        aria-label={
+          sinSenal
+            ? `${etiqueta}: sin lecturas`
+            : `${etiqueta}: ${valor.toFixed(decimales)} ${unidad}`
+        }
+      >
         <circle cx="60" cy="60" r="55" className="medidor__caja" />
         <circle cx="60" cy="60" r="49" className="medidor__esfera" />
         {marcas.map((m) => (
@@ -62,13 +93,16 @@ export function Medidor({
             className={m.mayor ? 'medidor__marca medidor__marca--mayor' : 'medidor__marca'}
           />
         ))}
-        <line
-          x1={cx}
-          y1={cy}
-          x2={ax}
-          y2={ay}
-          className={atencion ? 'medidor__aguja medidor__aguja--atencion' : 'medidor__aguja'}
-        />
+        {sinSenal ? null : (
+          <line
+            x1="54"
+            y1="60"
+            x2="96"
+            y2="60"
+            style={{ transform: `rotate(${giro}deg)` }}
+            className={atencion ? 'medidor__aguja medidor__aguja--atencion' : 'medidor__aguja'}
+          />
+        )}
         <circle cx="60" cy="60" r="5" className="medidor__eje" />
         <text x="60" y="86" className="medidor__unidad">
           {unidad}
