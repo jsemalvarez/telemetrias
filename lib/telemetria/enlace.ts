@@ -1,37 +1,45 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createClient, type RealtimeChannel, type SupabaseClient } from '@supabase/supabase-js';
 import type { DispositivoVivo } from './panel';
 
 /**
  * El enlace del panel con el servidor.
  *
- * Trae el estado del panel una y otra vez y dice si el enlace está en pie. Es
+ * Trae el estado del panel y dice si lo que está en pantalla es de ahora. Es
  * una sola pieza y no dos porque son la misma pregunta: qué se está midiendo, y
- * si lo que tengo delante es de ahora o es lo último que alcancé a saber.
+ * si esto es de ahora o es lo último que alcancé a saber.
  *
- * **Consulta periódica, y con esta arquitectura es la decisión correcta hoy.**
- * La aplicación va a Vercel, que es serverless: un SSE le dejaría una instancia
- * de función tomada a cada persona con la pantalla abierta, con tope de
- * duración, así que se cortaría solo. Lo que corresponde después es empuje por
- * Supabase Broadcast —el socket lo sostiene Supabase y no esta app—, y cuando
- * eso exista **esta pieza no se tira**: baja su cadencia y queda como lo que ya
- * es, la resincronización. Un canal que se cortó no sabe qué se perdió mientras
- * estuvo caído; una foto completa no necesita saberlo. En un producto donde
- * quedarse sin señal es un estado normal, ese piso no es opcional.
+ * ── Dos caminos, y uno sostiene al otro ────────────────────────────────────
  *
- * Por eso lo que la pantalla consume es este hook y no un `EventSource` ni un
- * canal: el día que entre el empuje, cambia acá adentro y la pantalla no se
- * entera.
+ * **Empuje**: Supabase Realtime avisa por el canal de la empresa apenas la
+ * ingesta guarda algo, y el panel se vuelve a pedir en ese instante. El socket
+ * lo sostiene Supabase y no esta aplicación, que es lo que lo hace funcionar
+ * igual en una notebook que en Vercel — en serverless no hay proceso largo que
+ * pueda sostener una conexión abierta.
+ *
+ * **Sondeo**: preguntar cada tanto. No es el plan B que se tira cuando anda el
+ * plan A: es el piso. Un canal que se cortó **no sabe qué se perdió mientras
+ * estuvo caído**, y en este producto quedarse sin señal no es un caso de borde.
+ * Con el canal vivo el sondeo baja a resincronización y deja de costar; sin
+ * canal, sube y sostiene la pantalla solo.
+ *
+ * Que los dos vivan acá adentro y no en la pantalla es lo que hace que
+ * `Panel.tsx` no sepa cuál está andando. El día que Broadcast se cambie por
+ * otra cosa, se cambia acá.
+ *
+ * ── Qué manda el canal ─────────────────────────────────────────────────────
+ *
+ * El mensaje **no trae la medición**: trae el serial del equipo que habló, y
+ * este hook vuelve a pedir el panel entero. Un mensaje con el valor adentro
+ * tendría que traer también la magnitud, su unidad, sus umbrales y su escala
+ * para poder dibujarse — un segundo formato que mantener en sincronía con
+ * `panelDe`— y además dejaría la pantalla dependiendo de no haberse perdido
+ * ningún mensaje. Así, el canal sólo dice «mirá de nuevo».
  */
 
-/**
- * Cada cuánto se vuelve a pedir el panel **cuando algo se está moviendo**.
- *
- * Un segundo es el número que hace que una perilla girando se vea girar. Si en
- * la demo la aguja se siente atrasada, éste es el número que se toca, junto con
- * la transición de la aguja en `.medidor__aguja`.
- */
+/** Cada cuánto se pregunta cuando algo se está moviendo y no hay canal. */
 export const CADENCIA_MS = 1000;
 
 /**
@@ -39,19 +47,24 @@ export const CADENCIA_MS = 1000;
  *
  * **La cadencia la pide el dato, no el reloj.** Un pedido por segundo sostenido
  * son unas 3.600 invocaciones por hora y por pantalla abierta, y en serverless
- * eso se paga —además de dos consultas a la base cada vez— para traer, casi
- * siempre, exactamente lo mismo que ya estaba en pantalla. Un tablero de buque
- * no cambia sesenta veces por minuto: reporta cada tanto, y entre reporte y
- * reporte no hay nada que pedir.
- *
- * Así que el sondeo afloja solo cuando la respuesta viene igual, y vuelve a un
- * segundo en cuanto algo se mueve. La escalera es 1 s, 2 s, 4 s y de ahí el
- * tope: llega al reposo después de unos siete segundos sin novedades, y ese
+ * eso se paga para traer casi siempre lo mismo que ya estaba. El sondeo afloja
+ * solo cuando la respuesta viene igual —1 s, 2 s, 4 s y de ahí el tope— y
+ * vuelve a un segundo en cuanto algo se mueve. Cinco y no treinta porque ese
  * tope es lo peor que puede tardar en verse el primer cambio después de una
- * pausa. Cinco segundos y no treinta por eso mismo — quien gira una perilla no
- * puede quedarse medio minuto mirando una aguja quieta.
+ * pausa, y quien gira una perilla no puede quedarse medio minuto mirando una
+ * aguja quieta.
  */
 export const CADENCIA_REPOSO_MS = 5000;
+
+/**
+ * Y cada cuánto con el canal vivo.
+ *
+ * Acá el sondeo ya no es quien trae las novedades: es la red que atrapa lo que
+ * el canal haya perdido mientras estuvo caído, o lo que se haya perdido entre
+ * que se cortó y este hook se dio cuenta. Medio minuto alcanza y sale
+ * prácticamente gratis.
+ */
+export const CADENCIA_RESINCRONIZACION_MS = 30_000;
 
 /** Cada cuánto se reescribe la edad de un dato. Nunca cambia más rápido. */
 const RELOJ_MS = 5000;
@@ -62,37 +75,40 @@ const TOLERANCIA = 3;
 /** Hasta cuánto se afloja entre reintentos. Un buque sin señal no se martilla. */
 const ESPERA_MAXIMA_MS = 30_000;
 
+/** Con cuánta anticipación se renueva el pase del canal antes de que venza. */
+const MARGEN_RENOVACION_MS = 5 * 60_000;
+
 export type Enlace = 'vivo' | 'sin-enlace';
+
+/** Por dónde está llegando el dato ahora mismo. */
+export type Modo = 'empuje' | 'sondeo';
 
 export type PanelVivo = {
   dispositivos: DispositivoVivo[];
   /** El instante contra el que se mide la edad, corregido por el reloj del servidor. */
   ahora: number;
   enlace: Enlace;
+  modo: Modo;
+};
+
+type Pase = {
+  url: string;
+  clavePublica: string;
+  topico: string;
+  token: string;
+  venceEn: number;
 };
 
 /**
  * Una huella de lo que la pantalla dibuja, para saber si cambió algo.
  *
- * Es el objeto entero y no sólo las marcas de tiempo de las lecturas: si
- * alguien declara un equipo, retoca un umbral o corrige una escala mientras el
- * panel está abierto, eso también es un cambio que hay que ver. Serializar unos
- * pocos kilobytes cuesta microsegundos y ahorra un render por segundo.
- *
- * `ahora` queda afuera a propósito —viene distinto en cada respuesta— o nada
- * sería nunca igual a nada.
+ * Es el objeto entero y no sólo las marcas de tiempo: si alguien declara un
+ * equipo, retoca un umbral o corrige una escala mientras el panel está abierto,
+ * eso también es un cambio que hay que ver. Serializar unos pocos kilobytes
+ * cuesta microsegundos y ahorra un render por segundo.
  */
 const huellaDe = (dispositivos: DispositivoVivo[]) => JSON.stringify(dispositivos);
 
-/**
- * @param inicial   Lo que dibujó el servidor. El primer render del navegador
- *                  tiene que escribir exactamente esto o hay desajuste de
- *                  hidratación.
- * @param ahoraDelServidor  Su reloj, en el mismo momento.
- * @param cliente   La empresa cuyo panel se mira. Viaja en el pedido porque el
- *                  super mira el de una que no es la suya; el servidor la pasa
- *                  igual por `alcanzaCliente` antes de contestar nada.
- */
 export function usePanelVivo(
   inicial: DispositivoVivo[],
   ahoraDelServidor: number,
@@ -100,13 +116,20 @@ export function usePanelVivo(
 ): PanelVivo {
   const [dispositivos, setDispositivos] = useState(inicial);
   const [enlace, setEnlace] = useState<Enlace>('vivo');
+  const [modo, setModo] = useState<Modo>('sondeo');
 
   /* La distancia entre el reloj del servidor y el de esta máquina. La edad de
      una lectura se mide contra el primero: una tablet a bordo con la hora
-     corrida mostraría, si no, lecturas de ayer o del futuro. Se vuelve a medir
-     en cada respuesta, así que se corrige sola. */
+     corrida mostraría, si no, lecturas de ayer o del futuro. */
   const desfase = useRef(ahoraDelServidor - Date.now());
   const [ahora, setAhora] = useState(ahoraDelServidor);
+
+  const huella = useRef<string | null>(null);
+  /* Cuántas respuestas seguidas vinieron iguales, y si el canal está en pie.
+     Van en refs porque los lee el bucle del sondeo, que vive fuera del render. */
+  const quietas = useRef(0);
+  const empuje = useRef(false);
+  const despertar = useRef<(() => void) | null>(null);
 
   /* El reloj de la edad, aparte del enlace: tiene que seguir corriendo aunque
      no llegue ni una respuesta. Una pantalla sin señal que congela el «hace 2
@@ -117,20 +140,44 @@ export function usePanelVivo(
     return () => clearInterval(reloj);
   }, []);
 
-  /* La última huella vista. En una ref y no en estado: cambia en cada respuesta
-     y no tiene por qué provocar un dibujo. */
-  const huella = useRef<string | null>(null);
+  /**
+   * Pide el panel entero y lo pone en pantalla si cambió. Devuelve si el pedido
+   * llegó a destino, que es otra cosa que si trajo novedades.
+   */
+  const refrescar = useCallback(async (): Promise<boolean> => {
+    const respuesta = await fetch(`/api/lecturas?cliente=${encodeURIComponent(cliente)}`, {
+      cache: 'no-store',
+    });
+    if (!respuesta.ok) throw new Error(String(respuesta.status));
+    const cuerpo = await respuesta.json();
+
+    desfase.current = cuerpo.ahora - Date.now();
+
+    const ahoraHuella = huellaDe(cuerpo.dispositivos);
+    if (ahoraHuella === huella.current) return false;
+
+    huella.current = ahoraHuella;
+    setDispositivos(cuerpo.dispositivos);
+    setAhora(cuerpo.ahora);
+    return true;
+  }, [cliente]);
+
+  /* ------------------------------- El sondeo ------------------------------- */
 
   useEffect(() => {
     let montado = true;
     let turno: ReturnType<typeof setTimeout> | undefined;
     let fallos = 0;
-    /* Cuántas respuestas seguidas vinieron iguales. Es lo que decide la
-       cadencia: el dato manda el ritmo. */
-    let quietas = 0;
 
     const programar = (espera: number) => {
       if (montado) turno = setTimeout(tic, espera);
+    };
+
+    /** Cuánto esperar hasta el próximo pedido, según qué está pasando. */
+    const proximaEspera = () => {
+      if (empuje.current) return CADENCIA_RESINCRONIZACION_MS;
+      if (quietas.current === 0) return CADENCIA_MS;
+      return Math.min(CADENCIA_MS * 2 ** quietas.current, CADENCIA_REPOSO_MS);
     };
 
     async function tic() {
@@ -144,32 +191,12 @@ export function usePanelVivo(
       }
 
       try {
-        const respuesta = await fetch(`/api/lecturas?cliente=${encodeURIComponent(cliente)}`, {
-          cache: 'no-store',
-        });
-        if (!respuesta.ok) throw new Error(String(respuesta.status));
-        const cuerpo = await respuesta.json();
+        const cambio = await refrescar();
         if (!montado) return;
-
-        desfase.current = cuerpo.ahora - Date.now();
         setEnlace('vivo');
         fallos = 0;
-
-        const ahoraHuella = huellaDe(cuerpo.dispositivos);
-        if (ahoraHuella === huella.current) {
-          /* Nada cambió: no se toca el estado —un render por segundo para
-             redibujar lo mismo es trabajo tirado— y se afloja el sondeo. */
-          quietas += 1;
-          programar(Math.min(CADENCIA_MS * 2 ** quietas, CADENCIA_REPOSO_MS));
-          return;
-        }
-
-        huella.current = ahoraHuella;
-        setDispositivos(cuerpo.dispositivos);
-        setAhora(cuerpo.ahora);
-        /* Algo se movió: se vuelve a mirar seguido. */
-        quietas = 0;
-        programar(CADENCIA_MS);
+        quietas.current = cambio ? 0 : quietas.current + 1;
+        programar(proximaEspera());
       } catch {
         if (!montado) return;
         fallos += 1;
@@ -181,28 +208,127 @@ export function usePanelVivo(
       }
     }
 
+    /* Lo que usa el canal para pedir un refresco ya: corta la espera en curso y
+       vuelve a pedir. Así el empuje y el sondeo no compiten — hay un solo lugar
+       que pide, y el canal apura el turno. */
+    despertar.current = () => {
+      if (!montado) return;
+      clearTimeout(turno);
+      fallos = 0;
+      quietas.current = 0;
+      void tic();
+    };
+
     /* Volver a la pestaña pide de nuevo enseguida: nadie espera un segundo
        mirando un número que sabe viejo. */
     const alVolver = () => {
-      if (typeof document !== 'undefined' && !document.hidden) {
-        clearTimeout(turno);
-        fallos = 0;
-        /* Y se vuelve a la cadencia rápida: quien acaba de mirar la pantalla no
-           tiene por qué heredar el reposo en el que estaba. */
-        quietas = 0;
-        void tic();
-      }
+      if (typeof document !== 'undefined' && !document.hidden) despertar.current?.();
     };
     document.addEventListener('visibilitychange', alVolver);
 
-    programar(CADENCIA_MS);
+    programar(proximaEspera());
 
     return () => {
       montado = false;
+      despertar.current = null;
       clearTimeout(turno);
       document.removeEventListener('visibilitychange', alVolver);
     };
+  }, [refrescar]);
+
+  /* -------------------------------- El canal -------------------------------- */
+
+  useEffect(() => {
+    let montado = true;
+    let cliente_: SupabaseClient | null = null;
+    let canal: RealtimeChannel | null = null;
+    let renovacion: ReturnType<typeof setTimeout> | undefined;
+
+    const caer = () => {
+      empuje.current = false;
+      if (montado) setModo('sondeo');
+    };
+
+    async function pedirPase(): Promise<Pase | null> {
+      const respuesta = await fetch(`/api/canal?cliente=${encodeURIComponent(cliente)}`, {
+        cache: 'no-store',
+      });
+      if (!respuesta.ok) return null;
+      return (await respuesta.json()).canal as Pase;
+    }
+
+    async function conectar() {
+      let pase: Pase | null;
+      try {
+        pase = await pedirPase();
+      } catch {
+        pase = null;
+      }
+
+      /* Sin pase no hay canal, y no es un error: es una instalación sin
+         Supabase configurado. El sondeo ya está sosteniendo la pantalla. */
+      if (!pase || !montado) return;
+
+      cliente_ = createClient(pase.url, pase.clavePublica, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      await cliente_.realtime.setAuth(pase.token);
+
+      canal = cliente_
+        .channel(pase.topico, { config: { private: true } })
+        .on('broadcast', { event: 'lecturas' }, () => despertar.current?.())
+        .subscribe((estado) => {
+          if (!montado) return;
+          if (estado === 'SUBSCRIBED') {
+            empuje.current = true;
+            setModo('empuje');
+            /* Entre que se pidió el panel y que el canal quedó en pie pudo
+               entrar algo. Se pide una vez más y recién ahí se está al día. */
+            despertar.current?.();
+            return;
+          }
+          /* CHANNEL_ERROR, TIMED_OUT o CLOSED: el sondeo vuelve a mandar. */
+          caer();
+        });
+
+      /* El pase vale una hora. Se renueva antes de que venza, para que una
+         pantalla abierta toda la tarde no se quede muda sin avisar. */
+      renovacion = setTimeout(
+        () => {
+          void renovar();
+        },
+        Math.max(pase.venceEn - Date.now() - MARGEN_RENOVACION_MS, 60_000),
+      );
+    }
+
+    async function renovar() {
+      if (!montado || !cliente_) return;
+      try {
+        const pase = await pedirPase();
+        if (!pase || !montado) return;
+        await cliente_.realtime.setAuth(pase.token);
+        renovacion = setTimeout(
+          () => {
+            void renovar();
+          },
+          Math.max(pase.venceEn - Date.now() - MARGEN_RENOVACION_MS, 60_000),
+        );
+      } catch {
+        /* Si no se pudo renovar, el canal va a caerse solo cuando el token
+           venza, y el sondeo lo va a cubrir. No hay nada que romper acá. */
+      }
+    }
+
+    void conectar();
+
+    return () => {
+      montado = false;
+      caer();
+      clearTimeout(renovacion);
+      if (canal) void cliente_?.removeChannel(canal);
+      void cliente_?.realtime.disconnect();
+    };
   }, [cliente]);
 
-  return { dispositivos, ahora, enlace };
+  return { dispositivos, ahora, enlace, modo };
 }

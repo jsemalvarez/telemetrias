@@ -58,3 +58,7 @@ src/plugins/impeccable-live.client.ts
 # Material de trabajo: capturas de revisión y logs de la página de decisión.
 .impeccable/review/
 .impeccable/questions/
+
+# Raiz de Avast exportada para que Node acepte su MITM local. Es de esta
+# maquina y no del proyecto.
+.ca-avast.pem

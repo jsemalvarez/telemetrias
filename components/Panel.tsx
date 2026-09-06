@@ -46,8 +46,15 @@ export function Panel({
   dispositivos: DispositivoVivo[];
   ahora: number;
 }) {
-  const { dispositivos, ahora, enlace } = usePanelVivo(iniciales, ahoraDelServidor, cliente);
+  const { dispositivos, ahora, enlace, modo } = usePanelVivo(iniciales, ahoraDelServidor, cliente);
   const vivo = enlace === 'vivo';
+
+  /* La lámpara dice tres cosas distintas y no dos, porque son tres estados que
+     le importan a quien mira: el dato le está llegando empujado, lo está yendo
+     a buscar, o no hay enlace. Decir «en vivo» cuando en realidad se está
+     preguntando cada cinco segundos sería la clase de mentira chica que este
+     producto no se permite. */
+  const lampara = !vivo ? 'Sin enlace' : modo === 'empuje' ? 'En vivo' : 'Sondeo';
 
   return (
     <main className="registro" id="contenido">
@@ -57,7 +64,7 @@ export function Panel({
             <span className="serigrafia">−A6 · Panel de lecturas</span>
             {/* La lámpara del enlace. Naranja encendida es señal viva, que es
                 lo único para lo que este mundo usa el naranja. */}
-            <Piloto encendida={vivo} etiqueta={vivo ? 'Enlace' : 'Sin enlace'} />
+            <Piloto encendida={vivo} etiqueta={lampara} />
           </div>
 
           <div className="registro__cabeza">

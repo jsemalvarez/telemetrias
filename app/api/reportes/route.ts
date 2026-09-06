@@ -1,6 +1,7 @@
 import { conSerial } from '@/lib/dispositivos/guarda';
 import { dispositivoConMagnitudes, dispositivoQueReporta } from '@/lib/dispositivos/padron';
 import { esSerial, normalizarSerial } from '@/lib/dispositivos/reglas';
+import { avisarLecturas } from '@/lib/telemetria/canal';
 import { guardarLote, seriePorMagnitud } from '@/lib/telemetria/mediciones';
 import { autenticaPuente } from '@/lib/telemetria/puente';
 import { ADELANTO_TOLERADO_MS, aInstante, aValor } from '@/lib/telemetria/reglas';
@@ -204,6 +205,19 @@ export async function POST(pedido: Request) {
   for (const fila of aGuardar) {
     (entraron.has(fila.magnitud) ? guardadas : repetidas).push(fila.clave);
   }
+
+  /* Se avisa por el canal de la empresa, y sólo si entró algo nuevo: un
+     reintento del puente no es una novedad para nadie mirando la pantalla.
+
+     Se espera el aviso antes de contestar, y no se dispara y olvida, porque en
+     serverless la función puede terminar apenas responde y dejar el pedido a
+     medio salir. Cuesta unos milisegundos y es la diferencia entre un canal que
+     avisa siempre y uno que avisa casi siempre.
+
+     `avisarLecturas` no lanza: un aviso que no salió es una pantalla que se
+     actualiza un segundo más tarde por sondeo, y tirar el POST del puente por
+     eso sería perder una medición para no perder una notificación. */
+  if (guardadas.length) await avisarLecturas(equipo.cliente, serial);
 
   return listo({
     serial,
