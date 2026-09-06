@@ -86,11 +86,24 @@ export function umbralValido(min: number | null, max: number | null): boolean {
 /**
  * De lo que se tipeó en un borne de umbral al número que se guarda.
  *
- * El borne vacío es `null` —sin umbral de ese lado— y no cero. Lo que no es un
- * número devuelve `undefined`, que es distinto de las dos cosas anteriores:
- * significa «esto no se puede guardar» y quien llama lo trata como error.
+ * Tres resultados y no dos, y la diferencia entre el segundo y el tercero es lo
+ * que hace útil a esta función:
+ *
+ *   — un número, si se puede leer uno;
+ *   — `null` si el borne está vacío, que quiere decir «sin umbral de ese lado»
+ *     y no cero;
+ *   — `undefined` si lo que hay no es un número, que quiere decir «esto no se
+ *     puede guardar» y quien llama lo trata como error.
+ *
+ * Acepta `unknown` porque la usan los dos lados: la pantalla le pasa el texto
+ * del borne, y el servidor le pasa lo que vino en el pedido, que puede ser
+ * cualquier cosa. La coma decimal se acepta — se tipea en un teclado de acá.
  */
-export function aUmbral(valor: string): number | null | undefined {
+export function aUmbral(valor: unknown): number | null | undefined {
+  if (valor === null || valor === undefined) return null;
+  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : undefined;
+  if (typeof valor !== 'string') return undefined;
+
   const limpio = valor.trim().replace(',', '.');
   if (!limpio) return null;
   const numero = Number(limpio);
