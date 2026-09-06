@@ -159,6 +159,21 @@ export const rotuloCliente = cache(async (id: string): Promise<string> => {
 });
 
 /**
+ * ¿Esta empresa está dada de alta y en servicio?
+ *
+ * La consultan las rutas que se paran adentro de un cliente, para distinguir
+ * «no existe» —que es un 404— de «no la alcanzás» —que resuelve
+ * `alcanzaCliente` y termina en el resumen—. Vive acá y no suelta en cada
+ * `page.tsx` para que las rutas no importen la base directamente: dos consultas
+ * iguales escritas en dos archivos son dos consultas que un día no van a ser
+ * iguales.
+ */
+export const clienteEnServicio = cache(async (id: string): Promise<boolean> => {
+  const fila = await db.client.findUnique({ where: { id }, select: { active: true } });
+  return Boolean(fila?.active);
+});
+
+/**
  * El personal de una empresa: sus administradores y encargados. Es lo que ve el
  * admin en su pantalla de Personal.
  *

@@ -61,7 +61,11 @@ export function Clientes({ clientes, puedeCrear }: { clientes: Cliente[]; puedeC
                     siendo la grilla que era, y lo que anuncia un lector de
                     pantalla es el nombre de la empresa y no todo el renglón. */}
                 <h2 className="fila__titulo">
-                  <a className="fila__enlace" href={`/tablero/clientes/${cliente.id}`}>
+                  {/* Al segmento y no a la raíz del cliente: la raíz redirige
+                      acá, y un salto de más en el destino de cada clic del
+                      padrón se paga en la pantalla chica, donde la conexión es
+                      lo que es. */}
+                  <a className="fila__enlace" href={`/tablero/clientes/${cliente.id}/personal`}>
                     {cliente.rotulo}
                   </a>
                 </h2>

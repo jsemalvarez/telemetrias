@@ -10,6 +10,17 @@ export type Destino = {
   simbolo: Simbolo;
   /** Sin permiso declarado, el destino es de cualquiera que tenga sesión. */
   permiso?: Permiso;
+  /**
+   * El tramo que este destino ocupa debajo de una empresa concreta, cuando
+   * existe la misma pantalla adentro de un cliente
+   * (`/tablero/clientes/<id>/<segmento>`).
+   *
+   * Se declara y no se deduce del `href`: recortarle el prefijo a una ruta para
+   * adivinar la otra funciona hasta el día que una de las dos se mueva, y ese
+   * día falla en silencio con un enlace roto. El Resumen no lo tiene, porque el
+   * resumen de una empresa es su padrón de personal y no una pantalla propia.
+   */
+  segmento?: string;
 };
 
 /**
@@ -29,9 +40,16 @@ export type Destino = {
  */
 export const DESTINOS: Destino[] = [
   { href: '/tablero', rotulo: 'Resumen', simbolo: 'resumen' },
-  { href: '/tablero/personal', rotulo: 'Personal', simbolo: 'personal', permiso: 'personal:ver' },
+  {
+    href: '/tablero/personal',
+    segmento: 'personal',
+    rotulo: 'Personal',
+    simbolo: 'personal',
+    permiso: 'personal:ver',
+  },
   {
     href: '/tablero/dispositivos',
+    segmento: 'dispositivos',
     rotulo: 'Dispositivos',
     simbolo: 'dispositivos',
     permiso: 'umbral:definir',
@@ -51,4 +69,34 @@ export function destinosDe(sesion: Sesion | null): Destino[] {
   if (!sesion) return [];
   if (puede(sesion, 'cliente:cruzar')) return DESTINOS.filter((d) => !d.permiso);
   return DESTINOS.filter((d) => !d.permiso || puede(sesion, d.permiso));
+}
+
+/**
+ * Un destino hermano: la otra pantalla de la empresa en la que uno está parado.
+ */
+export type Hermana = { href: string; rotulo: string; actual: boolean };
+
+/**
+ * Los destinos por-empresa, apuntados adentro de un cliente concreto.
+ *
+ * Es la pieza que le faltaba al super. `destinosDe` le muestra sólo el Resumen
+ * porque quien cruza el corte está mirando el padrón de empresas y las
+ * pantallas por-empresa no tienen a qué empresa referirse — pero adentro de un
+ * cliente sí la tienen, y es la de la URL. Así que acá se filtra por el permiso
+ * a secas, sin la regla del cruce: la empresa ya está dicha.
+ *
+ * Sale del mismo catálogo que la botonera. Una pantalla nueva por-empresa se
+ * agrega arriba con su permiso y su segmento, y aparece en los dos lugares.
+ */
+export function hermanasDe(
+  sesion: Sesion | null,
+  cliente: string,
+  aqui: string | null,
+): Hermana[] {
+  if (!sesion) return [];
+  return DESTINOS.filter((d) => d.segmento && d.permiso && puede(sesion, d.permiso)).map((d) => ({
+    href: `/tablero/clientes/${cliente}/${d.segmento}`,
+    rotulo: d.rotulo,
+    actual: d.segmento === aqui,
+  }));
 }

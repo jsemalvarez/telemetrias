@@ -502,3 +502,48 @@ export function SimboloDispositivos() {
     </svg>
   );
 }
+
+/**
+ * La banda de contexto de una pantalla montada adentro de una empresa.
+ *
+ * Dice de dónde se entró y qué otras pantallas tiene esa misma empresa. Va
+ * arriba del titular y no al pie: quien está adentro de un cliente tiene que
+ * ver dónde está antes de leer qué hay.
+ *
+ * Existe porque el super entra a un cliente desde el padrón de empresas y ahí
+ * la botonera del riel no le sirve —le muestra el Resumen y nada más, porque
+ * quien cruza el corte está mirando todas las empresas y no una—. Adentro de
+ * una, en cambio, sí hay a qué referirse, y es la de la URL.
+ */
+export function Contexto({
+  volver,
+  hermanas,
+}: {
+  volver?: { href: string; rotulo: string };
+  hermanas?: { href: string; rotulo: string; actual: boolean }[];
+}) {
+  if (!volver && !hermanas?.length) return null;
+
+  return (
+    <nav className="registro__contexto" aria-label="Dónde estás">
+      {volver ? (
+        <a className="registro__volver" href={volver.href}>
+          <span aria-hidden="true">←</span> {volver.rotulo}
+        </a>
+      ) : null}
+      {hermanas?.map((hermana) => (
+        <a
+          key={hermana.href}
+          className="fila__accion registro__hermana"
+          href={hermana.href}
+          /* La pantalla en la que ya estás sigue estando: un enlace que
+             desaparece deja el juego de mandos incompleto y no se entiende
+             entre qué se está eligiendo. `aria-current` la marca sin sacarla. */
+          aria-current={hermana.actual ? 'page' : undefined}
+        >
+          {hermana.rotulo}
+        </a>
+      ))}
+    </nav>
+  );
+}

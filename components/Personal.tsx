@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { CLAVE_MINIMA, esCorreo } from '@/lib/auth/reglas';
 import { ROTULO_ROL, type Rol } from '@/lib/auth/roles';
 import type { Miembro } from '@/lib/auth/usuarios';
-import { Interruptor, Piloto } from './instrumentos';
+import type { Hermana } from '@/lib/navegacion';
+import { Contexto, Interruptor, Piloto } from './instrumentos';
 
 /**
  * Padrón de personal (−A2): lo que ve el administrador de una empresa.
@@ -38,6 +39,7 @@ export function Personal({
   otorgables,
   yo,
   volver,
+  hermanas,
 }: {
   empresa: string;
   /** El identificador de la empresa, que es lo que viaja en el alta. */
@@ -53,6 +55,8 @@ export function Personal({
    * de clientes y tiene que poder ver que está adentro de una, y salir.
    */
   volver?: { href: string; rotulo: string };
+  /** Las otras pantallas de esta misma empresa, cuando se está adentro de una. */
+  hermanas?: Hermana[];
 }) {
   const [panel, setPanel] = useState<Panel>(null);
   const puedeCrear = otorgables.length > 0;
@@ -75,11 +79,7 @@ export function Personal({
 
           <div className="registro__cabeza">
             <div className="registro__texto">
-              {volver ? (
-                <a className="registro__volver" href={volver.href}>
-                  <span aria-hidden="true">←</span> {volver.rotulo}
-                </a>
-              ) : null}
+              <Contexto volver={volver} hermanas={hermanas} />
               <h1>Personal</h1>
               <p>
                 Los administradores y encargados de {empresa} — el personal que opera la

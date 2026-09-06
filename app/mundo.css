@@ -3771,3 +3771,34 @@
     margin-inline: var(--e4);
   }
 }
+
+/* La banda de contexto de una pantalla montada adentro de una empresa: por
+   dónde se sale, y qué otras pantallas tiene esa misma empresa. Es la botonera
+   que el riel no puede dar cuando quien mira cruza el corte, así que usa el
+   mismo material que los chips del padrón y no el de los mandos del riel: es
+   navegación local de la pantalla, no del panel. */
+.registro__contexto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+  margin-bottom: var(--e3);
+}
+.registro__contexto .registro__volver {
+  margin-bottom: 0;
+}
+.registro__hermana {
+  text-decoration: none;
+}
+/* Donde ya estás: la lámpara encendida del juego. Naranja, que en este mundo
+   es la señal activa, y el chip queda hundido en vez de proud — un pulsador
+   que ya está apretado. */
+.registro__hermana[aria-current='page'] {
+  color: var(--naranja-lente);
+  background: var(--acero);
+  box-shadow: var(--rebaje);
+}
+.registro__hermana[aria-current='page']:hover {
+  color: var(--naranja-lente);
+  background: var(--acero);
+}

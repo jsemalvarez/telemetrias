@@ -1,58 +1,23 @@
-import type { Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
-import { Personal } from '@/components/Personal';
-import { alcanzaCliente, puede, rolesQueOtorga } from '@/lib/auth/roles';
-import { sesionActual } from '@/lib/auth/servidor';
-import { personalDe, rotuloCliente } from '@/lib/auth/usuarios';
-import { db } from '@/lib/db';
-
-export const metadata: Metadata = {
-  title: 'Cliente — Monitoreo Tecvol',
-  description: 'El padrón de personal de una empresa.',
-  robots: { index: false, follow: false },
-};
+import { redirect } from 'next/navigation';
 
 /**
- * Adentro de un cliente.
+ * La entrada a un cliente.
  *
- * Ésta es la pieza que le faltaba al super: hasta acá podía ver el padrón de
- * empresas pero no pararse adentro de ninguna. Bajaba la llave a administrador
- * y seguía siendo administrador de Tecvol, así que el personal que diera de
- * alta caía en Tecvol y no en la empresa que estaba mirando.
+ * Desde que la empresa tiene dos pantallas —personal y dispositivos— cada una
+ * vive bajo su segmento, y ésta se quedó sin contenido propio: mandar a la
+ * primera es más honesto que inventarle un resumen que repetiría lo que hay una
+ * pantalla más abajo.
  *
- * **La empresa va en la URL y no en una cookie.** Un «cliente activo» guardado
- * en algún lado sería un estado invisible decidiendo sobre qué padrón se
- * escribe, y el día que alguien diera de alta a una persona en la empresa
- * equivocada no quedaría rastro de por qué. Acá se lee, se comparte y se
- * vuelve atrás con el botón del navegador.
+ * Redirige y no desaparece porque esta URL ya se emitió: fue la única forma de
+ * entrar a un cliente desde que existe la ruta, y las filas del padrón de
+ * empresas apuntaban acá. Un enlace guardado tiene que seguir llegando a algún
+ * lado.
  *
- * Y se valida en cada pedido con `alcanzaCliente`, que es el mismo corte que
- * usa todo lo demás: quien no cruza el corte entre empresas no llega, aunque
- * escriba el identificador a mano en la barra de direcciones.
+ * No valida nada, a propósito. El corte entre empresas y la existencia del
+ * cliente los decide la ruta de destino, que es la que va a leer el padrón;
+ * hacerlo también acá serían dos lugares donde mantener la misma regla, y el
+ * día que se toque uno solo, esta ruta contestaría distinto que la otra.
  */
-export default async function ClienteRuta({ params }: { params: { id: string } }) {
-  const sesion = await sesionActual();
-  if (!sesion) redirect('/login');
-
-  /* Se pregunta por el permiso, no por el rol. Y con el modo puesto: un super
-     que bajó la llave a administrador deja de cruzar el corte, así que tampoco
-     entra por acá — es la misma sesión mirando con menos alcance. */
-  if (!alcanzaCliente(sesion, params.id)) redirect('/tablero');
-
-  const existe = await db.client.findUnique({
-    where: { id: params.id },
-    select: { active: true },
-  });
-  if (!existe || !existe.active) notFound();
-
-  return (
-    <Personal
-      empresa={await rotuloCliente(params.id)}
-      cliente={params.id}
-      personal={await personalDe(params.id)}
-      otorgables={puede(sesion, 'personal:crear') ? rolesQueOtorga(sesion) : []}
-      yo={sesion.id}
-      volver={{ href: '/tablero', rotulo: 'Padrón de clientes' }}
-    />
-  );
+export default function ClienteRuta({ params }: { params: { id: string } }) {
+  redirect(`/tablero/clientes/${params.id}/personal`);
 }

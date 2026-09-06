@@ -12,7 +12,8 @@ import {
   normalizarSerial,
   umbralValido,
 } from '@/lib/dispositivos/reglas';
-import { Interruptor, Persianas } from './instrumentos';
+import type { Hermana } from '@/lib/navegacion';
+import { Contexto, Interruptor, Persianas } from './instrumentos';
 
 /**
  * Padrón de dispositivos (−A3).
@@ -54,6 +55,8 @@ export function Dispositivos({
   enServicio,
   fueraDeServicio,
   puedeAdministrar,
+  volver,
+  hermanas,
 }: {
   empresa: string;
   /** El identificador de la empresa, que es lo que viaja en el alta. */
@@ -63,6 +66,14 @@ export function Dispositivos({
   fueraDeServicio: Dispositivo[];
   /** Si esta sesión puede declarar equipos, además de fijarles umbrales. */
   puedeAdministrar: boolean;
+  /**
+   * Por dónde se sale, cuando se entró desde algún lado. El admin está en su
+   * propia empresa y no tiene de dónde volver; el super entró desde el padrón
+   * de clientes y tiene que poder ver que está adentro de una, y salir.
+   */
+  volver?: { href: string; rotulo: string };
+  /** Las otras pantallas de esta misma empresa, cuando se está adentro de una. */
+  hermanas?: Hermana[];
 }) {
   const [panel, setPanel] = useState<Panel>(null);
 
@@ -82,6 +93,7 @@ export function Dispositivos({
 
           <div className="registro__cabeza">
             <div className="registro__texto">
+              <Contexto volver={volver} hermanas={hermanas} />
               <h1>Dispositivos</h1>
               <p>
                 Los microcontroladores declarados en {empresa}. Cada uno reporta una o
