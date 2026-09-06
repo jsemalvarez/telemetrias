@@ -1,9 +1,15 @@
 // Database schema.
 //
-// This first version is the roster: clients, users and their roles. It is what
-// lib/auth/usuarios.ts has been declaring since day one would become a table.
-// Measurements are deliberately absent: their shape is defined by the
-// microcontroller that reports them, and that is not decided yet.
+// It started as the roster — clients, users and their roles — which is what
+// lib/auth/usuarios.ts had been declaring since day one would become a table.
+// The device roster came next, and `Measurement` closes it: the readings the
+// hardware reports. Two layers, and the seam between them is deliberate. A
+// roster row is written by a person and is worth a form; a measurement is
+// written by a machine and is worth an index.
+//
+// What is still absent is any enum of metrics. Which quantities a device
+// reports is a row in `Magnitude`, not a column here, and no table below
+// decides it.
 //
 // Models are singular PascalCase because that is how the Prisma client names
 // them; tables are plural snake_case, which is how they read in Adminer and in
@@ -19,8 +25,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   // Migrations do not go through the pooler: see .env.example.
   directUrl = env("DIRECT_URL")
 }
@@ -107,13 +113,17 @@ model User {
   client Client     @relation(fields: [clientId], references: [id], onDelete: Restrict)
   roles  UserRole[]
 
-  /* `Restrict`, like the client relation: an account that gave others cannot
-     be erased out from under them. Nothing hard-deletes a user anyway —
-     `active` is the way out — so this is the database agreeing with that. */
+  /**
+   * `Restrict`, like the client relation: an account that gave others cannot
+   * be erased out from under them. Nothing hard-deletes a user anyway —
+   * `active` is the way out — so this is the database agreeing with that.
+   */
   createdBy User?  @relation("Alta", fields: [createdById], references: [id], onDelete: Restrict)
   creados   User[] @relation("Alta")
 
-  /* Devices this person signed for. Same `Restrict` reasoning as above. */
+  /**
+   * Devices this person signed for. Same `Restrict` reasoning as above.
+   */
   devices Device[] @relation("AltaDispositivo")
 
   @@index([clientId])
@@ -239,10 +249,73 @@ model Magnitude {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  /* Cascade, unlike everything else in this schema: a magnitude has no life
-     of its own away from its device. Nothing hard-deletes a device anyway. */
+  /**
+   * Cascade, unlike everything else in this schema: a magnitude has no life
+   * of its own away from its device. Nothing hard-deletes a device anyway.
+   */
   device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  /**
+   * Cascade too, and for the same reason: a reading has no life away from the
+   * magnitude that produced it. Nothing hard-deletes a magnitude anyway —
+   * `active` is the way out — so this is the database agreeing with that.
+   */
+  measurements Measurement[]
 
   @@unique([deviceId, key])
   @@map("magnitudes")
+}
+
+/// One reading of one magnitude, at one instant.
+///
+/// This is the time series, and it is the table that will grow without bound
+/// while every other one in this schema stays the size of a roster. Everything
+/// below is decided by that.
+///
+/// **Two timestamps, not one.** `measuredAt` is what the device says;
+/// `receivedAt` is what the server saw. Keeping both is the only thing that
+/// lets the product say honestly how old a reading is — ships sail, lose
+/// signal, and dump a fortnight of samples the moment they are back in range.
+/// With a single timestamp that batch either looks like it was all measured on
+/// arrival or like it arrived when it was measured, and both are lies.
+///
+/// **It hangs off the magnitude, not off the device.** The magnitude is what
+/// carries the unit and the thresholds, so it is what a number means something
+/// against. A `deviceId` here would be a second path to the same fact, and two
+/// columns that have to agree eventually disagree.
+///
+/// **No surrogate id, and the primary key is the query.** Nothing references a
+/// measurement, so an `id` column would be an extra 25 bytes and an extra
+/// index on the biggest table in the system, bought for nothing. The composite
+/// key `(magnitudeId, measuredAt)` is the index this table gets read by —
+/// one magnitude over a range of time, or its latest sample by scanning that
+/// same btree backwards — and it does a second job for free: it makes ingest
+/// idempotent. MQTT delivers at least once and a bridge that times out will
+/// re-POST, so without this key every retry silently doubles a reading and
+/// every later average is wrong. With it, a retry is free.
+///
+/// The cost of that key is real and worth naming: a device that genuinely
+/// measures the same magnitude twice inside the same millisecond loses the
+/// second sample. That is not a cadence this product has, and if it ever
+/// arrives the fix is a finer timestamp — not a second row claiming the same
+/// instant, which no later query could tell apart anyway.
+model Measurement {
+  magnitudeId String @map("magnitude_id")
+
+  /// When the device says it measured. It comes from outside and it is
+  /// believed, within reason: the ingest endpoint refuses a timestamp from the
+  /// future, and accepts any past.
+  measuredAt DateTime @map("measured_at") @db.Timestamptz(3)
+
+  /// When this server took it. Written here and never by the caller.
+  receivedAt DateTime @default(now()) @map("received_at") @db.Timestamptz(3)
+
+  /// Double precision, like the thresholds it will be compared against. Same
+  /// reasoning: an instrument reading is not money.
+  value Float
+
+  magnitude Magnitude @relation(fields: [magnitudeId], references: [id], onDelete: Cascade)
+
+  @@id([magnitudeId, measuredAt])
+  @@map("measurements")
 }
