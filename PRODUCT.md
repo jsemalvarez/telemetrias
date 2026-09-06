@@ -45,10 +45,19 @@ Los tres de arriba son **perfiles de usuario**: describen quién entra y con qu�
 **Pantallas del panel y datos de fantasía (2026-09-05).** El panel de aplicación tiene una botonera de mandos (riel izquierdo en escritorio, faja inferior en móvil) que muestra los destinos según el permiso del modo puesto:
 
 - **Resumen** (todos): el super ve el padrón de clientes; el admin y el encargado ven las métricas.
-- **Personal** (`personal:ver`, admin y super): lista de administradores y encargados de la empresa, con alta. El encargado no la ve.
+- **Personal** (`personal:ver`, admin y super): los administradores y encargados de la empresa, con alta y con restablecimiento de contraseña por fila. El encargado no la ve.
+- **Tu credencial** (todos, fuera de la botonera): se llega desde la propia identidad en el riel.
 - **Dispositivos** (`umbral:definir`, encargado, admin y super): los microcontroladores de la empresa. Hoy está vacía a propósito: el monitoreo no está instalado en ningún lado.
 
-El padrón vive en Postgres desde el 2026-09-05, y lo que quedó sembrado es la **demostración**: una sola empresa, **Tecvol**, con `demo@tecvol.com.ar` como administrador y `encargado@tecvol.com.ar` como encargado (clave `tecvol` en ambos, pública a propósito), más un super administrador cuya credencial sale del entorno y no figura en la tarjeta del acceso. El alta de empresas ya va a la base, con su primer administrador en la misma transacción; las de personal y dispositivo siguen sin tensión.
+El padrón vive en Postgres desde el 2026-09-05, y lo que quedó sembrado es la **demostración**: una sola empresa, **Tecvol**, con `demo@tecvol.com.ar` como administrador y `encargado@tecvol.com.ar` como encargado (clave `tecvol` en ambos, pública a propósito), más un super administrador cuya credencial sale del entorno y no figura en la tarjeta del acceso. Las altas de empresa y de personal ya van a la base; la de dispositivo sigue sin tensión, porque no hay dispositivos que dar de alta.
+
+**Quién crea y quién restablece (2026-09-06).** Se otorga todo rol cuyos permisos estén **estrictamente contenidos** en los propios. Contenidos, porque nadie reparte lo que no tiene; estrictamente, porque nadie da de alta a un par suyo. De ahí sale la tabla sin escalera codificada: el super otorga administrador y encargado, el admin otorga encargado, el encargado no otorga nada. La misma regla decide quién puede **restablecer** una contraseña ajena: quien pudo dar de alta una credencial puede reemplazarla, y ni una más. Que un super no pueda crear otro super es consecuencia de la regla y es la consecuencia correcta — la credencial que abre el padrón de todas las empresas nace de la semilla o de un script en una terminal, no de un navegador con una sesión abierta.
+
+**Recuperación de contraseña (2026-09-06).** La hace quien administra, y no un enlace por correo. No es una etapa intermedia: es lo que le sirve a este producto. El encargado de un buque sin señal no puede seguir un enlace que le llegó a la casilla, pero sí puede llamar por radio a su administrador. Lo que sale de ahí es una contraseña provisoria —la eligió otro—, así que la marca queda encendida hasta que su dueño ponga la suya. El enlace por correo queda pendiente de que exista por dónde mandarlo; el correo de cada usuario ya está.
+
+**La credencial propia (2026-09-06).** Cada persona administra su nombre, su correo y su contraseña, y nada más: el rol y la empresa se muestran grabados y los fija quien la administra. Cambiar el correo pide la contraseña actual, porque es cambiar con qué se entra. Cambiar la contraseña cierra las demás sesiones abiertas, que es lo que hace que cambiarla sirva de algo cuando se la cambia porque otro la sabe. Es la única pantalla que no pregunta por un permiso: todo el que entró tiene una credencial.
+
+**El super adentro de una empresa (2026-09-06).** El super entra a un cliente desde el padrón y ahí da de alta a su personal y restablece sus contraseñas. La empresa va en la URL y no en una preferencia guardada: un «cliente activo» invisible sería un estado decidiendo sobre qué padrón se escribe, y el día que alguien diera de alta a una persona en la empresa equivocada no quedaría rastro de por qué. Se valida en cada pedido con el mismo corte de siempre, así que escribir el identificador a mano no abre nada.
 
 Un usuario lleva **varios roles a la vez** — la lista es estructura del modelo, no un campo que se amplíe después — aunque con roles jerárquicos casi siempre alcance con uno.
 
@@ -104,9 +113,9 @@ Lo que **no** es la propuesta: que haya que comprarle el tablero a Tecvol para p
 
 - Qué métricas concretas se reportan (tensión, corriente, temperatura, carga de generador, horas de servicio, etc.).
 - Transporte y cadencia de la telemetría (MQTT/HTTP, celular/satelital, frecuencia de reporte, retención histórica).
-- Por qué medio se notifica una alerta disparada (en pantalla, correo, push, mensaje). Que las alertas existen y se disparan por umbral quedó confirmado el 2026-09-04; cómo salen del sistema, no.
+- Por qué medio se notifica una alerta disparada (en pantalla, correo, push, mensaje). Que las alertas existen y se disparan por umbral quedó confirmado el 2026-09-04; cómo salen del sistema, no. Desde el 2026-09-06 hay un canal disponible —cada usuario tiene correo, que es además su identidad— pero elegirlo sigue sin decidirse, y no todo encargado de buque tiene casilla propia.
 - Backend de telemetría y origen de datos. El **proveedor de autenticación y el motor de base de datos salieron de esta lista el 2026-09-04** (ver Stack); por dónde llegan las lecturas de los microcontroladores, no.
-- Detalle del modelo multi-cliente. Que el sistema sirve a varios clientes y que sólo `superadmin` cruza el corte quedó confirmado el 2026-09-04, y cada sesión ya viaja con su cliente. Falta la política fina: qué pasa con un astillero que trabaja para varios armadores, si un usuario puede pertenecer a más de un cliente, y quién da de alta a los usuarios de un cliente nuevo. Hay que establecerlo antes de modelar datos.
+- Detalle del modelo multi-cliente. Que el sistema sirve a varios clientes y que sólo `superadmin` cruza el corte quedó confirmado el 2026-09-04, y cada sesión ya viaja con su cliente. **Quién da de alta a los usuarios de un cliente nuevo quedó resuelto el 2026-09-06** (ver «Quién crea y quién restablece»). Falta la política fina: qué pasa con un astillero que trabaja para varios armadores, y si un usuario puede pertenecer a más de un cliente — hoy no puede, la empresa es un campo y no una lista.
 - Objetivo de despliegue.
 
 ## Brand Commitments
