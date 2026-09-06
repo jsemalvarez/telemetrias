@@ -4,7 +4,7 @@ import { alcanzaCliente, puede, type Permiso } from '../auth/roles';
 import { sesionActual } from '../auth/servidor';
 import type { Sesion } from '../auth/sesion';
 import { error } from '../respuestas';
-import { clienteDelDispositivo, clienteDeLaMagnitud } from './padron';
+import { clienteDelDispositivo, clienteDeLaMagnitud, duenoDelSerial } from './padron';
 
 /**
  * La puerta de todas las rutas que tocan un dispositivo.
@@ -57,6 +57,51 @@ export async function conDispositivo(
   if (!alcanzaCliente(sesion, dispositivo.cliente)) return { ok: false, respuesta: NO_ESTA() };
 
   return { ok: true, sesion, dato: { id, ...dispositivo } };
+}
+
+/**
+ * El mismo corte, pero cuando lo que se tiene es el serial y no el id.
+ *
+ * Lo necesita la lectura de mediciones: quien verifica lo que entró tiene en la
+ * mano el serial que acaba de reportar —está impreso en la chapita y en la
+ * pantalla—, no un cuid que ninguna superficie muestra. Pedirle el id sería
+ * pedirle que busque en la base el identificador de algo que ya sabe nombrar.
+ *
+ * Va acá y no en el handler por la razón de siempre: si el corte se escribe una
+ * vez en cada ruta, alcanza con que una se lo saltee para que el aislamiento
+ * deje de existir ahí. Que la llave de búsqueda sea otra no cambia los tres
+ * pasos, y son los tres pasos los que viven en este archivo.
+ *
+ * Contesta lo mismo que las otras dos ante «no existe» y «no es de tu empresa»,
+ * y acá importa más que nunca: el serial es único en todo el sistema, así que
+ * distinguirlas convertiría esta ruta en una manera de averiguar qué seriales
+ * hay declarados en el padrón de al lado.
+ */
+export async function conSerial(
+  serial: string,
+  permiso: Permiso,
+): Promise<Guarda<{ id: string; cliente: string; rotulo: string; activo: boolean }>> {
+  const sesion = await sesionActual();
+  if (!sesion || !puede(sesion, permiso)) {
+    return { ok: false, respuesta: error('permiso', 'Esta sesión no alcanza para eso.', 403) };
+  }
+
+  /* Normaliza adentro, como quien escribe: «tvl-0001» y «TVL-0001» son el
+     mismo fierro, y buscar sin normalizar los haría dos. */
+  const dispositivo = await duenoDelSerial(serial);
+  if (!dispositivo) return { ok: false, respuesta: NO_ESTA() };
+  if (!alcanzaCliente(sesion, dispositivo.cliente)) return { ok: false, respuesta: NO_ESTA() };
+
+  return {
+    ok: true,
+    sesion,
+    dato: {
+      id: dispositivo.id,
+      cliente: dispositivo.cliente,
+      rotulo: dispositivo.rotulo,
+      activo: dispositivo.activo,
+    },
+  };
 }
 
 /**

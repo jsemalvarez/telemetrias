@@ -1,6 +1,7 @@
-import { dispositivoQueReporta } from '@/lib/dispositivos/padron';
+import { conSerial } from '@/lib/dispositivos/guarda';
+import { dispositivoConMagnitudes, dispositivoQueReporta } from '@/lib/dispositivos/padron';
 import { esSerial, normalizarSerial } from '@/lib/dispositivos/reglas';
-import { guardarLote } from '@/lib/telemetria/mediciones';
+import { guardarLote, seriePorMagnitud } from '@/lib/telemetria/mediciones';
 import { autenticaPuente } from '@/lib/telemetria/puente';
 import { ADELANTO_TOLERADO_MS, aInstante, aValor } from '@/lib/telemetria/reglas';
 import { cuerpoDe, error, listo, texto } from '@/lib/respuestas';
@@ -216,5 +217,146 @@ export async function POST(pedido: Request) {
     guardadas,
     repetidas,
     ignoradas,
+  });
+}
+
+/* --------------------------- Leer lo que entró --------------------------- */
+
+/**
+ * Las mediciones de un equipo, para poder verlas.
+ *
+ * Es el primer endpoint de lectura del proyecto. Hasta acá todas las listas se
+ * armaban al renderizar la pantalla, que es lo correcto para una pantalla y
+ * deja sin respuesta la única pregunta que importa cuando se está probando la
+ * ingesta: ¿entró lo que mandé?
+ *
+ * **Este GET NO acepta la clave del puente, y ésa es la decisión del handler.**
+ * El puente escribe; leer es un acto de una persona, con sesión, y pasa por el
+ * mismo corte que todo lo demás: `lectura:ver` —que tienen los tres roles— y
+ * `alcanzaCliente` adentro de `conSerial`. Una credencial de máquina que además
+ * pudiera leer las mediciones de todas las empresas sería, el día que se
+ * filtre, el aislamiento entero del producto; como está, es alguien escribiendo
+ * lecturas falsas, que se ve y se corta rotando la clave. Dos permisos
+ * distintos para dos actos distintos, aunque compartan la URL.
+ *
+ * Desde Postman eso significa entrar primero —`POST /api/auth/entrar` con una
+ * credencial de la demostración, que deja las cookies en el frasco— y después
+ * pedir acá. Es un paso más y es el paso correcto.
+ *
+ *     GET /api/reportes?serial=TVL-0001
+ *         &magnitud=tension-de-barra   (opcional: una sola)
+ *         &desde=2026-09-06T00:00:00Z  (opcional)
+ *         &hasta=2026-09-07T00:00:00Z  (opcional)
+ *         &limite=100                  (opcional, POR MAGNITUD)
+ *
+ * Se busca por serial y no por el id de la fila porque el serial es lo que
+ * quien pregunta tiene en la mano: está grabado en el equipo, impreso en la
+ * pantalla y es lo que se acaba de mandar en el POST. El id es un cuid que
+ * ninguna superficie muestra.
+ *
+ * El límite es por magnitud: pedir las últimas cincuenta de un equipo que mide
+ * cuatro cosas tiene que dar cincuenta de cada una, y no cincuenta de la que
+ * reportó más seguido y ninguna de las otras tres.
+ */
+
+/** Cuántas mediciones por magnitud se devuelven si nadie dice otra cosa. */
+const POR_DEFECTO = 100;
+
+/** Y el tope, que nadie puede pasar. Sin esto, un `limite` grande es un modo
+ *  de pedirle a la base la tabla entera con una sola línea de URL. */
+const TOPE = 1000;
+
+/**
+ * Un instante que llegó por la query: ausente es `null`, ilegible es
+ * `undefined`. La distinción es la misma de `aUmbral`, y por la misma razón:
+ * «no filtres por acá» y «esto no se puede leer» son dos cosas distintas.
+ */
+function leerInstante(valor: string | null): Date | null | undefined {
+  if (valor === null || !valor.trim()) return null;
+  return aInstante(valor) ?? undefined;
+}
+
+const MAL_FECHADO =
+  'tiene que ser una fecha ISO 8601 con huso horario. Ojo con el signo más: en una URL significa espacio, así que un huso «+03:00» se escribe «%2B03:00», o se usa «Z».';
+
+export async function GET(pedido: Request) {
+  const url = new URL(pedido.url);
+
+  const serial = normalizarSerial(url.searchParams.get('serial') ?? '');
+  if (!serial) {
+    return error('faltan', 'Falta «serial»: es por dónde se nombra el equipo.', 400);
+  }
+
+  /* El corte vive en `lib/dispositivos/guarda.ts` y no se reescribe acá. «No
+     existe» y «no es de tu empresa» contestan lo mismo, que con un índice de
+     seriales único en todo el sistema es lo único que impide usar esta ruta
+     para averiguar qué hay declarado en el padrón de al lado. */
+  const guarda = await conSerial(serial, 'lectura:ver');
+  if (!guarda.ok) return guarda.respuesta;
+
+  const dispositivo = await dispositivoConMagnitudes(guarda.dato.id);
+  if (!dispositivo) return error('dispositivo', 'Ese dispositivo ya no está.', 404);
+
+  const clave = (url.searchParams.get('magnitud') ?? '').trim();
+  const magnitudes = clave
+    ? dispositivo.magnitudes.filter((m) => m.clave === clave)
+    : dispositivo.magnitudes;
+
+  if (clave && !magnitudes.length) {
+    /* Acá sí se puede ser concreto: quien pregunta ya pasó el corte, así que
+       está mirando su propio padrón y no se le cuenta nada que no tenga en
+       pantalla. */
+    return error(
+      'magnitud',
+      `«${clave}» no es una magnitud declarada en ${dispositivo.rotulo}.`,
+      404,
+    );
+  }
+
+  const desde = leerInstante(url.searchParams.get('desde'));
+  if (desde === undefined) return error('desde', `«desde» ${MAL_FECHADO}`, 400);
+
+  const hasta = leerInstante(url.searchParams.get('hasta'));
+  if (hasta === undefined) return error('hasta', `«hasta» ${MAL_FECHADO}`, 400);
+
+  const crudo = url.searchParams.get('limite');
+  let limite = POR_DEFECTO;
+  if (crudo !== null && crudo.trim()) {
+    const numero = Number(crudo);
+    if (!Number.isInteger(numero) || numero < 1) {
+      return error('limite', 'El límite es un entero mayor que cero.', 400);
+    }
+    /* Se recorta en vez de rechazar, y la respuesta devuelve el que se aplicó:
+       quien pidió cinco mil ve que le dieron mil, sin quedarse sin nada. */
+    limite = Math.min(numero, TOPE);
+  }
+
+  const series = await seriePorMagnitud(
+    magnitudes.map((m) => m.id),
+    { desde: desde ?? undefined, hasta: hasta ?? undefined, limite },
+  );
+
+  return listo({
+    dispositivo: {
+      serial: dispositivo.serial,
+      rotulo: dispositivo.rotulo,
+      ubicacion: dispositivo.ubicacion,
+      /* Un equipo fuera de servicio se lee igual: sus lecturas están y son
+         suyas. Lo que dice este campo es en qué parte del padrón se lo ve. */
+      enServicio: guarda.dato.activo,
+    },
+    desde: desde?.toISOString() ?? null,
+    hasta: hasta?.toISOString() ?? null,
+    limite,
+    magnitudes: magnitudes.map((m) => ({
+      clave: m.clave,
+      rotulo: m.rotulo,
+      unidad: m.unidad,
+      /* El umbral viaja con la magnitud aunque nadie lo evalúe todavía: es lo
+         que le da sentido al número que está al lado. */
+      min: m.min,
+      max: m.max,
+      mediciones: series.get(m.id) ?? [],
+    })),
   });
 }

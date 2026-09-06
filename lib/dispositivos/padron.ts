@@ -125,6 +125,29 @@ export async function padronDe(
 }
 
 /**
+ * Un dispositivo con sus magnitudes, ya pasado el corte.
+ *
+ * Es `padronDe` para uno solo, y existe porque la lectura de mediciones
+ * necesita las magnitudes de un equipo —sus claves, sus unidades y sus
+ * umbrales— y traer el padrón entero de la empresa para quedarse con una fila
+ * sería leer cien para usar una.
+ *
+ * No decide nada sobre quién puede verlo: eso ya lo decidió `conSerial` o
+ * `conDispositivo` antes de llegar acá, que es la razón por la que este módulo
+ * no conoce la sesión.
+ *
+ * Trae sólo las magnitudes en servicio, como todo lo que devuelve este módulo.
+ * Es una limitación conocida y vale escribirla: las mediciones de una magnitud
+ * dada de baja quedan guardadas —la baja es blanda justamente para eso— pero
+ * hoy no hay por dónde leerlas. El día que haga falta, es un parámetro acá y
+ * una casilla en la pantalla, no una migración.
+ */
+export async function dispositivoConMagnitudes(id: string): Promise<Dispositivo | null> {
+  const fila = await db.device.findUnique({ where: { id }, include: CON_MAGNITUDES });
+  return fila ? aDispositivo(fila) : null;
+}
+
+/**
  * De qué empresa es un dispositivo, para que quien lo vaya a tocar pase por
  * `alcanzaCliente` antes de tocarlo.
  *
