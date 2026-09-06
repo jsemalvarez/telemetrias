@@ -33,10 +33,10 @@ Los tres de arriba son **perfiles de usuario**: describen quién entra y con qu�
 **Roles del sistema (2026-09-04), jerárquicos — cada uno contiene al de abajo:**
 
 - **`superadmin`**: crea clientes, y puede ser admin y encargado **de cada cliente**. Es el único rol que cruza el corte entre empresas.
-- **`admin`**: lee, da de alta encargados y puede ser encargado, **de su propia empresa**.
+- **`admin`**: lee, da de alta encargados, declara los dispositivos y puede ser encargado, **de su propia empresa**.
 - **`encargado`**: lee, y establece los valores mínimos y máximos que disparan las alertas de los elementos monitoreados.
 
-*Resuelto por el usuario el 2026-09-05:* el encargado **sí** lee. Fijar un umbral sin ver la lectura que ese umbral vigila era trabajar a ciegas. Lo que distingue a `admin` de `encargado` pasa a ser el **personal** (`personal:ver` / `personal:crear`): el admin ve y da de alta a los administradores y encargados de su empresa; el encargado no. La jerarquía se mantiene —el admin conserva `umbral:definir`, así que también ve los dispositivos—, y lo que le falta al encargado es Personal.
+*Resuelto por el usuario el 2026-09-05:* el encargado **sí** lee. Fijar un umbral sin ver la lectura que ese umbral vigila era trabajar a ciegas. Lo que distingue a `admin` de `encargado` pasa a ser el **personal** (`personal:ver` / `personal:crear`): el admin ve y da de alta a los administradores y encargados de su empresa; el encargado no. La jerarquía se mantiene —el admin conserva `umbral:definir`, así que también ve los dispositivos—, y lo que le falta al encargado es Personal. *Ampliado el 2026-09-06:* le falta además declarar equipos (`dispositivo:administrar`), que es el segundo corte entre los dos roles y va en la misma dirección — el admin puede todo lo que puede el encargado, y un poco más.
 
 **Identidad por correo (2026-09-05).** No hay nombre de usuario: se entra con el correo, único en todo el sistema. Una identidad sola, que además es el único lugar a donde el producto puede avisarle algo a una persona — con eso queda contestada, cuando llegue, la pregunta abierta de por qué medio se notifica una alerta de umbral. La contrapartida a saber: un encargado de buque puede no tener correo propio, y ahí quien lo da de alta le inventa uno, que sirve como identidad pero no para avisarle nada.
 
@@ -47,9 +47,9 @@ Los tres de arriba son **perfiles de usuario**: describen quién entra y con qu�
 - **Resumen** (todos): el super ve el padrón de clientes; el admin y el encargado ven las métricas.
 - **Personal** (`personal:ver`, admin y super): los administradores y encargados de la empresa, con alta y con restablecimiento de contraseña por fila. El encargado no la ve.
 - **Tu credencial** (todos, fuera de la botonera): se llega desde la propia identidad en el riel.
-- **Dispositivos** (`umbral:definir`, encargado, admin y super): los microcontroladores de la empresa. Hoy está vacía a propósito: el monitoreo no está instalado en ningún lado.
+- **Dispositivos** (`umbral:definir`, encargado, admin y super): los microcontroladores de la empresa, con sus magnitudes y sus umbrales. Desde el 2026-09-06 tiene alta, corrección y baja (ver «El padrón de dispositivos»). Lo que sigue vacío es la lectura: un dispositivo declarado no es un dispositivo reportando, y la pantalla lo dice al pie.
 
-El padrón vive en Postgres desde el 2026-09-05, y lo que quedó sembrado es la **demostración**: una sola empresa, **Tecvol**, con `demo@tecvol.com.ar` como administrador y `encargado@tecvol.com.ar` como encargado (clave `tecvol` en ambos, pública a propósito), más un super administrador cuya credencial sale del entorno y no figura en la tarjeta del acceso. Las altas de empresa y de personal ya van a la base; la de dispositivo sigue sin tensión, porque no hay dispositivos que dar de alta.
+El padrón vive en Postgres desde el 2026-09-05, y lo que quedó sembrado es la **demostración**: una sola empresa, **Tecvol**, con `demo@tecvol.com.ar` como administrador y `encargado@tecvol.com.ar` como encargado (clave `tecvol` en ambos, pública a propósito), más un super administrador cuya credencial sale del entorno y no figura en la tarjeta del acceso. Las altas de empresa, de personal y de dispositivo ya van a la base. Lo que no hay sembrado es ningún dispositivo: el padrón nace vacío en las dos empresas, porque inventar un inventario de equipos instalados sería exactamente lo que este documento prohíbe.
 
 **Quién crea y quién restablece (2026-09-06).** Se otorga todo rol cuyos permisos estén **estrictamente contenidos** en los propios. Contenidos, porque nadie reparte lo que no tiene; estrictamente, porque nadie da de alta a un par suyo. De ahí sale la tabla sin escalera codificada: el super otorga administrador y encargado, el admin otorga encargado, el encargado no otorga nada. La misma regla decide quién puede **restablecer** una contraseña ajena: quien pudo dar de alta una credencial puede reemplazarla, y ni una más. Que un super no pueda crear otro super es consecuencia de la regla y es la consecuencia correcta — la credencial que abre el padrón de todas las empresas nace de la semilla o de un script en una terminal, no de un navegador con una sesión abierta.
 
@@ -57,7 +57,21 @@ El padrón vive en Postgres desde el 2026-09-05, y lo que quedó sembrado es la 
 
 **La credencial propia (2026-09-06).** Cada persona administra su nombre, su correo y su contraseña, y nada más: el rol y la empresa se muestran grabados y los fija quien la administra. Cambiar el correo pide la contraseña actual, porque es cambiar con qué se entra. Cambiar la contraseña cierra las demás sesiones abiertas, que es lo que hace que cambiarla sirva de algo cuando se la cambia porque otro la sabe. Es la única pantalla que no pregunta por un permiso: todo el que entró tiene una credencial.
 
-**El super adentro de una empresa (2026-09-06).** El super entra a un cliente desde el padrón y ahí da de alta a su personal y restablece sus contraseñas. La empresa va en la URL y no en una preferencia guardada: un «cliente activo» invisible sería un estado decidiendo sobre qué padrón se escribe, y el día que alguien diera de alta a una persona en la empresa equivocada no quedaría rastro de por qué. Se valida en cada pedido con el mismo corte de siempre, así que escribir el identificador a mano no abre nada.
+**El super adentro de una empresa (2026-09-06).** El super entra a un cliente desde el padrón y ahí administra su personal y sus dispositivos: da de alta, restablece contraseñas y declara equipos, todo en la empresa donde está parado. La empresa va en la URL y no en una preferencia guardada: un «cliente activo» invisible sería un estado decidiendo sobre qué padrón se escribe, y el día que alguien diera de alta a una persona en la empresa equivocada no quedaría rastro de por qué. Se valida en cada pedido con el mismo corte de siempre, así que escribir el identificador a mano no abre nada.
+
+**El padrón de dispositivos (2026-09-06).** Un dispositivo es el microcontrolador que se instala sobre el equipo para que reporte. El padrón dice qué hay declarado, de quién es, qué mide y entre qué valores se lo vigila — y no dice ni una lectura.
+
+*El umbral no vive en el dispositivo.* Un microcontrolador reporta varias magnitudes —tensión de barra, corriente, temperatura de bobinado, factor de potencia— y cada una tiene su mínimo y su máximo. Un par de valores en la fila del dispositivo es un modelo que se sostiene sólo mientras cada instalación mida una sola cosa. Es **dispositivo 1—N magnitudes**, y el umbral cuelga de la magnitud.
+
+*Cuáles son esas magnitudes sigue sin decidirse, y por eso son dato y no esquema.* Una magnitud se da de alta como se da de alta un dispositivo: alguien escribe qué mide y en qué unidad. No hay lista fija de métricas en ningún lado, que es la única forma de no decidir por descuido lo que este documento dejó abierto a propósito.
+
+*El mínimo y el máximo pueden faltar, cada uno por su lado.* Una temperatura de bobinado se vigila por arriba y nada más. Vacío quiere decir «por ese lado no se vigila», que no es lo mismo que cero, que quiere decir «avisame si baja de cero».
+
+*El dispositivo tiene una identidad que él mismo reporta:* un serial, único en todo el sistema. Es lo que va a permitir atribuir un mensaje entrante a una fila cuando exista el transporte — llegue como llegue, llega diciendo eso y nada que la aplicación haya elegido. Único en todo el sistema y no por empresa, porque el mensaje llega antes de que nadie sepa de quién es.
+
+*Las bajas no borran.* Un equipo sale de servicio y sigue apareciendo en el padrón, abajo, hasta que vuelva: sus umbrales son trabajo hecho, y su serial sigue tomado porque es el mismo fierro. Que la vuelta esté a un clic es lo que hace que la baja no necesite ceremonia — lo peligroso no es darla, es no poder deshacerla.
+
+**Quién declara un equipo (2026-09-06).** El encargado **fija umbrales**; el administrador **declara los fierros**. Instalar un equipo no es configurar una alerta, y quien responde por el parque de una empresa es su administrador. De ahí sale un permiso nuevo, `dispositivo:administrar`, que tienen el admin y el super: gobierna el alta, la corrección, la baja de un dispositivo y también el alta de una magnitud, porque **qué mide un equipo es parte del equipo**. Lo que queda del lado del encargado, con `umbral:definir`, es entrar a la pantalla, ver el padrón entero y escribir los mínimos y los máximos. Se llama `administrar` y no `crear` porque gobierna tres actos: un permiso llamado `crear` que autoriza una baja miente en el catálogo, que es el único lugar donde alguien va a ir a leer qué puede cada rol.
 
 Un usuario lleva **varios roles a la vez** — la lista es estructura del modelo, no un campo que se amplíe después — aunque con roles jerárquicos casi siempre alcance con uno.
 
@@ -101,7 +115,8 @@ Lo que **no** es la propuesta: que haya que comprarle el tablero a Tecvol para p
 - Los dispositivos reportan **status y métricas** vía microcontroladores.
 - Múltiples perfiles de usuario con permisos diferenciados, **varios roles por usuario** y permisos derivados de los roles.
 - **Varios clientes en el mismo sistema** (2026-09-04). Cada empresa ve lo suyo; sólo el rol `superadmin` cruza ese corte.
-- **Alertas por umbral** (2026-09-04): los elementos monitoreados tienen valores mínimo y máximo que las disparan, y esos valores los configura un usuario con rol `encargado`. No está confirmado por qué medio se notifica una alerta.
+- **Alertas por umbral** (2026-09-04): los elementos monitoreados tienen valores mínimo y máximo que las disparan, y esos valores los configura un usuario con rol `encargado`. No está confirmado por qué medio se notifica una alerta. *Precisado el 2026-09-06:* el umbral es de una **magnitud** y no de un dispositivo, y cada lado —mínimo o máximo— puede faltar.
+- **Padrón de dispositivos** (2026-09-06): los microcontroladores se dan de alta, se corrigen y se dan de baja, por empresa, con una identidad de hardware única y sus magnitudes declaradas como dato (ver «El padrón de dispositivos»).
 - Autenticación propia con JWT y sesión en cookies httpOnly, dentro de la app Next (2026-09-04).
 - PostgreSQL como base: Docker en local, Supabase en stage y producción (2026-09-04).
 - Escritorio y móvil como escenas de primera clase, por igual.
@@ -111,8 +126,8 @@ Lo que **no** es la propuesta: que haya que comprarle el tablero a Tecvol para p
 
 **Explícitamente sin decidir — no inventar:**
 
-- Qué métricas concretas se reportan (tensión, corriente, temperatura, carga de generador, horas de servicio, etc.).
-- Transporte y cadencia de la telemetría (MQTT/HTTP, celular/satelital, frecuencia de reporte, retención histórica).
+- Qué métricas concretas se reportan (tensión, corriente, temperatura, carga de generador, horas de servicio, etc.). **Sigue sin decidirse, y desde el 2026-09-06 el sistema está construido para que siga así:** una magnitud es una fila que alguien da de alta, no un valor de un enum ni una columna. Decidirlo no va a costar una migración; no decidirlo tampoco cuesta nada.
+- Transporte y cadencia de la telemetría (MQTT/HTTP, celular/satelital, frecuencia de reporte, retención histórica). El padrón ya deja la puerta abierta —cada dispositivo tiene un serial único que él mismo reporta, y cada magnitud una clave estable con la que nombrarse adentro de un mensaje— pero por dónde llega ese mensaje no está decidido.
 - Por qué medio se notifica una alerta disparada (en pantalla, correo, push, mensaje). Que las alertas existen y se disparan por umbral quedó confirmado el 2026-09-04; cómo salen del sistema, no. Desde el 2026-09-06 hay un canal disponible —cada usuario tiene correo, que es además su identidad— pero elegirlo sigue sin decidirse, y no todo encargado de buque tiene casilla propia.
 - Backend de telemetría y origen de datos. El **proveedor de autenticación y el motor de base de datos salieron de esta lista el 2026-09-04** (ver Stack); por dónde llegan las lecturas de los microcontroladores, no.
 - Detalle del modelo multi-cliente. Que el sistema sirve a varios clientes y que sólo `superadmin` cruza el corte quedó confirmado el 2026-09-04, y cada sesión ya viaja con su cliente. **Quién da de alta a los usuarios de un cliente nuevo quedó resuelto el 2026-09-06** (ver «Quién crea y quién restablece»). Falta la política fina: qué pasa con un astillero que trabaja para varios armadores, y si un usuario puede pertenecer a más de un cliente — hoy no puede, la empresa es un campo y no una lista.
