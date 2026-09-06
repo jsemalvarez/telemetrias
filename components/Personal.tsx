@@ -23,18 +23,37 @@ import { Interruptor } from './instrumentos';
  * que esta sesión puede otorgar. Lista vacía, no hay alta. Quién puede otorgar
  * qué lo decide `rolesQueOtorga`, y lo hace cumplir el servidor.
  */
+/**
+ * Qué riel está bajado. Uno por vez: abrir el alta cierra un restablecimiento a
+ * medio tipear, y al revés. Dos formularios de contraseña abiertos en la misma
+ * pantalla son la forma más fácil de escribir la clave de uno en el borne del
+ * otro.
+ */
+type Panel = null | { tipo: 'alta' } | { tipo: 'clave'; miembro: Miembro };
+
 export function Personal({
   empresa,
   personal,
   otorgables,
+  yo,
 }: {
   empresa: string;
   personal: Miembro[];
   /** Los roles que esta sesión puede dar de alta, ya resueltos por el servidor. */
   otorgables: Rol[];
+  /** Quién está mirando. Nadie se restablece su propia clave desde acá. */
+  yo: string;
 }) {
-  const [abierto, setAbierto] = useState(false);
+  const [panel, setPanel] = useState<Panel>(null);
   const puedeCrear = otorgables.length > 0;
+
+  /* El servidor lo vuelve a decidir; esto decide si se dibuja el mando. La
+     regla es la misma que la del alta, y no es casualidad: quien pudo dar de
+     alta una credencial puede reemplazarla, y ni una más. */
+  const puedeRestablecer = (miembro: Miembro) =>
+    miembro.id !== yo &&
+    miembro.roles.length > 0 &&
+    miembro.roles.every((rol) => otorgables.includes(rol));
 
   return (
     <main className="registro" id="contenido">
@@ -58,15 +77,21 @@ export function Personal({
               <Interruptor
                 designacion="−S6"
                 className="registro__accion"
-                onClick={() => setAbierto((estaba) => !estaba)}
+                onClick={() =>
+                  setPanel((antes) => (antes?.tipo === 'alta' ? null : { tipo: 'alta' }))
+                }
               >
-                {abierto ? 'Cerrar alta' : 'Crear personal'}
+                {panel?.tipo === 'alta' ? 'Cerrar alta' : 'Crear personal'}
               </Interruptor>
             ) : null}
           </div>
 
-          {puedeCrear && abierto ? (
-            <AltaMiembro rol={otorgables[0]} alCerrar={() => setAbierto(false)} />
+          {puedeCrear && panel?.tipo === 'alta' ? (
+            <AltaMiembro rol={otorgables[0]} alCerrar={() => setPanel(null)} />
+          ) : null}
+
+          {panel?.tipo === 'clave' ? (
+            <RestablecerClave miembro={panel.miembro} alCerrar={() => setPanel(null)} />
           ) : null}
 
           <ul className="registro__lista">
@@ -80,6 +105,16 @@ export function Personal({
                       {ROTULO_ROL[rol]}
                     </span>
                   ))}
+                  {puedeRestablecer(miembro) ? (
+                    <button
+                      type="button"
+                      className="fila__accion"
+                      onClick={() => setPanel({ tipo: 'clave', miembro })}
+                    >
+                      Restablecer clave
+                      <span className="oculto-visual"> de {miembro.nombre}</span>
+                    </button>
+                  ) : null}
                 </span>
               </li>
             ))}
@@ -285,6 +320,201 @@ function AltaMiembro({ rol, alCerrar }: { rol: Rol; alCerrar: () => void }) {
         <div className="borne borne--llave">
           <Interruptor type="submit" designacion="−Q6" disabled={estado !== 'listo'}>
             {estado === 'listo' ? 'Dar de alta' : 'Dando de alta…'}
+          </Interruptor>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+/* ---------------- Restablecer una clave ajena: el riel −X7 ---------------- */
+
+/**
+ * La contraseña de otro, puesta de nuevo por quien lo administra.
+ *
+ * Es la recuperación que este producto puede dar hoy, y encaja con cómo
+ * trabaja: el encargado de un buque sin señal no puede seguir un enlace que le
+ * llegó por correo, pero sí puede llamar a su administrador.
+ *
+ * Lo que sale de acá es una contraseña provisoria —la eligió otro— y la lámpara
+ * del riel se lo va a recordar a su dueño hasta que ponga la suya. Guardar
+ * cierra además las sesiones abiertas de esa persona, y el riel lo dice antes
+ * de apretar: quien restablece porque una credencial se filtró tiene que saber
+ * que eso es justamente lo que está haciendo.
+ *
+ * Pide la contraseña de quien administra. Restablecer no crea una credencial
+ * nueva: se mete adentro de una que ya es de alguien, con su nombre y su
+ * historia. Una sesión de administrador olvidada abierta no debería alcanzar.
+ */
+function RestablecerClave({ miembro, alCerrar }: { miembro: Miembro; alCerrar: () => void }) {
+  const router = useRouter();
+  const [clave, setClave] = useState('');
+  const [nueva, setNueva] = useState('');
+  const [repetida, setRepetida] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [estado, setEstado] = useState<Estado>('listo');
+  const aviso = useRef<HTMLDivElement>(null);
+  const primero = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    primero.current?.focus();
+  }, []);
+
+  const enviar = async (ev: React.FormEvent) => {
+    ev.preventDefault();
+
+    if (!clave || !nueva || !repetida) {
+      setError('Faltan datos: hay que completar los tres bornes.');
+      aviso.current?.focus();
+      return;
+    }
+    if (nueva.length < CLAVE_MINIMA) {
+      setError(`La contraseña nueva tiene que ser de ${CLAVE_MINIMA} caracteres o más.`);
+      aviso.current?.focus();
+      return;
+    }
+    if (nueva !== repetida) {
+      setError('Las dos contraseñas nuevas no coinciden.');
+      aviso.current?.focus();
+      return;
+    }
+
+    setError(null);
+    setEstado('dando');
+
+    let respuesta: Response;
+    try {
+      respuesta = await fetch(`/api/personal/${miembro.id}/clave`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clave, nueva }),
+      });
+    } catch {
+      setEstado('listo');
+      setError('No hay enlace con el servidor. Revisá la conexión y probá de nuevo.');
+      aviso.current?.focus();
+      return;
+    }
+
+    const cuerpo = await respuesta.json().catch(() => null);
+
+    if (!respuesta.ok) {
+      setEstado('listo');
+      setError(typeof cuerpo?.mensaje === 'string' ? cuerpo.mensaje : 'No se pudo restablecer.');
+      aviso.current?.focus();
+      return;
+    }
+
+    setEstado('ok');
+    alCerrar();
+    router.refresh();
+  };
+
+  const malo = Boolean(error);
+
+  return (
+    <form className="regleta regleta--alta regleta--guarda" onSubmit={enviar} noValidate>
+      <div className="regleta__chapa">
+        <span className="serigrafia">−X7 · Nueva contraseña para {miembro.nombre}</span>
+      </div>
+
+      {error && (
+        <div className="aviso aviso--error regleta__aviso" role="alert" tabIndex={-1} ref={aviso}>
+          {error}
+        </div>
+      )}
+
+      <div className="aviso aviso--atencion regleta__aviso">
+        Al guardarla se cierran las sesiones que {miembro.nombre} tenga abiertas, y le queda
+        una contraseña provisoria que le vas a tener que pasar vos.
+      </div>
+
+      <div className="regleta__riel">
+        <p className="borne">
+          <span className="borne__cabeza">
+            <label className="campo__etiqueta" htmlFor="reponer-tuya">
+              Tu contraseña
+            </label>
+            <span className="serigrafia borne__designacion" aria-hidden="true">
+              −X7:1
+            </span>
+          </span>
+          <span className="hueco hueco--campo">
+            <input
+              id="reponer-tuya"
+              name="reponer-tuya"
+              type="password"
+              className="campo__entrada"
+              value={clave}
+              onChange={(e) => setClave(e.target.value)}
+              ref={primero}
+              autoComplete="current-password"
+              aria-describedby="reponer-tuya-pie"
+              aria-invalid={malo || undefined}
+            />
+          </span>
+          <span className="borne__pie" id="reponer-tuya-pie">
+            Estás entrando a una credencial ajena: confirmá que sos vos.
+          </span>
+        </p>
+
+        <p className="borne">
+          <span className="borne__cabeza">
+            <label className="campo__etiqueta" htmlFor="reponer-nueva">
+              La nueva
+            </label>
+            <span className="serigrafia borne__designacion" aria-hidden="true">
+              −X7:2
+            </span>
+          </span>
+          <span className="hueco hueco--campo">
+            <input
+              id="reponer-nueva"
+              name="reponer-nueva"
+              type="password"
+              className="campo__entrada"
+              value={nueva}
+              onChange={(e) => setNueva(e.target.value)}
+              autoComplete="new-password"
+              aria-describedby="reponer-nueva-pie"
+              aria-invalid={malo || undefined}
+            />
+          </span>
+          <span className="borne__pie" id="reponer-nueva-pie">
+            Mínimo {CLAVE_MINIMA} caracteres. Se la entregás vos.
+          </span>
+        </p>
+
+        <p className="borne">
+          <span className="borne__cabeza">
+            <label className="campo__etiqueta" htmlFor="reponer-repetida">
+              Repetila
+            </label>
+            <span className="serigrafia borne__designacion" aria-hidden="true">
+              −X7:3
+            </span>
+          </span>
+          <span className="hueco hueco--campo">
+            <input
+              id="reponer-repetida"
+              name="reponer-repetida"
+              type="password"
+              className="campo__entrada"
+              value={repetida}
+              onChange={(e) => setRepetida(e.target.value)}
+              autoComplete="new-password"
+              aria-describedby="reponer-repetida-pie"
+              aria-invalid={malo || undefined}
+            />
+          </span>
+          <span className="borne__pie" id="reponer-repetida-pie">
+            Si no coinciden no se guarda nada.
+          </span>
+        </p>
+
+        <div className="borne borne--llave">
+          <Interruptor type="submit" designacion="−Q7" disabled={estado !== 'listo'}>
+            {estado === 'listo' ? 'Restablecer' : 'Restableciendo…'}
           </Interruptor>
         </div>
       </div>

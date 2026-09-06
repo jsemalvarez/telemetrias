@@ -303,3 +303,27 @@ export async function cambiarClave(id: string, hash: string): Promise<Usuario> {
   });
   return aUsuario(fila);
 }
+
+/**
+ * Restablecimiento: la contraseña de otro, puesta de nuevo por quien lo
+ * administra.
+ *
+ * Es igual que `cambiarClave` salvo en una cosa, y esa cosa es todo el asunto:
+ * la marca queda en **verdadero**. Ésta la eligió alguien que no es su dueño,
+ * así que hay otra persona que la sabe, que es exactamente lo que la marca
+ * registra. Por eso son dos funciones y no una con una bandera: quién eligió la
+ * contraseña no es un parámetro de configuración, es la diferencia entre los
+ * dos actos.
+ *
+ * Sube la versión de credenciales, o sea que cierra todas las sesiones abiertas
+ * de esa persona. Si se restablece porque la credencial se filtró, dejar viva
+ * la sesión de quien la tiene haría que restablecerla no sirviera de nada.
+ */
+export async function restablecerClave(id: string, hash: string): Promise<Usuario> {
+  const fila = await db.user.update({
+    where: { id },
+    data: { hash, provisionalPassword: true, credentialVersion: { increment: 1 } },
+    include: CON_ROLES,
+  });
+  return aUsuario(fila);
+}

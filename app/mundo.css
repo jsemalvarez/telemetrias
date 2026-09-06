@@ -3556,3 +3556,29 @@
     display: none;
   }
 }
+
+/* La acción de una fila del padrón. Es un chip de utilidad y no el pulsador
+   del sistema: el pulsador es la acción de la pantalla —hay una—, y uno por
+   fila convertiría un registro en una botonera. Mismo material que la salida
+   del riel, que es el otro chip del gabinete. */
+.fila__accion {
+  font-family: inherit;
+  font-size: var(--t4);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gris);
+  background: var(--acero-alto);
+  border: 1px solid #0a0d0f;
+  box-shadow: var(--proa);
+  padding: var(--e2) var(--e3);
+  cursor: pointer;
+  transition: color 0.16s var(--sale), background-color 0.16s var(--sale);
+}
+.fila__accion:hover {
+  color: var(--blanco);
+  background: #343a41;
+}
+.fila__accion:active {
+  box-shadow: var(--rebaje);
+}

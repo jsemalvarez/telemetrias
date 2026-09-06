@@ -34,6 +34,7 @@ export default async function PersonalRuta() {
       empresa={await rotuloCliente(sesion.cliente)}
       personal={await personalDe(sesion.cliente)}
       otorgables={otorgables}
+      yo={sesion.id}
     />
   );
 }
