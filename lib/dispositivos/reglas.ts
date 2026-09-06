@@ -84,6 +84,26 @@ export function umbralValido(min: number | null, max: number | null): boolean {
 }
 
 /**
+ * ¿La escala del instrumento se sostiene?
+ *
+ * Distinta de `umbralValido` a propósito, y la diferencia es la que separa un
+ * umbral de una escala. Que falte un umbral es normal —una temperatura de
+ * bobinado se vigila por arriba y nada más—; que falte medio arco no es nada:
+ * un medidor con piso y sin techo no se puede dibujar, y uno con piso igual al
+ * techo es una división por cero.
+ *
+ * Así que: las dos, o ninguna. Ninguna quiere decir «esta magnitud no se dibuja
+ * con aguja», que es una respuesta legítima y es la que da una magnitud recién
+ * declarada. La base lo hace cumplir con su propio CHECK; esto es para que la
+ * pantalla lo diga antes de mandar un pedido que va a volver rechazado.
+ */
+export function escalaValida(min: number | null, max: number | null): boolean {
+  if (min === null && max === null) return true;
+  if (min === null || max === null) return false;
+  return min < max;
+}
+
+/**
  * De lo que se tipeó en un borne de umbral al número que se guarda.
  *
  * Tres resultados y no dos, y la diferencia entre el segundo y el tercero es lo

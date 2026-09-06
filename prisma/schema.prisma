@@ -242,6 +242,27 @@ model Magnitude {
   min Float?
   max Float?
 
+  /// The floor and ceiling of the dial this magnitude is drawn on.
+  ///
+  /// **Not the same numbers as `min`/`max`, and this is the distinction the
+  /// whole panel rests on.** Those two are the thresholds that raise an alarm;
+  /// these two are the extent of the instrument. A winding temperature alarms
+  /// above 75 °C and has no meaningful minimum, but its dial still has to start
+  /// somewhere — and a bus voltage watched between 385 V and 420 V still has to
+  /// show a reading of 380 V rather than pushing the needle off the face.
+  ///
+  /// Nullable, and a magnitude without them is not a broken magnitude: it is
+  /// one the screen draws as a digital readout instead of a dial. A needle
+  /// needs a declared scale, and inventing one from the data would move the
+  /// face under the needle every time a new extreme arrived.
+  ///
+  /// Both or neither, and floor strictly below ceiling. That is a CHECK
+  /// constraint in the migration rather than a comment here, because half a
+  /// scale is not a state this system should be able to hold: it would reach
+  /// the gauge as a division by zero or as an arc with no length.
+  scaleMin Float? @map("scale_min")
+  scaleMax Float? @map("scale_max")
+
   /// Soft delete, like its device. A magnitude that has been measured cannot
   /// be erased without erasing the history that names it.
   active Boolean @default(true)

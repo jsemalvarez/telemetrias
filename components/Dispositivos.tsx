@@ -6,6 +6,7 @@ import type { Dispositivo, Magnitud } from '@/lib/dispositivos/padron';
 import {
   aClave,
   aUmbral,
+  escalaValida,
   esSerial,
   LARGO_SERIAL,
   MINIMO_SERIAL,
@@ -705,7 +706,14 @@ function Magnitudes({
       ]),
     ),
   );
-  const [nueva, setNueva] = useState({ rotulo: '', unidad: '', min: '', max: '' });
+  const [nueva, setNueva] = useState({
+    rotulo: '',
+    unidad: '',
+    min: '',
+    max: '',
+    escalaMin: '',
+    escalaMax: '',
+  });
   const [error, setError] = useState<string | null>(null);
   const [estado, setEstado] = useState<Estado>('listo');
   const aviso = useRef<HTMLDivElement>(null);
@@ -754,6 +762,19 @@ function Magnitudes({
       }
       if (!umbralValido(min, max)) {
         fallar('En la magnitud nueva, el mínimo no puede ser mayor que el máximo.');
+        return;
+      }
+
+      const escalaMin = aUmbral(nueva.escalaMin);
+      const escalaMax = aUmbral(nueva.escalaMax);
+      if (escalaMin === undefined || escalaMax === undefined) {
+        fallar('La escala del medidor tiene que ser dos números, o quedar vacía.');
+        return;
+      }
+      if (!escalaValida(escalaMin, escalaMax)) {
+        fallar(
+          'La escala va con los dos extremos y el de abajo menor que el de arriba. Vacía quiere decir que esta magnitud no se dibuja con aguja.',
+        );
         return;
       }
     }
@@ -805,6 +826,8 @@ function Magnitudes({
             unidad: nueva.unidad.trim(),
             min: nueva.min,
             max: nueva.max,
+            escalaMin: nueva.escalaMin,
+            escalaMax: nueva.escalaMax,
           }),
         });
         if (!alta.ok) {
@@ -941,15 +964,56 @@ function Magnitudes({
                   />
                 </span>
               </span>
+              {/* La escala del instrumento, que NO son los umbrales de arriba.
+                  Aquéllos dicen entre qué valores se vigila; éstos, de dónde a
+                  dónde llega la esfera. Un bobinado que alarma arriba de 75 se
+                  dibuja igual desde 20, y una barra vigilada entre 385 y 420
+                  tiene que poder mostrar 380 sin tirar la aguja afuera. */}
+              <span className="umbral__campo umbral__campo--angosto">
+                <label className="umbral__rotulo" htmlFor="magnitud-escala-min">
+                  Escala desde
+                </label>
+                <span className="hueco hueco--campo">
+                  <input
+                    id="magnitud-escala-min"
+                    name="magnitud-escala-min"
+                    type="text"
+                    className="campo__entrada cifra"
+                    inputMode="decimal"
+                    value={nueva.escalaMin}
+                    onChange={(e) => setNueva((a) => ({ ...a, escalaMin: e.target.value }))}
+                    autoComplete="off"
+                  />
+                </span>
+              </span>
+              <span className="umbral__campo umbral__campo--angosto">
+                <label className="umbral__rotulo" htmlFor="magnitud-escala-max">
+                  Escala hasta
+                </label>
+                <span className="hueco hueco--campo">
+                  <input
+                    id="magnitud-escala-max"
+                    name="magnitud-escala-max"
+                    type="text"
+                    className="campo__entrada cifra"
+                    inputMode="decimal"
+                    value={nueva.escalaMax}
+                    onChange={(e) => setNueva((a) => ({ ...a, escalaMax: e.target.value }))}
+                    autoComplete="off"
+                  />
+                </span>
+              </span>
             </span>
             <span className="borne__pie">
               {aClave(nueva.rotulo) ? (
                 <>
                   Con esto la va a nombrar el equipo:{' '}
-                  <span className="cifra">{aClave(nueva.rotulo)}</span>
+                  <span className="cifra">{aClave(nueva.rotulo)}</span>. La escala es de dónde a
+                  dónde llega la esfera del medidor, y no son los umbrales: sin escala, esta
+                  magnitud se muestra como lectura digital en vez de con aguja.
                 </>
               ) : (
-                'Tensión de barra, corriente, temperatura de bobinado. La unidad y los umbrales se pueden dejar vacíos.'
+                'Tensión de barra, corriente, temperatura de bobinado. La unidad y los umbrales se pueden dejar vacíos; la escala es lo que hace que se dibuje con aguja.'
               )}
             </span>
           </div>

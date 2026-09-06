@@ -1,6 +1,6 @@
 import { conDispositivo } from '@/lib/dispositivos/guarda';
 import { crearMagnitud } from '@/lib/dispositivos/padron';
-import { aClave, aUmbral, umbralValido } from '@/lib/dispositivos/reglas';
+import { aClave, aUmbral, escalaValida, umbralValido } from '@/lib/dispositivos/reglas';
 import { cuerpoDe, error, listo, texto, textoOpcional } from '@/lib/respuestas';
 
 /* Prisma no corre en Edge. */
@@ -28,7 +28,14 @@ export const dynamic = 'force-dynamic';
  * los fija el encargado.
  */
 
-type Cuerpo = { rotulo?: unknown; unidad?: unknown; min?: unknown; max?: unknown };
+type Cuerpo = {
+  rotulo?: unknown;
+  unidad?: unknown;
+  min?: unknown;
+  max?: unknown;
+  escalaMin?: unknown;
+  escalaMax?: unknown;
+};
 
 export async function POST(pedido: Request, { params }: { params: { id: string } }) {
   const guarda = await conDispositivo(params.id, 'dispositivo:administrar');
@@ -62,6 +69,31 @@ export async function POST(pedido: Request, { params }: { params: { id: string }
     return error('umbral', 'El mínimo no puede ser mayor que el máximo.', 400);
   }
 
-  const magnitud = await crearMagnitud(guarda.dato.id, { rotulo, unidad, min, max });
+  /* La escala del instrumento, que no son los umbrales. Entra por acá porque
+     hasta dónde llega un medidor es parte del equipo, como su unidad. */
+  const escalaMin = aUmbral(leido.cuerpo.escalaMin);
+  const escalaMax = aUmbral(leido.cuerpo.escalaMax);
+  if (escalaMin === undefined || escalaMax === undefined) {
+    return error('escala', 'La escala tiene que ser dos números, o quedar vacía.', 400);
+  }
+
+  /* Las dos o ninguna: medio arco no se puede dibujar. La base lo vuelve a
+     exigir con su propio CHECK, que es donde no se puede saltear. */
+  if (!escalaValida(escalaMin, escalaMax)) {
+    return error(
+      'escala',
+      'La escala va con los dos extremos, y el de abajo tiene que ser menor que el de arriba. Vacía quiere decir que esta magnitud no se dibuja con aguja.',
+      400,
+    );
+  }
+
+  const magnitud = await crearMagnitud(guarda.dato.id, {
+    rotulo,
+    unidad,
+    min,
+    max,
+    escalaMin,
+    escalaMax,
+  });
   return listo({ magnitud });
 }

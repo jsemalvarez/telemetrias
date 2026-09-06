@@ -32,6 +32,13 @@ import { aClave, normalizarSerial } from './reglas';
  *
  * `min` y `max` en nulo quieren decir «sin umbral de ese lado», que no es lo
  * mismo que cero: una temperatura de bobinado se vigila por arriba y nada más.
+ *
+ * `escalaMin` y `escalaMax` son otra cosa y no hay que confundirlas: son los
+ * extremos de la esfera del instrumento, no los valores que disparan la alerta.
+ * Van juntas o no va ninguna, y sin ellas la magnitud se dibuja como lectura
+ * digital en vez de con aguja — porque una aguja necesita una escala declarada,
+ * y sacarla de los datos movería la esfera abajo de la aguja cada vez que
+ * llegara un extremo nuevo.
  */
 export type Magnitud = {
   id: string;
@@ -41,6 +48,8 @@ export type Magnitud = {
   unidad: string | null;
   min: number | null;
   max: number | null;
+  escalaMin: number | null;
+  escalaMax: number | null;
 };
 
 /** Un dispositivo tal como lo ve la pantalla. Nunca lleva la empresa: eso lo
@@ -66,6 +75,8 @@ type FilaMagnitud = {
   unit: string | null;
   min: number | null;
   max: number | null;
+  scaleMin: number | null;
+  scaleMax: number | null;
 };
 
 type FilaDispositivo = {
@@ -84,6 +95,8 @@ function aMagnitud(fila: FilaMagnitud): Magnitud {
     unidad: fila.unit,
     min: fila.min,
     max: fila.max,
+    escalaMin: fila.scaleMin,
+    escalaMax: fila.scaleMax,
   };
 }
 
@@ -340,29 +353,36 @@ export async function volverAlServicio(id: string): Promise<void> {
  * La clave se deriva del rótulo acá adentro. Lo que manda el navegador es lo
  * que la persona escribió; una clave que llegara de afuera sería un campo que
  * alguien elige a mano, y esa clave es con la que el fierro va a hablar.
+ *
+ * La escala entra por acá y no por la ruta del umbral, y ése es el mismo corte
+ * de siempre: hasta dónde llega un instrumento es parte del equipo, como su
+ * unidad, y lo declara quien lo instaló. El encargado fija entre qué valores se
+ * vigila; no decide de qué tamaño es la esfera.
  */
 export async function crearMagnitud(
   dispositivo: string,
-  datos: { rotulo: string; unidad: string | null; min: number | null; max: number | null },
+  datos: {
+    rotulo: string;
+    unidad: string | null;
+    min: number | null;
+    max: number | null;
+    escalaMin: number | null;
+    escalaMax: number | null;
+  },
 ): Promise<Magnitud> {
   const clave = aClave(datos.rotulo);
+  const columnas = {
+    label: datos.rotulo,
+    unit: datos.unidad,
+    min: datos.min,
+    max: datos.max,
+    scaleMin: datos.escalaMin,
+    scaleMax: datos.escalaMax,
+  };
   const fila = await db.magnitude.upsert({
     where: { deviceId_key: { deviceId: dispositivo, key: clave } },
-    create: {
-      deviceId: dispositivo,
-      key: clave,
-      label: datos.rotulo,
-      unit: datos.unidad,
-      min: datos.min,
-      max: datos.max,
-    },
-    update: {
-      active: true,
-      label: datos.rotulo,
-      unit: datos.unidad,
-      min: datos.min,
-      max: datos.max,
-    },
+    create: { deviceId: dispositivo, key: clave, ...columnas },
+    update: { active: true, ...columnas },
   });
   return aMagnitud(fila);
 }
