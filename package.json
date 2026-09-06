@@ -13,6 +13,7 @@
     "db:desplegar": "prisma migrate deploy",
     "db:sembrar": "prisma db seed",
     "db:crear-admin": "tsx scripts/crear-admin.ts",
+    "simular-puente": "tsx scripts/simular-puente.ts",
     "db:estudio": "prisma studio",
     "postinstall": "prisma generate"
   },
