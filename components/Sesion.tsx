@@ -33,7 +33,7 @@ export function Salida({ sesion }: { sesion: Sesion }) {
   return (
     <>
       <span className="riel__sesion serigrafia">
-        Sesión <span className="cifra">{sesion.usuario}</span>
+        Sesión <span className="cifra">{sesion.correo}</span>
       </span>
       <button className="riel__salida" type="button" onClick={salir} disabled={saliendo}>
         {saliendo ? 'Saliendo…' : 'Salir'}

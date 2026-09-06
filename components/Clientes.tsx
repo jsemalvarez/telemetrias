@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CLAVE_MINIMA } from '@/lib/auth/reglas';
+import { CLAVE_MINIMA, esCorreo } from '@/lib/auth/reglas';
 import { aIdentificador } from '@/lib/identificador';
 import type { Cliente } from '@/lib/auth/usuarios';
 import { Interruptor } from './instrumentos';
@@ -86,7 +86,7 @@ function AltaCliente({ alCerrar }: { alCerrar: () => void }) {
   const router = useRouter();
   const [empresa, setEmpresa] = useState('');
   const [nombre, setNombre] = useState('');
-  const [usuario, setUsuario] = useState('');
+  const [correo, setCorreo] = useState('');
   const [clave, setClave] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [estado, setEstado] = useState<Estado>('listo');
@@ -104,8 +104,16 @@ function AltaCliente({ alCerrar }: { alCerrar: () => void }) {
   const enviar = async (ev: React.FormEvent) => {
     ev.preventDefault();
 
-    if (!empresa.trim() || !nombre.trim() || !usuario.trim() || !clave) {
+    if (!empresa.trim() || !nombre.trim() || !correo.trim() || !clave) {
       setError('Faltan datos: hay que completar los cuatro bornes.');
+      aviso.current?.focus();
+      return;
+    }
+
+    /* El servidor lo vuelve a decidir por su cuenta. Esto está acá para que un
+       error de tipeo se vea ahora y no después de mandar el pedido. */
+    if (!esCorreo(correo)) {
+      setError('Eso no es una dirección de correo. Con eso entra al sistema, así que tiene que ser la suya.');
       aviso.current?.focus();
       return;
     }
@@ -120,7 +128,7 @@ function AltaCliente({ alCerrar }: { alCerrar: () => void }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           empresa: empresa.trim(),
-          admin: { usuario: usuario.trim(), nombre: nombre.trim(), clave },
+          admin: { correo: correo.trim(), nombre: nombre.trim(), clave },
         }),
       });
     } catch {
@@ -226,8 +234,8 @@ function AltaCliente({ alCerrar }: { alCerrar: () => void }) {
 
         <p className="borne">
           <span className="borne__cabeza">
-            <label className="campo__etiqueta" htmlFor="admin-usuario">
-              Usuario
+            <label className="campo__etiqueta" htmlFor="admin-correo">
+              Correo
             </label>
             <span className="serigrafia borne__designacion" aria-hidden="true">
               −X5:3
@@ -235,21 +243,22 @@ function AltaCliente({ alCerrar }: { alCerrar: () => void }) {
           </span>
           <span className="hueco hueco--campo">
             <input
-              id="admin-usuario"
-              name="admin-usuario"
-              type="text"
+              id="admin-correo"
+              name="admin-correo"
+              type="email"
               className="campo__entrada"
-              value={usuario}
-              onChange={(e) => setUsuario(e.target.value)}
+              value={correo}
+              onChange={(e) => setCorreo(e.target.value)}
               autoComplete="off"
+              inputMode="email"
               autoCapitalize="none"
               spellCheck={false}
-              aria-describedby="admin-usuario-pie"
+              aria-describedby="admin-correo-pie"
               aria-invalid={malo || undefined}
             />
           </span>
-          <span className="borne__pie" id="admin-usuario-pie">
-            Con esto entra al sistema.
+          <span className="borne__pie" id="admin-correo-pie">
+            Con esto entra al sistema, y es a donde le van a llegar los avisos.
           </span>
         </p>
 

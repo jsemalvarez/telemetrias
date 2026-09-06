@@ -48,10 +48,11 @@ function jti() {
 
 export async function firmarAcceso(claims: ClaimsAcceso) {
   return new SignJWT({
-    usuario: claims.usuario,
+    correo: claims.correo,
     nombre: claims.nombre,
     roles: claims.roles,
     cliente: claims.cliente,
+    provisoria: claims.claveProvisoria,
     ver: claims.ver,
   })
     .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
@@ -95,15 +96,18 @@ export async function verificarAcceso(token: string | undefined | null) {
   if (!token) return null;
   const p = await abrir(token);
   if (!p || typeof p.sub !== 'string') return null;
-  if (typeof p.usuario !== 'string' || typeof p.cliente !== 'string') return null;
+  if (typeof p.correo !== 'string' || typeof p.cliente !== 'string') return null;
 
   const roles: Rol[] = normalizarRoles(p.roles);
   const sesion: Sesion & { ver: number } = {
     id: p.sub,
-    usuario: p.usuario,
-    nombre: typeof p.nombre === 'string' ? p.nombre : p.usuario,
+    correo: p.correo,
+    nombre: typeof p.nombre === 'string' ? p.nombre : p.correo,
     roles,
     cliente: p.cliente,
+    /* Un token viejo sin la marca vale igual y no enciende la lámpara: el
+       refresco la trae en cuanto pase, y en el peor caso son 30 minutos. */
+    claveProvisoria: p.provisoria === true,
     /* El modo no viaja en el token: es una preferencia, no una credencial, y
        vive en su propia cookie. Quien arme la sesión completa lo resuelve. */
     modo: null,

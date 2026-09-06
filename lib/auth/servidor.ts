@@ -41,10 +41,11 @@ export async function conPermiso(permiso: Permiso): Promise<Sesion | null> {
 export function sesionDe(usuario: Usuario): Sesion {
   return {
     id: usuario.id,
-    usuario: usuario.usuario,
+    correo: usuario.correo,
     nombre: usuario.nombre,
     roles: usuario.roles,
     cliente: usuario.cliente,
+    claveProvisoria: usuario.claveProvisoria,
     modo: modoPorDefecto(usuario.roles),
   };
 }

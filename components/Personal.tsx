@@ -53,7 +53,7 @@ export function Personal({
             {personal.map((miembro) => (
               <li className="hueco fila" key={miembro.id}>
                 <h2 className="fila__titulo">{miembro.nombre}</h2>
-                <span className="fila__sub cifra">{miembro.usuario}</span>
+                <span className="fila__sub cifra">{miembro.correo}</span>
                 <span className="fila__aside">
                   {miembro.roles.map((rol) => (
                     <span className="serigrafia fila__rol" key={rol}>

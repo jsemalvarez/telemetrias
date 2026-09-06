@@ -14,7 +14,7 @@
  * única señal de que eso está por pasar es esa línea.
  *
  * Sin terminal —un contenedor, un paso de despliegue— toma los datos del
- * entorno: ADMIN_USUARIO, ADMIN_CLAVE, ADMIN_NOMBRE, ADMIN_CLIENTE y ADMIN_ROL.
+ * entorno: ADMIN_CORREO, ADMIN_CLAVE, ADMIN_NOMBRE, ADMIN_CLIENTE y ADMIN_ROL.
  * Van por variable de entorno y no por argumento a propósito: los argumentos de
  * un proceso los lee cualquiera que liste los procesos de la máquina.
  *
@@ -25,22 +25,24 @@
 
 import { createInterface } from 'node:readline';
 import { PrismaClient } from '@prisma/client';
-import { CLAVE_MINIMA, hashear } from '../lib/auth/contrasena';
+import { hashear } from '../lib/auth/contrasena';
+import { CLAVE_MINIMA, esCorreo, normalizarCorreo } from '../lib/auth/reglas';
 import { ROLES, ROTULO_ROL, esRol, type Rol } from '../lib/auth/roles';
 
 const db = new PrismaClient();
 
 type Datos = {
-  usuario: string;
+  correo: string;
   nombre: string;
   clave: string;
   cliente: string;
   rol: Rol;
 };
 
-/* La misma normalización que hace el acceso al buscar (lib/auth/usuarios.ts).
-   Sin esto se crea «Demo@X.com» y después nadie entra escribiendo «demo@x.com». */
-const normalizar = (nombre: string) => nombre.trim().toLowerCase();
+/* El identificador de empresa se tipea a mano acá, así que se normaliza igual
+   que como quedó guardado cuando lo derivó `aIdentificador`. El correo tiene su
+   propia normalización, en lib/auth/reglas.ts, que es la que usa el acceso. */
+const minusculas = (valor: string) => valor.trim().toLowerCase();
 
 /** A qué base apunta esto, sin revelar la contraseña que lleva la URL. */
 function destino(url: string | undefined) {
@@ -94,10 +96,10 @@ async function preguntarHasta(texto: string, valido: (v: string) => string | nul
 /* ------------------------- Juntar los datos ------------------------- */
 
 function delEntorno(): Datos {
-  const { ADMIN_USUARIO, ADMIN_CLAVE, ADMIN_NOMBRE, ADMIN_CLIENTE, ADMIN_ROL } = process.env;
+  const { ADMIN_CORREO, ADMIN_CLAVE, ADMIN_NOMBRE, ADMIN_CLIENTE, ADMIN_ROL } = process.env;
 
   const faltan = Object.entries({
-    ADMIN_USUARIO,
+    ADMIN_CORREO,
     ADMIN_CLAVE,
     ADMIN_NOMBRE,
     ADMIN_CLIENTE,
@@ -112,22 +114,27 @@ function delEntorno(): Datos {
     );
   }
   if (!esRol(ADMIN_ROL)) throw new Error(`ADMIN_ROL no es un rol conocido: ${ADMIN_ROL}`);
+  if (!esCorreo(ADMIN_CORREO as string)) {
+    throw new Error(`ADMIN_CORREO no es una dirección de correo: ${ADMIN_CORREO}`);
+  }
   if ((ADMIN_CLAVE as string).length < CLAVE_MINIMA) {
     throw new Error(`ADMIN_CLAVE tiene menos de ${CLAVE_MINIMA} caracteres.`);
   }
 
   return {
-    usuario: normalizar(ADMIN_USUARIO as string),
+    correo: normalizarCorreo(ADMIN_CORREO as string),
     nombre: (ADMIN_NOMBRE as string).trim(),
     clave: ADMIN_CLAVE as string,
-    cliente: normalizar(ADMIN_CLIENTE as string),
+    cliente: minusculas(ADMIN_CLIENTE as string),
     rol: ADMIN_ROL,
   };
 }
 
 async function preguntando(): Promise<Datos> {
-  const usuario = normalizar(
-    await preguntarHasta('Usuario (con el que entra): ', (v) => (v ? null : 'No puede quedar vacío.')),
+  const correo = normalizarCorreo(
+    await preguntarHasta('Correo (con el que entra): ', (v) =>
+      !v ? 'No puede quedar vacío.' : esCorreo(v) ? null : 'Eso no es una dirección de correo.',
+    ),
   );
 
   const nombre = await preguntarHasta('Nombre (como se muestra en pantalla): ', (v) =>
@@ -140,7 +147,7 @@ async function preguntando(): Promise<Datos> {
       ? `\nEmpresas dadas de alta: ${existentes.map((c) => c.id).join(', ')}`
       : '\nNo hay ninguna empresa dada de alta todavía; se crea la que indiques.',
   );
-  const cliente = normalizar(
+  const cliente = minusculas(
     await preguntarHasta('Empresa (identificador, ej. tecvol): ', (v) =>
       v ? null : 'No puede quedar vacío.',
     ),
@@ -162,17 +169,17 @@ async function preguntando(): Promise<Datos> {
       console.log('  No coinciden.');
       continue;
     }
-    return { usuario, nombre, clave, cliente, rol };
+    return { correo, nombre, clave, cliente, rol };
   }
 }
 
 /* ------------------------------ Alta ------------------------------ */
 
 async function crear(datos: Datos) {
-  const yaEsta = await db.user.findUnique({ where: { username: datos.usuario } });
+  const yaEsta = await db.user.findUnique({ where: { email: datos.correo } });
   if (yaEsta) {
     throw new Error(
-      `Ya existe un usuario «${datos.usuario}». Este script da de alta; no cambia contraseñas.`,
+      `Ya existe un usuario con el correo «${datos.correo}». Este script da de alta; no cambia contraseñas.`,
     );
   }
 
@@ -188,7 +195,7 @@ async function crear(datos: Datos) {
     });
     return tx.user.create({
       data: {
-        username: datos.usuario,
+        email: datos.correo,
         name: datos.nombre,
         hash,
         clientId: datos.cliente,
@@ -203,7 +210,7 @@ async function crear(datos: Datos) {
 
 async function main() {
   const donde = destino(process.env.DATABASE_URL);
-  const interactivo = Boolean(process.stdin.isTTY) && !process.env.ADMIN_USUARIO;
+  const interactivo = Boolean(process.stdin.isTTY) && !process.env.ADMIN_CORREO;
 
   console.log('\n  Alta de administrador');
   console.log(`  Base de datos: ${donde}\n`);
@@ -212,7 +219,7 @@ async function main() {
 
   if (interactivo) {
     console.log('');
-    console.log(`  Usuario:  ${datos.usuario}`);
+    console.log(`  Correo:   ${datos.correo}`);
     console.log(`  Nombre:   ${datos.nombre}`);
     console.log(`  Empresa:  ${datos.cliente}`);
     console.log(`  Rol:      ${ROTULO_ROL[datos.rol]}`);
@@ -226,7 +233,10 @@ async function main() {
 
   const creado = await crear(datos);
   const roles = creado.roles.map((r) => ROTULO_ROL[r.role]).join(', ');
-  console.log(`\n  Creado: ${creado.username} (${creado.name}) — ${roles} de ${creado.client.label}.\n`);
+  console.log(`\n  Creado: ${creado.email} (${creado.name}) — ${roles} de ${creado.client.label}.`);
+  /* La contraseña la elegiste vos, no su dueño: la aplicación se lo va a
+     recordar en cada sesión hasta que ponga la suya. */
+  console.log('  La contraseña queda como provisoria hasta que la cambie.\n');
 }
 
 main()

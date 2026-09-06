@@ -1,6 +1,7 @@
 import 'server-only';
 import { cache } from 'react';
 import { db } from '../db';
+import { normalizarCorreo } from './reglas';
 import { normalizarRoles, type Rol } from './roles';
 
 /**
@@ -24,7 +25,8 @@ import { normalizarRoles, type Rol } from './roles';
 
 export type Usuario = {
   id: string;
-  usuario: string;
+  /** Con esto entra. Es la identidad y es el único canal para avisarle algo. */
+  correo: string;
   nombre: string;
   /** scrypt$N$r$p$sal$hash — ver lib/auth/contrasena.ts */
   hash: string;
@@ -45,6 +47,11 @@ export type Usuario = {
    */
   ver: number;
   activo: boolean;
+  /**
+   * Si la contraseña que abre esta cuenta la eligió quien la dio de alta, y no
+   * su dueño. Mientras sea verdad, hay otra persona que la sabe.
+   */
+  claveProvisoria: boolean;
 };
 
 /**
@@ -60,10 +67,6 @@ export type Usuario = {
 export const HASH_SENUELO =
   'scrypt$16384$8$1$3Q2IaIxrur2KE8L3o8nTlg==$WwMIupqgtobROUsjl1HfIWnFD4KtoNX4p2uSvlXgkp0=';
 
-/* Quien escribe pasa por la misma normalización que quien busca; si no, se da
-   de alta «Demo» y después nadie entra escribiendo «demo». */
-const normalizar = (nombre: string) => nombre.trim().toLowerCase();
-
 /**
  * ¿El usuario es personal de una empresa? Un super no lo es: es de Tecvol y
  * cruza el corte, así que no cuenta como usuario de ningún cliente ni figura en
@@ -78,12 +81,13 @@ const CON_ROLES = { roles: { select: { role: true } } };
 
 type FilaUsuario = {
   id: string;
-  username: string;
+  email: string;
   name: string;
   hash: string;
   clientId: string;
   credentialVersion: number;
   active: boolean;
+  provisionalPassword: boolean;
   roles: { role: Rol }[];
 };
 
@@ -91,7 +95,7 @@ type FilaUsuario = {
 function aUsuario(fila: FilaUsuario): Usuario {
   return {
     id: fila.id,
-    usuario: fila.username,
+    correo: fila.email,
     nombre: fila.name,
     hash: fila.hash,
     /* Un rol que la base tenga y el catálogo no —uno retirado a medias— se
@@ -100,12 +104,13 @@ function aUsuario(fila: FilaUsuario): Usuario {
     cliente: fila.clientId,
     ver: fila.credentialVersion,
     activo: fila.active,
+    claveProvisoria: fila.provisionalPassword,
   };
 }
 
-export async function porUsuario(nombre: string): Promise<Usuario | null> {
+export async function porCorreo(correo: string): Promise<Usuario | null> {
   const fila = await db.user.findUnique({
-    where: { username: normalizar(nombre) },
+    where: { email: normalizarCorreo(correo) },
     include: CON_ROLES,
   });
   return fila ? aUsuario(fila) : null;
@@ -161,7 +166,7 @@ export const rotuloCliente = cache(async (id: string): Promise<string> => {
  */
 export type Miembro = {
   id: string;
-  usuario: string;
+  correo: string;
   nombre: string;
   roles: Rol[];
 };
@@ -179,7 +184,7 @@ export async function personalDe(cliente: string): Promise<Miembro[]> {
 
   return filas.map((u) => ({
     id: u.id,
-    usuario: u.username,
+    correo: u.email,
     nombre: u.name,
     roles: normalizarRoles(u.roles.map((r) => r.role)),
   }));

@@ -60,11 +60,17 @@ model User {
   /// inside already-issued JWTs and changing it signs everyone out.
   id String @id @default(cuid())
 
+  /// The address they sign in with. There is no separate username: one
+  /// identity, which is also the only channel the system could ever use to
+  /// reach this person — an alert has to arrive somewhere.
+  ///
   /// Always stored normalised — trimmed and lowercased — because the unique
-  /// index is case-sensitive and "Demo" and "demo" would be two people.
-  /// Whoever writes goes through the same normalisation as whoever looks up.
-  username String @unique
-  name     String
+  /// index is case-sensitive and "Ana@x.com" and "ana@x.com" would be two
+  /// people. Whoever writes goes through the same normalisation as whoever
+  /// looks up; both get it from lib/auth/reglas.ts, which is the one place
+  /// that knows what an address is.
+  email String @unique
+  name  String
 
   /// scrypt$N$r$p$salt$hash — see lib/auth/contrasena.ts. Never leaves the
   /// server: the types that travel to the client carry no hash.
@@ -80,11 +86,31 @@ model User {
   /// Soft delete. A user is never removed: records keep naming them.
   active Boolean @default(true)
 
+  /// Whether the password behind `hash` was chosen by whoever created the
+  /// account instead of by its owner.
+  ///
+  /// It records a fact, not a policy: while this is true, somebody else knows
+  /// this password. What the product does about it — today a lamp that stays
+  /// lit until the owner sets their own — is decided upstairs and can change
+  /// without touching this column. It is cleared in the one place where a
+  /// person types a password nobody dictated to them.
+  provisionalPassword Boolean @default(true) @map("provisional_password")
+
+  /// Who signed for this account. Null for the seeded users, who answer to
+  /// nobody; every account created through the application carries its author.
+  createdById String? @map("created_by_id")
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   client Client     @relation(fields: [clientId], references: [id], onDelete: Restrict)
   roles  UserRole[]
+
+  /* `Restrict`, like the client relation: an account that gave others cannot
+     be erased out from under them. Nothing hard-deletes a user anyway —
+     `active` is the way out — so this is the database agreeing with that. */
+  createdBy User?  @relation("Alta", fields: [createdById], references: [id], onDelete: Restrict)
+  creados   User[] @relation("Alta")
 
   @@index([clientId])
   @@map("users")

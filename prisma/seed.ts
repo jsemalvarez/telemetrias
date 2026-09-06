@@ -7,7 +7,7 @@
  *     abajo. Está bien que sea así: son la demo, su contraseña se reparte en la
  *     tarjeta de la pantalla de acceso y es pública a propósito.
  *
- *   — El SUPER ADMINISTRADOR sale del entorno, de SEED_SUPERADMIN_USUARIO y
+ *   — El SUPER ADMINISTRADOR sale del entorno, de SEED_SUPERADMIN_CORREO y
  *     SEED_SUPERADMIN_CLAVE. Es el único que cruza el corte entre empresas y ve
  *     los datos de todas: su credencial no puede estar en un archivo que se
  *     lleva puesto cualquiera que clone el repositorio. Sin esas dos variables
@@ -34,7 +34,8 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { CLAVE_MINIMA, hashear, verificar } from '../lib/auth/contrasena';
+import { hashear, verificar } from '../lib/auth/contrasena';
+import { CLAVE_MINIMA, esCorreo, normalizarCorreo } from '../lib/auth/reglas';
 import type { Rol } from '../lib/auth/roles';
 
 const db = new PrismaClient();
@@ -42,12 +43,9 @@ const db = new PrismaClient();
 /** El id del super es fijo: viaja en los JWT ya emitidos. */
 const ID_SUPER = 'u_super';
 
-/* La misma normalización que hace el acceso al buscar. */
-const normalizar = (nombre: string) => nombre.trim().toLowerCase();
-
 type Sembrado = {
   id: string;
-  username: string;
+  email: string;
   name: string;
   hash: string;
   roles: Rol[];
@@ -65,7 +63,7 @@ const CLIENTES = [{ id: 'tecvol', label: 'Tecvol' }];
 const DEMO: Sembrado[] = [
   {
     id: 'u_demo',
-    username: 'demo',
+    email: 'demo@tecvol.com.ar',
     name: 'Administrador de Tecvol',
     hash: 'scrypt$16384$8$1$OajxHj3B2FxtAB15bzyTJA==$G5ozfsDyWW/9nA1FG6wsxF7sBxpekJ88c2/ic4KOdrk=',
     roles: ['admin'],
@@ -73,7 +71,7 @@ const DEMO: Sembrado[] = [
   },
   {
     id: 'u_encargado',
-    username: 'encargado',
+    email: 'encargado@tecvol.com.ar',
     name: 'Encargado de Tecvol',
     hash: 'scrypt$16384$8$1$obhfx7dATuDZFEN1C/cseg==$6R32VZI5Ln9dZvb20Gxf/YbR83iRLpWceiqJDUOyoKQ=',
     roles: ['encargado'],
@@ -83,16 +81,19 @@ const DEMO: Sembrado[] = [
 
 /** Lo que el entorno declara del super, ya validado. */
 function superDelEntorno() {
-  const usuario = process.env.SEED_SUPERADMIN_USUARIO;
+  const correo = process.env.SEED_SUPERADMIN_CORREO;
   const clave = process.env.SEED_SUPERADMIN_CLAVE;
 
-  if (!usuario || !clave) return null;
+  if (!correo || !clave) return null;
+  if (!esCorreo(correo)) {
+    throw new Error(`SEED_SUPERADMIN_CORREO no es una dirección de correo: ${correo}`);
+  }
   if (clave.length < CLAVE_MINIMA) {
     throw new Error(
       `SEED_SUPERADMIN_CLAVE tiene ${clave.length} caracteres; el mínimo es ${CLAVE_MINIMA}.`,
     );
   }
-  return { usuario: normalizar(usuario), clave };
+  return { correo: normalizarCorreo(correo), clave };
 }
 
 /** Deja el usuario y sus roles como dicen los datos. */
@@ -100,14 +101,20 @@ async function sembrar({ roles, ...datos }: Sembrado, rotarClave: boolean) {
   await db.user.upsert({
     where: { id: datos.id },
     update: {
-      username: datos.username,
+      email: datos.email,
       name: datos.name,
       active: true,
+      /* La contraseña de un usuario sembrado no es de nadie más: la del super
+         la eligió quien corre la semilla, que es su dueño, y la de los de
+         demostración es pública a propósito. En ninguno de los dos casos hay
+         alguien esperando a poner la suya, así que la marca va en falso y la
+         lámpara no se enciende. */
+      provisionalPassword: false,
       /* Rotar la contraseña sin subir la versión de credenciales deja abiertas
          las sesiones que se abrieron con la anterior. */
       ...(rotarClave ? { hash: datos.hash, credentialVersion: { increment: 1 } } : {}),
     },
-    create: datos,
+    create: { ...datos, provisionalPassword: false },
   });
 
   /* Los roles se reafirman completos: acá está la definición de qué puede cada
@@ -124,7 +131,7 @@ async function sembrar({ roles, ...datos }: Sembrado, rotarClave: boolean) {
 }
 
 /** Siembra el super, rotando la clave sólo si la del entorno es otra. */
-async function sembrarSuper({ usuario, clave }: { usuario: string; clave: string }) {
+async function sembrarSuper({ correo, clave }: { correo: string; clave: string }) {
   const existente = await db.user.findUnique({ where: { id: ID_SUPER } });
 
   /* La única forma de saber si la clave cambió es preguntárselo al hash
@@ -134,7 +141,7 @@ async function sembrarSuper({ usuario, clave }: { usuario: string; clave: string
   await sembrar(
     {
       id: ID_SUPER,
-      username: usuario,
+      email: correo,
       name: 'Super administrador',
       hash: rotar ? await hashear(clave) : existente.hash,
       roles: ['superadmin'],
@@ -143,10 +150,10 @@ async function sembrarSuper({ usuario, clave }: { usuario: string; clave: string
     rotar,
   );
 
-  if (!existente) return `y el super administrador ${usuario}, nuevo.`;
+  if (!existente) return `y el super administrador ${correo}, nuevo.`;
   return rotar
-    ? `y el super administrador ${usuario}, con la clave rotada (sus sesiones abiertas quedaron cerradas).`
-    : `y el super administrador ${usuario}, sin cambios.`;
+    ? `y el super administrador ${correo}, con la clave rotada (sus sesiones abiertas quedaron cerradas).`
+    : `y el super administrador ${correo}, sin cambios.`;
 }
 
 async function main() {
@@ -163,7 +170,7 @@ async function main() {
   const entorno = superDelEntorno();
   const superadmin = entorno
     ? await sembrarSuper(entorno)
-    : 'sin el super administrador: falta SEED_SUPERADMIN_USUARIO o SEED_SUPERADMIN_CLAVE.';
+    : 'sin el super administrador: falta SEED_SUPERADMIN_CORREO o SEED_SUPERADMIN_CLAVE.';
 
   console.log(`Sembrado: ${CLIENTES.length} cliente(s), ${DEMO.length} de demostración, ${superadmin}`);
 }

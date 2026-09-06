@@ -12,20 +12,21 @@ import { Interruptor, Tornillo } from './instrumentos';
  * hash y, si está bien, deja la sesión en dos cookies httpOnly. Esta pantalla
  * nunca ve el token — no puede, y ese es el punto.
  *
- * Lo que sigue siendo de demostración es el padrón: los usuarios están
- * sembrados en `lib/auth/usuarios.ts` hasta que exista la base de datos.
+ * Se entra con el correo: no hay un nombre de usuario aparte. Una identidad
+ * sola, que además es el único lugar a donde el sistema podría avisarle algo a
+ * esta persona.
  */
 
 /* Espejo de la semilla del padrón, para poder mostrar la credencial en pantalla
    sin importar el módulo del servidor (que lleva hashes y no puede viajar al
    navegador). Las dos chapas de abajo se retiran cuando haya altas reales. */
-const DEMOSTRACION = { usuario: 'demo', clave: 'tecvol' };
+const DEMOSTRACION = { correo: 'demo@tecvol.com.ar', clave: 'tecvol' };
 
 type Estado = 'listo' | 'validando' | 'ok';
 
 export function Acceso({ destino = '/tablero' }: { destino?: string }) {
   const router = useRouter();
-  const [usuario, setUsuario] = useState('');
+  const [correo, setCorreo] = useState('');
   const [clave, setClave] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [estado, setEstado] = useState<Estado>('listo');
@@ -34,7 +35,7 @@ export function Acceso({ destino = '/tablero' }: { destino?: string }) {
   const enviar = async (ev: React.FormEvent) => {
     ev.preventDefault();
 
-    if (!usuario.trim() || !clave.trim()) {
+    if (!correo.trim() || !clave.trim()) {
       setError('Faltan datos: hay que completar los dos bornes.');
       aviso.current?.focus();
       return;
@@ -48,7 +49,7 @@ export function Acceso({ destino = '/tablero' }: { destino?: string }) {
       respuesta = await fetch('/api/auth/entrar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario: usuario.trim(), clave }),
+        body: JSON.stringify({ correo: correo.trim(), clave }),
       });
     } catch {
       /* En este producto quedarse sin señal es normal, no una falla: el aviso
@@ -107,8 +108,8 @@ export function Acceso({ destino = '/tablero' }: { destino?: string }) {
           <div className="regleta__riel">
             <p className="borne">
               <span className="borne__cabeza">
-                <label className="campo__etiqueta" htmlFor="usuario">
-                  Usuario
+                <label className="campo__etiqueta" htmlFor="correo">
+                  Correo
                 </label>
                 <span className="serigrafia borne__designacion" aria-hidden="true">
                   −X0:1
@@ -116,13 +117,16 @@ export function Acceso({ destino = '/tablero' }: { destino?: string }) {
               </span>
               <span className="hueco hueco--campo">
                 <input
-                  id="usuario"
-                  name="usuario"
-                  type="text"
+                  id="correo"
+                  name="correo"
+                  type="email"
                   className="campo__entrada"
-                  value={usuario}
-                  onChange={(e) => setUsuario(e.target.value)}
-                  autoComplete="username"
+                  value={correo}
+                  onChange={(e) => setCorreo(e.target.value)}
+                  autoComplete="email"
+                  /* El teclado del teléfono trae la arroba sin que haya que ir a
+                     buscarla, y no arranca en mayúscula: esto se tipea a bordo. */
+                  inputMode="email"
                   autoCapitalize="none"
                   spellCheck={false}
                   aria-invalid={malo || undefined}
@@ -172,8 +176,8 @@ export function Acceso({ destino = '/tablero' }: { destino?: string }) {
             <span className="serigrafia">Credencial de demostración</span>
             <dl className="acceso__credencial">
               <div>
-                <dt className="serigrafia">Usuario</dt>
-                <dd className="cifra">{DEMOSTRACION.usuario}</dd>
+                <dt className="serigrafia">Correo</dt>
+                <dd className="cifra">{DEMOSTRACION.correo}</dd>
               </div>
               <div>
                 <dt className="serigrafia">Contraseña</dt>
