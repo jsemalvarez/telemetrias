@@ -7,9 +7,14 @@ import { aClave, normalizarSerial } from './reglas';
  *
  * Un dispositivo es el microcontrolador que se instala sobre el equipo para que
  * reporte. Esto es el padrón —qué hay instalado, de quién es, qué mide y entre
- * qué valores— y no la telemetría: lo que cada uno haya medido es otra tabla,
- * de otra capa, y esa capa todavía no existe. Ninguna función de acá inventa
- * una lectura.
+ * qué valores— y no la telemetría: lo que cada uno haya medido es otra tabla y
+ * otra capa, que desde el 2026-09-06 existe y vive en `lib/telemetria/`.
+ * Ninguna función de acá lee una medición, y ninguna inventa una.
+ *
+ * Lo único que este módulo le presta a esa capa es `dispositivoQueReporta`: a
+ * qué fila del padrón corresponde un serial que acaba de hablar. Va acá porque
+ * es una pregunta sobre el padrón —quién es este fierro y bajo qué claves
+ * reporta—, y la contesta quien tiene la respuesta.
  *
  * Los nombres de la base están en inglés y los de la aplicación en español, así
  * que acá adentro hay una traducción, y vive acá adentro entera: `aDispositivo`
@@ -179,6 +184,56 @@ export async function duenoDelSerial(
   return fila
     ? { id: fila.id, rotulo: fila.label, cliente: fila.clientId, activo: fila.active }
     : null;
+}
+
+/**
+ * A qué fila del padrón corresponde un serial que acaba de reportar, con las
+ * claves bajo las que ese equipo declara medir.
+ *
+ * Es la consulta de la ingesta, y por eso trae lo que la ingesta necesita
+ * decidir, que no es lo mismo que muestra la pantalla:
+ *
+ *   — La empresa, aunque nadie la use para cortar nada. Acá no hay sesión que
+ *     pasar por `alcanzaCliente`: el que llegó es el puente, que no es de
+ *     ninguna empresa y reporta para todas. El corte de este endpoint es otro
+ *     —el serial tiene que estar declarado— y el aislamiento se cumple del
+ *     lado de la lectura, que sí pide sesión.
+ *   — Si está en servicio, para poder decirlo en la respuesta. La lectura de
+ *     un equipo dado de baja se guarda igual: el fierro está hablando y
+ *     negarlo no lo hace callar. Lo que cambia es que la pantalla no lo muestra
+ *     entre los activos, que es donde esa decisión pertenece.
+ *   — **Las magnitudes dadas de baja también**, con su marca. Sin ellas, una
+ *     clave que alguien retiró del padrón se vería igual que una que nunca
+ *     existió, y son dos cosas distintas: una es un firmware que reporta de más
+ *     y la otra es un equipo que sigue midiendo algo que ya no se vigila. El
+ *     puente tiene que poder registrar cuál de las dos le pasó.
+ */
+export async function dispositivoQueReporta(serial: string): Promise<{
+  id: string;
+  rotulo: string;
+  cliente: string;
+  activo: boolean;
+  magnitudes: { id: string; clave: string; activa: boolean }[];
+} | null> {
+  const fila = await db.device.findUnique({
+    where: { serial: normalizarSerial(serial) },
+    select: {
+      id: true,
+      label: true,
+      clientId: true,
+      active: true,
+      magnitudes: { select: { id: true, key: true, active: true } },
+    },
+  });
+  if (!fila) return null;
+
+  return {
+    id: fila.id,
+    rotulo: fila.label,
+    cliente: fila.clientId,
+    activo: fila.active,
+    magnitudes: fila.magnitudes.map((m) => ({ id: m.id, clave: m.key, activa: m.active })),
+  };
 }
 
 /**
