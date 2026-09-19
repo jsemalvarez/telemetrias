@@ -1,0 +1,44 @@
+# Quién puede publicar y escuchar qué.
+#
+# Con un `acl_file` configurado, lo que no está permitido acá está prohibido:
+# no hace falta —ni se puede— escribir una negación.
+#
+# Este archivo repite en el idioma de Mosquitto la forma que define
+# `lib/telemetria/topicos.ts`. Son dos archivos y no puede ser uno solo: el
+# broker no lee TypeScript. Si allá cambia la raíz o la palabra «lecturas»,
+# cambia acá, en el mismo commit.
+#
+#     tecvol/TVL-0001/lecturas                    todas las magnitudes juntas
+#     tecvol/TVL-0001/lecturas/tension-de-barra   una sola
+
+# --- Cada equipo, abajo de su propio serial --------------------------------
+#
+# `%u` es el usuario con el que se conectó, y el usuario MQTT de un equipo ES
+# su serial: `npm run mqtt:credencial -- TVL-0001` crea la credencial con ese
+# nombre. De ahí sale que no haya una entrada por dispositivo que mantener —
+# un padrón de doscientos equipos son estas dos líneas y doscientas
+# contraseñas, y ninguna lista que se desactualice.
+#
+# Y de ahí sale también el corte: un equipo no puede publicar en nombre de
+# otro, aunque le roben la clave. Es la parte del aislamiento que la credencial
+# del puente —una sola, de servicio, que puede reportar por cualquier serial—
+# no puede dar del lado de la aplicación.
+#
+# `write` y no `readwrite`: un equipo habla y no escucha. Uno que pudiera
+# suscribirse a su propio tópico se leería a sí mismo, y uno que pudiera
+# suscribirse al de al lado sería el aislamiento roto por el otro lado.
+#
+# Las líneas `pattern` no pertenecen al usuario que tengan encima: valen para
+# todos. Van primero para que nadie las lea como parte de un bloque.
+pattern write tecvol/%u/lecturas
+pattern write tecvol/%u/lecturas/+
+
+# --- El puente: escucha todo y no publica nada -----------------------------
+#
+# Es el espejo exacto de lo que puede hacer contra la aplicación, donde escribe
+# mediciones y no lee ninguna. Acá lee mensajes y no escribe ninguno. Un puente
+# que pudiera publicar sería un proceso capaz de inventar lecturas que los
+# equipos nunca reportaron.
+user puente
+topic read tecvol/+/lecturas
+topic read tecvol/+/lecturas/+

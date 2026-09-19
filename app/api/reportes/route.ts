@@ -24,9 +24,10 @@ export const dynamic = 'force-dynamic';
  * autentica contra Mosquitto, con su usuario y su clave MQTT, que es otra capa
  * y otro problema. Ver `lib/telemetria/puente.ts`.
  *
- * El puente todavía no está escrito, y esta ruta no lo espera: el contrato es
- * HTTP y cualquier cosa que hable HTTP lo cumple. Simularlo desde Postman es
- * exactamente probar esto de punta a punta.
+ * El puente existe desde el 2026-09-06 y vive en `scripts/puente.ts`, pero
+ * esta ruta no lo espera ni lo conoce: el contrato es HTTP y cualquier cosa que
+ * hable HTTP lo cumple. Pedirlo desde Postman es exactamente probar esto de
+ * punta a punta.
  *
  *     POST /api/reportes
  *     Authorization: Bearer <PUENTE_CLAVE>

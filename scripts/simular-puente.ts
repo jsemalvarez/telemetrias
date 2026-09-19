@@ -6,9 +6,13 @@
  *     microcontrolador --MQTT--> Mosquitto --MQTT--> puente --REST--> la app
  *
  * y este script es el último tramo: hace exactamente los mismos POST a
- * `/api/reportes` que va a hacer el puente cuando exista. No habla MQTT, no
- * necesita broker y no simula ningún dispositivo — **simula al puente**, que es
- * la única pieza con la que esta aplicación conversa.
+ * `/api/reportes` que hace el puente de verdad, que desde el 2026-09-06 existe
+ * y vive en `scripts/puente.ts`. Éste no habla MQTT, no necesita broker y no
+ * simula ningún dispositivo — **simula al puente**, que es la única pieza con la
+ * que esta aplicación conversa.
+ *
+ * Y sigue sirviendo justamente por eso: es la única forma de mover el panel sin
+ * levantar el broker y sin tener un fierro publicando.
  *
  * Sirve para dos cosas concretas:
  *
@@ -52,37 +56,7 @@
  * es exactamente lo que hay que ver cuando el equipo no tiene reloj propio.
  */
 
-import { readFileSync } from 'node:fs';
-
-/* ------------------------------- El entorno ------------------------------- */
-
-/**
- * `PUENTE_CLAVE` vive en `.env.local`, y a este script no se lo carga nadie:
- * Prisma lee `.env` por su cuenta, pero acá no hay Prisma. Doce líneas propias
- * antes que una dependencia, y con la misma precedencia que usa Next —
- * `.env.local` pisa a `.env`—, que es lo que el `.env.example` documenta.
- */
-function delEntorno(nombre: string): string | undefined {
-  if (process.env[nombre]) return process.env[nombre];
-
-  for (const archivo of ['.env.local', '.env']) {
-    let texto: string;
-    try {
-      texto = readFileSync(archivo, 'utf8');
-    } catch {
-      continue;
-    }
-    for (const linea of texto.split(/\r?\n/)) {
-      const limpia = linea.trim();
-      if (!limpia || limpia.startsWith('#')) continue;
-      const corte = limpia.indexOf('=');
-      if (corte < 0) continue;
-      if (limpia.slice(0, corte).trim() !== nombre) continue;
-      return limpia.slice(corte + 1).trim().replace(/^["']|["']$/g, '');
-    }
-  }
-  return undefined;
-}
+import { delEntorno } from './entorno';
 
 /* ------------------------------ Los argumentos ------------------------------ */
 

@@ -1,17 +1,26 @@
-# La base de datos de desarrollo, en la máquina de cada uno.
+# Los servicios de desarrollo, en la máquina de cada uno.
+#
+# Son tres y hacen dos cosas distintas: la base de datos con su visor, y el
+# broker MQTT por donde entra la telemetría. Van juntos acá porque se levantan
+# juntos — trabajar sobre el panel sin broker es no poder ver una aguja
+# moverse, y trabajar sobre el broker sin base es no tener a quién atribuirle
+# la lectura.
 #
 # Postgres 17 porque es lo que corre Supabase, que es la base de stage y de
 # producción (17.6.1, motor 17, canal GA — verificado el 2026-09-05). Trabajar
 # en local sobre otro mayor es descubrir en el deploy que una migración usaba
 # algo que allá no existe.
 #
-# Los puertos se publican desplazados y salen de .env.local: esta máquina ya
-# tiene otros Postgres ocupando 5432 y 5433, y un Adminer en 8080. Adentro de
-# la red de Docker el puerto sigue siendo el 5432 de siempre.
+# Los puertos se publican desplazados y salen de .env: esta máquina ya tiene
+# otros Postgres ocupando 5432 y 5433, y un Adminer en 8080. Adentro de la red
+# de Docker el puerto sigue siendo el 5432 de siempre. El 1883 del broker, en
+# cambio, está libre y se publica tal cual — es el puerto que un
+# microcontrolador trae escrito de fábrica en cada ejemplo que uno copia.
 #
-#   docker compose up -d      levanta base y visor
+#   docker compose up -d      levanta base, visor y broker
 #   docker compose down       los baja, conservando los datos
-#   docker compose down -v    los baja y BORRA los datos
+#   docker compose down -v    los baja y BORRA los datos, incluidas las
+#                             credenciales MQTT de todos los equipos
 
 # El nombre del proyecto de Compose. Sin esto lo toma del nombre de la carpeta,
 # que acá no dice nada: los volúmenes y la red quedan con un prefijo que no es
@@ -53,5 +62,52 @@ services:
       postgres:
         condition: service_healthy
 
+  # El broker MQTT: la primera flecha de la cadena de telemetría.
+  #
+  #   microcontrolador --MQTT--> ACÁ --MQTT--> puente --REST--> la app
+  #
+  # Mosquitto es un broker puro y no habla HTTP, así que no le postea nada a
+  # nadie: el que se suscribe y reporta es `npm run puente`. La configuración
+  # está en mosquitto/, versionada; las credenciales de los equipos no, y se
+  # administran con `npm run mqtt:credencial`.
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: tecvol-mosquitto
+    restart: unless-stopped
+    ports:
+      - "${MQTT_PUERTO:-1883}:1883"
+    volumes:
+      # El directorio de configuración es un volumen y no una carpeta de la
+      # máquina, y la diferencia importa: adentro vive `passwd`, que son las
+      # credenciales de todos los equipos. En un volumen no puede terminar
+      # commiteado por descuido ni abierto con un editor de paso. Se lo
+      # administra por `docker compose exec`, que es lo que hace el script.
+      - mosquitto_config:/mosquitto/config
+      # La fuente versionada entra aparte y de sólo lectura, y se copia adentro
+      # al arrancar en vez de montarse sobre el directorio de arriba. Mosquitto
+      # 2.1 ya avisa que un archivo de configuración que no pertenece al usuario
+      # `mosquitto` va a dejar de cargarse, y uno montado desde la máquina nunca
+      # le pertenece. Copiarlo tiene además un efecto bienvenido: un
+      # `docker compose restart mosquitto` toma los cambios de estos dos
+      # archivos. El SIGHUP que manda el script recarga contraseñas, no esto.
+      - ./mosquitto:/mosquitto/fuente:ro
+      # La cola de los mensajes que llegaron mientras el puente estaba caído.
+      - mosquitto_data:/mosquitto/data
+    # Mosquitto 2 no arranca si el archivo de contraseñas no existe, y en el
+    # primer `up` todavía no existe: se lo crea vacío, que es un archivo válido
+    # con cero usuarios y un broker en el que no entra nadie.
+    #
+    # El dueño y los permisos también se fijan acá, y no es ceremonia: Mosquitto
+    # 2.1 avisa que un archivo de contraseñas o de ACL legible por todos va a
+    # dejar de cargarse, y el que sale de `cp` sobre un montaje de Windows lo es.
+    command: >
+      sh -c "cp /mosquitto/fuente/mosquitto.conf /mosquitto/fuente/acl /mosquitto/config/;
+      touch /mosquitto/config/passwd;
+      chown mosquitto:mosquitto /mosquitto/config/mosquitto.conf /mosquitto/config/acl /mosquitto/config/passwd;
+      chmod 600 /mosquitto/config/acl /mosquitto/config/passwd;
+      exec /usr/sbin/mosquitto -c /mosquitto/config/mosquitto.conf"
+
 volumes:
   postgres_data:
+  mosquitto_config:
+  mosquitto_data:
