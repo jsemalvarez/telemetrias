@@ -62,3 +62,7 @@ src/plugins/impeccable-live.client.ts
 # Raiz de Avast exportada para que Node acepte su MITM local. Es de esta
 # maquina y no del proyecto.
 .ca-avast.pem
+
+# Las credenciales que se graban en un equipo: la red de casa y su clave MQTT.
+# El firmware sí se versiona; esto no. La plantilla al lado es la que viaja.
+firmware/**/secretos.h
