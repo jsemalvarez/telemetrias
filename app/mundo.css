@@ -3993,6 +3993,13 @@
   color: var(--gris-hondo);
 }
 
+/* El ritmo va un escalón más apagado que la edad: la edad es del dato que se
+   está mirando y el ritmo es del equipo, que cambia una vez al año. Mismo
+   renglón, distinta jerarquía. */
+.equipo__ritmo {
+  opacity: 0.62;
+}
+
 .equipo__sin-magnitudes {
   margin: 0;
   padding: var(--e5) var(--e4);

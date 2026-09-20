@@ -2,7 +2,7 @@
 
 import type { DispositivoVivo, MagnitudViva } from '@/lib/telemetria/panel';
 import { usePanelVivo } from '@/lib/telemetria/enlace';
-import { cifraTexto, edadTexto } from '@/lib/telemetria/reglas';
+import { cifraTexto, edadTexto, ritmoTexto } from '@/lib/telemetria/reglas';
 import { Medidor, Persianas, Piloto } from './instrumentos';
 
 /**
@@ -46,7 +46,11 @@ export function Panel({
   dispositivos: DispositivoVivo[];
   ahora: number;
 }) {
-  const { dispositivos, ahora, enlace, modo } = usePanelVivo(iniciales, ahoraDelServidor, cliente);
+  const { dispositivos, ahora, enlace, modo, cadencias } = usePanelVivo(
+    iniciales,
+    ahoraDelServidor,
+    cliente,
+  );
   const vivo = enlace === 'vivo';
 
   /* La lámpara dice cuatro cosas y no dos, porque son cuatro estados que le
@@ -112,7 +116,12 @@ export function Panel({
           {dispositivos.length ? (
             <div className="panel__equipos">
               {dispositivos.map((dispositivo) => (
-                <Equipo key={dispositivo.id} dispositivo={dispositivo} ahora={ahora} />
+                <Equipo
+                  key={dispositivo.id}
+                  dispositivo={dispositivo}
+                  ahora={ahora}
+                  cadencias={cadencias}
+                />
               ))}
             </div>
           ) : (
@@ -150,7 +159,15 @@ export function Panel({
  * que el fierro dice de sí mismo y lo que hay que poder cotejar contra la
  * chapita del equipo cuando un número no cierra.
  */
-function Equipo({ dispositivo, ahora }: { dispositivo: DispositivoVivo; ahora: number }) {
+function Equipo({
+  dispositivo,
+  ahora,
+  cadencias,
+}: {
+  dispositivo: DispositivoVivo;
+  ahora: number;
+  cadencias: Record<string, number>;
+}) {
   return (
     <section className="equipo">
       <div className="equipo__chapa">
@@ -174,6 +191,7 @@ function Equipo({ dispositivo, ahora }: { dispositivo: DispositivoVivo; ahora: n
               magnitud={magnitud}
               designacion={`−P${9 + i}`}
               ahora={ahora}
+              cadencia={cadencias[magnitud.id] ?? null}
             />
           ))}
         </div>
@@ -212,10 +230,13 @@ function Instrumento({
   magnitud,
   designacion,
   ahora,
+  cadencia,
 }: {
   magnitud: MagnitudViva;
   designacion: string;
   ahora: number;
+  /** Cada cuánto viene reportando, o `null` mientras no se la vio lo suficiente. */
+  cadencia: number | null;
 }) {
   const { ultima, escalaMin, escalaMax } = magnitud;
   const conEscala = escalaMin !== null && escalaMax !== null;
@@ -248,8 +269,16 @@ function Instrumento({
         ) : null}
       </span>
 
+      {/* El ritmo al lado de la edad y no en otro lado: juntos son una sola
+          lectura —«recién, y reporta cada 5 s»— y separados obligan a buscar
+          la mitad del dato en otra parte de la pantalla. Mientras no se lo vio
+          reportar lo suficiente no se dice nada, que es más honesto que
+          estimar con dos muestras. */}
       <span className="serigrafia equipo__cuando">
         {ultima ? edadTexto(ahora - Date.parse(ultima.medidoEn)) : 'Sin reportes'}
+        {ultima && cadencia !== null ? (
+          <span className="equipo__ritmo"> · {ritmoTexto(cadencia)}</span>
+        ) : null}
       </span>
     </div>
   );

@@ -99,6 +99,30 @@ export function aValor(valor: unknown): number | undefined {
  * instrumento roto. Un adelanto dentro de la tolerancia cae acá también, que es
  * lo honesto: el dato es de ahora y el reloj del equipo se corrió unos segundos.
  */
+/**
+ * Cada cuánto viene reportando un equipo, dicho en palabras.
+ *
+ * Es el compañero de `edadTexto` y existe por lo que aquélla no puede decir:
+ * «hace 2 min» es una alarma en un equipo que reporta cada segundo y es lo
+ * normal en uno que reporta cada cinco minutos. Sin el ritmo al lado, la edad
+ * sola no alcanza para saber si algo anda mal.
+ *
+ * Redondeado a propósito, y con el «cada» adelante: no es una medición, es una
+ * cadencia observada, y un número con decimales invitaría a leerla como un
+ * dato del equipo cuando en realidad la estima la pantalla mirando lo que
+ * llega. Por debajo de diez segundos se redondea al segundo, que es donde
+ * todavía se distingue un equipo de un segundo de uno de cinco.
+ */
+export function ritmoTexto(ms: number): string {
+  if (ms < MINUTO) return `cada ${Math.max(1, Math.round(ms / 1000))} s`;
+
+  const minutos = Math.round(ms / MINUTO);
+  if (minutos < 60) return `cada ${minutos} min`;
+
+  const horas = Math.round(minutos / 60);
+  return `cada ${horas} h`;
+}
+
 export function edadTexto(ms: number): string {
   if (ms < MINUTO) return 'recién';
 

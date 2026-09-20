@@ -102,6 +102,13 @@ export type PanelVivo = {
   ahora: number;
   enlace: Enlace;
   modo: Modo;
+  /**
+   * Cada cuánto viene reportando cada magnitud, en milisegundos y por id.
+   *
+   * Una magnitud está acá recién cuando se la vio reportar unas cuantas veces;
+   * antes de eso no hay ritmo que decir y la pantalla no muestra ninguno.
+   */
+  cadencias: Record<string, number>;
 };
 
 type Pase = {
@@ -122,6 +129,93 @@ type Pase = {
  */
 const huellaDe = (dispositivos: DispositivoVivo[]) => JSON.stringify(dispositivos);
 
+/* ------------------------------ El ritmo ---------------------------------- */
+
+/**
+ * Cuántos intervalos se guardan para estimar cada cuánto reporta una magnitud.
+ *
+ * Cinco: suficiente para que un salto suelto no mueva la estimación, y poco
+ * para que un equipo al que le cambiaron la cadencia se acomode en menos de un
+ * minuto.
+ *
+ * **Se estima acá y no se consulta a la base**, aunque la base lo sabría mejor.
+ * La consulta del panel se repite cada segundo por cada pantalla abierta —está
+ * escrito en `panelDe` con todas las letras— y el ritmo es un dato que casi
+ * nunca cambia: pagarlo en cada refresco para enterarse de algo que se mueve
+ * una vez al año es la clase de costo que se paga para siempre. Acá sale de
+ * mirar lo que ya está llegando, y no cuesta un pedido más.
+ */
+const MUESTRAS_DE_RITMO = 5;
+
+/**
+ * Cuántos intervalos hacen falta antes de decir un ritmo.
+ *
+ * Con dos, una reconexión o un mensaje demorado alcanzarían para mostrar un
+ * número equivocado, y un ritmo equivocado es peor que ninguno: sobre él se
+ * juzga si la edad de un dato es normal.
+ */
+const RITMO_MINIMO = 3;
+
+/** La mediana, y no el promedio: un salto raro no arrastra la estimación. */
+function mediana(valores: number[]): number {
+  const orden = [...valores].sort((a, b) => a - b);
+  const medio = Math.floor(orden.length / 2);
+  return orden.length % 2 ? orden[medio] : (orden[medio - 1] + orden[medio]) / 2;
+}
+
+/**
+ * Anota lo que este panel dice del ritmo de cada magnitud.
+ *
+ * Mide sobre `medidoEn` —el instante que selló el puente— y no sobre cuándo
+ * llegó la respuesta: lo que se quiere saber es cada cuánto habla el equipo, y
+ * no cada cuánto pregunta esta pantalla, que son dos cosas distintas y sólo
+ * coinciden por casualidad.
+ *
+ * Devuelve `null` cuando ninguna magnitud reportó algo nuevo, para no rehacer
+ * el objeto ni tocar el estado al pedo.
+ */
+function anotarRitmo(
+  memoria: Map<string, { ultimo: number; intervalos: number[] }>,
+  dispositivos: DispositivoVivo[],
+): Record<string, number> | null {
+  let novedad = false;
+
+  for (const dispositivo of dispositivos) {
+    for (const magnitud of dispositivo.magnitudes) {
+      if (!magnitud.ultima) continue;
+
+      const instante = Date.parse(magnitud.ultima.medidoEn);
+      if (Number.isNaN(instante)) continue;
+
+      const anterior = memoria.get(magnitud.id);
+      if (!anterior) {
+        /* La primera vez sólo se la ve; el primer intervalo sale de la
+           segunda. */
+        memoria.set(magnitud.id, { ultimo: instante, intervalos: [] });
+        continue;
+      }
+
+      /* Igual o anterior es la misma lectura de siempre —o una que llegó
+         desordenada— y no es un intervalo. */
+      if (instante <= anterior.ultimo) continue;
+
+      anterior.intervalos.push(instante - anterior.ultimo);
+      if (anterior.intervalos.length > MUESTRAS_DE_RITMO) anterior.intervalos.shift();
+      anterior.ultimo = instante;
+      novedad = true;
+    }
+  }
+
+  if (!novedad) return null;
+
+  /* `forEach` y no `for…of`: el target de este proyecto no itera un Map. */
+  const ritmos: Record<string, number> = {};
+  memoria.forEach(({ intervalos }, id) => {
+    if (intervalos.length >= RITMO_MINIMO) ritmos[id] = mediana(intervalos);
+  });
+  return ritmos;
+}
+
 export function usePanelVivo(
   inicial: DispositivoVivo[],
   ahoraDelServidor: number,
@@ -130,6 +224,14 @@ export function usePanelVivo(
   const [dispositivos, setDispositivos] = useState(inicial);
   const [enlace, setEnlace] = useState<Enlace>('vivo');
   const [modo, setModo] = useState<Modo>('sondeo');
+  const [cadencias, setCadencias] = useState<Record<string, number>>({});
+
+  /* Lo último que se le vio reportar a cada magnitud, y los intervalos entre
+     esos reportes. Va en un ref y no en el estado porque lo escribe el bucle
+     del sondeo, que vive fuera del render, y porque no hace falta que dispare
+     uno: cuando hay un reporte nuevo ya se está renderizando por el panel, y
+     React agrupa los dos cambios de estado en el mismo pasaje. */
+  const visto = useRef(new Map<string, { ultimo: number; intervalos: number[] }>());
 
   /* La distancia entre el reloj del servidor y el de esta máquina. La edad de
      una lectura se mide contra el primero: una tablet a bordo con la hora
@@ -190,6 +292,10 @@ export function usePanelVivo(
     huella.current = ahoraHuella;
     setDispositivos(cuerpo.dispositivos);
     setAhora(cuerpo.ahora);
+
+    const ritmos = anotarRitmo(visto.current, cuerpo.dispositivos);
+    if (ritmos) setCadencias(ritmos);
+
     return true;
   }, [cliente]);
 
@@ -370,5 +476,5 @@ export function usePanelVivo(
     };
   }, [cliente]);
 
-  return { dispositivos, ahora, enlace, modo };
+  return { dispositivos, ahora, enlace, modo, cadencias };
 }
